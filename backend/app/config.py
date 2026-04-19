@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080
+    DEFAULT_ADMIN_EMAIL: str = "admin@fantasysv.com"
+    DEFAULT_ADMIN_PASSWORD: str = "admin"
 
     class Config:
         env_file = ".env"

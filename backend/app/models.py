@@ -34,6 +34,10 @@ class PhaseName(enum.Enum):
     semifinal = "semifinal"
     final = "final"
 
+class UserRole(enum.Enum):
+    user = "user"
+    admin = "admin"
+
 class User(Base):
     __tablename__ = "user"
 
@@ -41,6 +45,7 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    role = Column(SQLEnum(UserRole), default=UserRole.user, nullable=False)
     
     fantasy_teams = relationship("FantasyTeam", back_populates="user", cascade="all, delete-orphan")
 

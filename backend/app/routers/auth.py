@@ -57,8 +57,8 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
         )
         
     # Create tokens
-    access_token = security.create_access_token(data={"sub": user.email})
-    refresh_token = security.create_refresh_token(data={"sub": user.email})
+    access_token = security.create_access_token(data={"sub": user.email, "role": user.role.value})
+    refresh_token = security.create_refresh_token(data={"sub": user.email, "role": user.role.value})
     
     return {
         "access_token": access_token,
@@ -69,3 +69,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
 @router.get("/me", response_model=schemas.UserResponse)
 def get_current_user_profile(current_user: models.User = Depends(security.get_current_user)):
     return current_user
+
+@router.get("/admin-only", response_model=schemas.UserResponse)
+def admin_only_endpoint(current_admin: models.User = Depends(security.get_current_admin_user)):
+    return current_admin
