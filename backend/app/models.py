@@ -28,6 +28,12 @@ class FantasySlot(enum.Enum):
     starter = "starter"
     bench = "bench"
 
+class PhaseName(enum.Enum):
+    group = "group"
+    quarterfinal = "quarterfinal"
+    semifinal = "semifinal"
+    final = "final"
+
 class User(Base):
     __tablename__ = "user"
 
@@ -50,6 +56,7 @@ class Season(Base):
     leagues = relationship("League", back_populates="season", cascade="all, delete-orphan")
     matchdays = relationship("Matchday", back_populates="season", cascade="all, delete-orphan")
     fantasy_teams = relationship("FantasyTeam", back_populates="season", cascade="all, delete-orphan")
+    tournament_phases = relationship("TournamentPhase", back_populates="season", cascade="all, delete-orphan")
 
 class Matchday(Base):
     __tablename__ = "matchday"
@@ -79,8 +86,10 @@ class Team(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True, nullable=False)  # fake name
     league_id = Column(Integer, ForeignKey("league.id"), nullable=False)
+    eliminated_in_phase_id = Column(Integer, ForeignKey("tournament_phase.id"), nullable=True)
     
     league = relationship("League", back_populates="teams")
+    eliminated_in_phase = relationship("TournamentPhase", back_populates="eliminated_teams")
     players = relationship("Player", back_populates="team", cascade="all, delete-orphan")
 
 class Player(Base):
@@ -159,3 +168,13 @@ class TeamScore(Base):
     
     fantasy_team = relationship("FantasyTeam", back_populates="team_scores")
     matchday = relationship("Matchday", back_populates="team_scores")
+
+class TournamentPhase(Base):
+    __tablename__ = "tournament_phase"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(SQLEnum(PhaseName), nullable=False)
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
+    
+    season = relationship("Season", back_populates="tournament_phases")
+    eliminated_teams = relationship("Team", back_populates="eliminated_in_phase")
