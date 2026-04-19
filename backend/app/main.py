@@ -52,9 +52,7 @@ async def logging_middleware(request: Request, call_next):
         )
         raise
 
-@app.on_event("startup")
-def init_db():
-    Base.metadata.create_all(bind=engine)
+from . import models
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
