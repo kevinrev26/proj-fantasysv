@@ -9,3 +9,5 @@ sqlalchemy==2.0.23
 pydantic==2.5.0
 pydantic-settings==2.1.0
 python-dotenv==1.0.0
+sentry-sdk[fastapi,celery]==1.35.0
+structlog==23.2.0

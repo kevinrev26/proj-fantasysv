@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     # Optional with defaults
     ENVIRONMENT: str = "dev"
     BROKER_CONNECTION_RETRY_ON_STARTUP: bool = True
+    SENTRY_DSN: str | None = None
+    LOG_LEVEL: str = "INFO"
 
     class Config:
         env_file = ".env"
