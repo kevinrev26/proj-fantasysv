@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     BROKER_CONNECTION_RETRY_ON_STARTUP: bool = True
     SENTRY_DSN: str | None = None
     LOG_LEVEL: str = "INFO"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080
 
     class Config:
         env_file = ".env"
