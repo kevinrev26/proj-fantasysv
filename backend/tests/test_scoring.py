@@ -1,5 +1,5 @@
 import pytest
-from app.scoring import calculate_player_points
+from app.scoring import calculate_player_points, apply_wildcard_multiplier, validate_wildcard_constraint
 
 # ---------- Helper to test final_points easily ----------
 def assert_points(position, minutes, goals, assists, goals_conceded,
@@ -193,3 +193,27 @@ def test_no_negative_final_points():
     res = calculate_player_points("DF", 60, 0, 0, 5, 0, 1, 1, 0, 0)
     # minutes 3 - DF conceded 1 - red 3 - own goal 2 = -3
     assert res["final_points"] == -3
+
+def test_apply_wildcard_multiplier():
+    score = {"base_points": 10, "bonus_points": 2, "final_points": 12}
+    # Non-wildcard: unchanged
+    result = apply_wildcard_multiplier(score, is_wildcard=False)
+    assert result == score
+    # Wildcard: final_points doubled
+    result = apply_wildcard_multiplier(score, is_wildcard=True)
+    assert result["base_points"] == 10
+    assert result["bonus_points"] == 2
+    assert result["final_points"] == 24
+
+def test_validate_wildcard_constraint():
+    players = [{"is_x2_joker": False}, {"is_x2_joker": False}]
+    assert validate_wildcard_constraint(players) is True
+
+    players = [{"is_x2_joker": True}, {"is_x2_joker": False}]
+    assert validate_wildcard_constraint(players) is True
+
+    players = [{"is_x2_joker": True}, {"is_x2_joker": True}]
+    assert validate_wildcard_constraint(players) is False
+
+    players = []  # empty list is fine
+    assert validate_wildcard_constraint(players) is True

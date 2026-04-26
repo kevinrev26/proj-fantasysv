@@ -153,7 +153,7 @@ class PlayerScore(Base):
     own_goal = Column(Integer, default=0, nullable=False)
     penalty_missed = Column(Integer, default=0, nullable=False)
     penalty_saved = Column(Integer, default=0, nullable=False)
-    
+    goals_conceded = Column(Integer, default=0, nullable=False)    
     base_points = Column(Integer, default=0, nullable=False)
     bonus_points = Column(Integer, default=0, nullable=False)
     final_points = Column(Integer, default=0, nullable=False)

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 # Goal points per position (spec: FW=6, MF=8, DF=10; GK not specified, fallback to 15)
 GOAL_POINTS: Dict[str, int] = {
@@ -85,3 +85,41 @@ def calculate_player_points(
         "bonus_points": bonus_points,
         "final_points": final_points
     }
+
+def apply_wildcard_multiplier(
+    player_score: Dict[str, int], is_wildcard: bool
+) -> Dict[str, int]:
+    """
+    Apply x2 multiplier to final_points if is_wildcard is True.
+    Preserves base_points and bonus_points unchanged.
+
+    Args:
+        player_score: dict with keys 'base_points', 'bonus_points', 'final_points'
+        is_wildcard: whether this player is the designated wildcard for the matchday
+
+    Returns:
+        dict with same keys, but final_points multiplied by 2 if wildcard
+    """
+    if not is_wildcard:
+        return player_score.copy()
+
+    return {
+        "base_points": player_score["base_points"],
+        "bonus_points": player_score["bonus_points"],
+        "final_points": player_score["final_points"] * 2,
+    }
+
+
+def validate_wildcard_constraint(fantasy_players: List[Dict]) -> bool:
+    """
+    Validate that at most one player in the fantasy team has is_x2_joker=True
+    for a given matchday.
+
+    Args:
+        fantasy_players: list of dicts, each containing at least {'is_x2_joker': bool}
+
+    Returns:
+        True if constraint satisfied, False otherwise
+    """
+    wildcard_count = sum(1 for p in fantasy_players if p.get("is_x2_joker", False))
+    return wildcard_count <= 1
