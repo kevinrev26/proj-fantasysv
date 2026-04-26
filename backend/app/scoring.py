@@ -1,5 +1,13 @@
 from typing import Dict
 
+# Goal points per position (spec: FW=6, MF=8, DF=10; GK not specified, fallback to 15)
+GOAL_POINTS: Dict[str, int] = {
+    "FW": 6,
+    "MF": 8,
+    "DF": 10,
+    "GK": 15,      # not required by spec, kept for potential completeness
+}
+
 def calculate_player_points(
     position: str,
     minutes_played: int,
@@ -13,74 +21,67 @@ def calculate_player_points(
     penalties_saved: int
 ) -> Dict[str, int]:
     """
-    Pure Python function to calculate fantasy points based on the scoring table.
+    Pure function to calculate fantasy points based on the official scoring table.
+
+    Returns:
+        dict: {"base_points": int, "bonus_points": int, "final_points": int}
     """
-    base_points = 0
-    bonus_points = 0
-    position = position.upper()
-    
-    if minutes_played == 0:
+    if minutes_played <= 0:
         return {"base_points": 0, "bonus_points": 0, "final_points": 0}
 
-    # 1. Minutes Played
-    if minutes_played >= 1:
-        base_points += 1
+    position = position.upper()
+    base_points = 0
+    bonus_points = 0
+
+    # 1. Minutes played
+    base_points += 1                     # 1+ min
     if minutes_played >= 60:
-        base_points += 2  # Total 3 points for >= 60 mins
+        base_points += 2                 # additional 2 pts (total 3 for ≥60 min)
 
-    # 2. Goals
-    goal_multiplier = 0
-    if position == "FW":
-        goal_multiplier = 6
-    elif position == "MF":
-        goal_multiplier = 8
-    elif position == "DF":
-        goal_multiplier = 10
-    elif position == "GK":
-        goal_multiplier = 15
-        
-    base_points += (goals * goal_multiplier)
+    # 2. Goals (per position multiplier)
+    goal_multiplier = GOAL_POINTS.get(position, 0)
+    base_points += goals * goal_multiplier
 
-    # 3. Assists
-    base_points += (assists * 4)
+    # 3. Assists (4 pts each)
+    base_points += assists * 4
 
-    # 4. Clean Sheets (Requires 90 minutes played and 0 goals conceded)
-    if minutes_played >= 90 and goals_conceded == 0:
+    # 4. Clean sheets (require 0 goals conceded and at least 60 minutes played)
+    if minutes_played >= 60 and goals_conceded == 0:
         if position == "GK":
             base_points += 8
         elif position == "DF":
             base_points += 4
 
-    # 5. Goals Conceded
+    # 5. Goals conceded penalties
     if position == "GK":
-        base_points -= goals_conceded
-    elif position == "DF":
-        # -1 for every 2 goals conceded
-        base_points -= (goals_conceded // 2)
+        base_points -= goals_conceded          # -1 per goal conceded
+    elif position == "DF" and goals_conceded >= 2:
+        base_points -= 1                       # -1 if 2+ goals conceded (once)
 
-    # 6. Penalties Saved
+    # 6. Penalties saved (GK only)
     if position == "GK":
-        base_points += (penalties_saved * 8)
+        base_points += penalties_saved * 8
 
     # 7. Cards
-    base_points -= (yellow_cards * 1)
-    base_points -= (red_cards * 3)
+    base_points -= yellow_cards * 1
+    base_points -= red_cards * 3
 
-    # 8. Penalties Missed and Own Goals
-    base_points -= (penalties_missed * 2)
-    base_points -= (own_goals * 2)
+    # 8. Penalty missed & own goal
+    base_points -= penalties_missed * 2
+    base_points -= own_goals * 2
 
-    # 9. Bonus Points
-    # Hat trick (+5 bonus)
+    # 9. Bonus points
+    # Hat trick (3+ goals): +5 bonus
     if goals >= 3:
         bonus_points += 5
-    
-    # Combo bonus: Goal + assist in same match (+2 bonus)
+
+    # Goal + assist combo: +2 bonus
     if goals >= 1 and assists >= 1:
         bonus_points += 2
 
+    final_points = base_points + bonus_points
     return {
         "base_points": base_points,
         "bonus_points": bonus_points,
-        "final_points": base_points + bonus_points
+        "final_points": final_points
     }
