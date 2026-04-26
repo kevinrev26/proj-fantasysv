@@ -1,11 +1,12 @@
 import sentry_sdk
 import structlog
-from celery import Celery
+from celery import Celery, shared_task
 from celery.signals import setup_logging as celery_setup_logging
 from sentry_sdk.integrations.celery import CeleryIntegration
+from .database import SessionLocal
 from .config import settings
 from .logger import setup_logging
-from .models import FantasyPlayer, PlayerScore, TeamScore
+from .models import FantasyPlayer, PlayerScore, TeamScore, Matchday, MatchdayStatus, FantasyTeam, Player
 from .scoring import calculate_player_points, apply_wildcard_multiplier, validate_wildcard_constraint
 
 @celery_setup_logging.connect
@@ -113,3 +114,119 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
 
     db_session.add(team_score)
     db_session.commit()
+
+@shared_task(
+    name="recalculate_matchday_scores",
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+)
+def recalculate_matchday_scores_task(self, matchday_id: int):
+    db = SessionLocal()
+    try:
+        # Update task status to processing
+        matchday = db.query(Matchday).filter(Matchday.id == matchday_id).first()
+        if not matchday:
+            return
+        matchday.task_status = "processing"
+        db.commit()
+        
+        # 1. Get all PlayerScore records for this matchday
+        player_scores = db.query(PlayerScore).filter(
+            PlayerScore.matchday_id == matchday_id
+        ).all()
+        if not player_scores:
+            matchday.task_status = "done"  # nothing to score
+            db.commit()
+            return
+        
+        player_ids = [ps.player_id for ps in player_scores]
+        
+        # 2. Find all FantasyTeams that have any of these players
+        #    (through FantasyPlayer -> Player)
+        fantasy_teams = db.query(FantasyTeam).join(
+            FantasyPlayer, FantasyPlayer.fantasy_team_id == FantasyTeam.id
+        ).join(
+            Player, Player.id == FantasyPlayer.player_id
+        ).filter(
+            Player.id.in_(player_ids),
+            FantasyTeam.season_id == matchday.season_id
+        ).distinct().all()
+        
+        # 3. For each fantasy team, compute TeamScore
+        for fantasy_team in fantasy_teams:
+            total_points = 0
+            
+            # Get all fantasy players of this team (for the season)
+            fantasy_players = db.query(FantasyPlayer).filter(
+                FantasyPlayer.fantasy_team_id == fantasy_team.id
+            ).all()
+            
+            for fp in fantasy_players:
+                # Find the corresponding PlayerScore for this player and matchday
+                ps = next((p for p in player_scores if p.player_id == fp.player_id), None)
+                if not ps:
+                    continue  # player didn't play, no points
+                
+                # Get raw points from real player's stats
+                raw = calculate_player_points(
+                    position=fp.player.position,
+                    minutes_played=ps.minutes_played,
+                    goals=ps.goals,
+                    assists=ps.assists,
+                    goals_conceded=ps.goals_conceded,
+                    yellow_cards=ps.yellow_card,
+                    red_cards=ps.red_card,
+                    own_goals=ps.own_goal,
+                    penalties_missed=ps.penalty_missed,
+                    penalties_saved=ps.penalty_saved
+                )
+                
+                # Apply wildcard multiplier (if this fantasy player is the joker)
+                # Note: This assumes is_x2_joker is set per matchday. 
+                # If you need per‑matchday selection, you'll need a separate table.
+                scored = apply_wildcard_multiplier(raw, fp.is_x2_joker)
+                
+                total_points += scored["final_points"]
+                
+                # Optional: store per‑player fantasy points in a new table for audit
+                # For now we only keep team total.
+            
+            # Update or create TeamScore
+            team_score = db.query(TeamScore).filter(
+                TeamScore.fantasy_team_id == fantasy_team.id,
+                TeamScore.matchday_id == matchday_id
+            ).first()
+            if not team_score:
+                team_score = TeamScore(
+                    fantasy_team_id=fantasy_team.id,
+                    matchday_id=matchday_id
+                )
+            team_score.points_this_matchday = total_points
+            # Cumulative points: we could compute by summing previous + current
+            previous_total = db.query(TeamScore).filter(
+                TeamScore.fantasy_team_id == fantasy_team.id,
+                TeamScore.matchday_id < matchday_id
+            ).with_entities(TeamScore.cumulative_points).order_by(
+                TeamScore.matchday_id.desc()
+            ).first()
+            if previous_total:
+                team_score.cumulative_points = previous_total[0] + total_points
+            else:
+                team_score.cumulative_points = total_points
+            
+            db.add(team_score)
+        
+        # 4. Mark matchday as closed (all matches processed)
+        matchday.status = MatchdayStatus.closed
+        matchday.task_status = "done"
+        db.commit()
+        
+    except Exception as e:
+        matchday.task_status = "failed"
+        db.commit()
+        # Retry the task
+        raise self.retry(exc=e)
+    finally:
+        db.close()

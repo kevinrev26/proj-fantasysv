@@ -70,6 +70,8 @@ class Matchday(Base):
     name = Column(String, nullable=False)
     season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
     status = Column(SQLEnum(MatchdayStatus), default=MatchdayStatus.scheduled, nullable=False)
+    task_id = Column(String, nullable=True)
+    task_status = Column(String, default="pending")
     
     season = relationship("Season", back_populates="matchdays")
     player_scores = relationship("PlayerScore", back_populates="matchday", cascade="all, delete-orphan")
