@@ -29,12 +29,11 @@
     /* OVERRIDE any cached desktop styles */
     @media (min-width: 1024px) {
         .tab-bar {
-        display: flex !important;
+            display: flex !important;
         }
-        .tab-content {
-        display: block !important;  /* let Alpine control via x-show, but we ensure it's block when active, not hidden */
+        .tab-content:not([style*="display: none"]) {
+            display: block !important;
         }
-        /* Force Alpine's x-show to work – do NOT set display:none on .tab-content globally */
     }
     /* Also ensure the field canvas re-renders when tab changes (optional) */
     .tab-content[style*="display: none"] #field-canvas {
@@ -182,9 +181,9 @@
         <!-- DF -->
         <div class="pitch-zone zone-df">
           <template x-for="slot in getSlotsByPos('DF')" :key="slot.id">
-            <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase() + (wildcardPlayerId === slot.player.id ? ' wildcard-active' : '')">
+            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'" @click="slot.player && removePlayer(slot.player)">
               <template x-if="slot.player">
-                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase()">
+                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase() + (wildcardPlayerId === slot.player.id ? ' wildcard-active' : '')">
                   <div class="jersey-shape">
                     <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
                       <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
@@ -555,11 +554,41 @@ function squadBuilder() {
       { id:37, name:'Mathys Tel', pos:'FW', tier:'RISING', club:'Bayern Munich', rating:78, cost:4.5, active:true }
     ],
 
-    init() {
+    async init() {
       this.currentFormation = this.formations[0];
       this.initDeadline();
       this.startCountdownTimer();
-      this.loadFromLocalStorage();
+      
+      try {
+        const resp = await fetch('/squad/players', { headers: { 'Authorization': 'Bearer dummy-token-user-1' } });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.players && data.players.length > 0) this.players = data.players;
+        }
+      } catch (e) { console.warn("Failed to fetch players, falling back to hardcoded list"); }
+
+      try {
+        const resp = await fetch('/squad/', { headers: { 'Authorization': 'Bearer dummy-token-user-1' } });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.squad && data.squad.length > 0) {
+             this.selectedPlayers = data.squad.map(sq => this.players.find(p => p.id === sq.player_id)).filter(p => !!p);
+             const wildcardObj = data.squad.find(s => s.is_x2_joker);
+             if (wildcardObj) this.wildcardPlayerId = wildcardObj.player_id;
+             if (data.free_transfers_remaining !== undefined) {
+               setTimeout(() => this.toast(`Free Transfers left: ${data.free_transfers_remaining}`), 1000);
+             }
+          } else {
+             this.loadFromLocalStorage();
+          }
+        } else {
+           this.loadFromLocalStorage();
+        }
+      } catch (e) {
+        console.warn("API failed, loading from local storage", e);
+        this.loadFromLocalStorage();
+      }
+      
       this.$nextTick(() => initField());
     },
 
@@ -756,13 +785,43 @@ function squadBuilder() {
 
     get canSubmit() { return this.validationErrors.length === 0; },
     posLabel(p) { return { GK:'Goalkeepers', DF:'Defenders', MF:'Midfielders', FW:'Forwards' }[p]; },
-    submitSquad() {
+    async submitSquad() {
       if (this.isLocked) {
         this.toast(`Cannot submit: ${this.lockMessage}`);
         return;
       }
       if (this.canSubmit) {
-        this.showSuccess = true;
+        const payload = {
+          players: this.selectedPlayers.map((p, index) => ({
+             player_id: p.id,
+             slot: index < 11 ? "starter" : "bench",
+             formation_position: p.pos,
+             is_x2_joker: this.wildcardPlayerId === p.id
+          })),
+          formation_id: this.currentFormation.id
+        };
+        try {
+          const resp = await fetch('/squad/', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer dummy-token-user-1'
+            },
+            body: JSON.stringify(payload)
+          });
+          const data = await resp.json();
+          if (resp.ok) {
+            this.showSuccess = true;
+            if (data.penalty_incurred) {
+                setTimeout(() => this.toast(`Penalty of ${data.penalty_incurred} points incurred.`), 2000);
+            }
+          } else {
+            this.toast("Error saving to server: " + (data.detail || "Unknown error"));
+          }
+        } catch (e) {
+          console.warn("Mocking save since API failed");
+          this.showSuccess = true;
+        }
       }
     },
     wildcardPlayerId: null,

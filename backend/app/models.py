@@ -172,6 +172,7 @@ class TeamScore(Base):
     
     points_this_matchday = Column(Integer, default=0, nullable=False)
     cumulative_points = Column(Integer, default=0, nullable=False)
+    transfer_penalty = Column(Integer, default=0, nullable=False)
     
     fantasy_team = relationship("FantasyTeam", back_populates="team_scores")
     matchday = relationship("Matchday", back_populates="team_scores")
@@ -185,3 +186,25 @@ class TournamentPhase(Base):
     
     season = relationship("Season", back_populates="tournament_phases")
     eliminated_teams = relationship("Team", back_populates="eliminated_in_phase")
+
+class SystemConfig(Base):
+    __tablename__ = "system_config"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, index=True, nullable=False)
+    value = Column(String, nullable=False)
+
+class Transfer(Base):
+    __tablename__ = "transfer"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    fantasy_team_id = Column(Integer, ForeignKey("fantasy_team.id"), nullable=False)
+    matchday_id = Column(Integer, ForeignKey("matchday.id"), nullable=False)
+    player_in_id = Column(Integer, ForeignKey("player.id"), nullable=False)
+    player_out_id = Column(Integer, ForeignKey("player.id"), nullable=False)
+    cost = Column(Integer, default=0, nullable=False)
+    
+    fantasy_team = relationship("FantasyTeam")
+    matchday = relationship("Matchday")
+    player_in = relationship("Player", foreign_keys=[player_in_id])
+    player_out = relationship("Player", foreign_keys=[player_out_id])
