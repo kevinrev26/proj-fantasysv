@@ -244,6 +244,7 @@ def update_squad(payload: SquadUpdateRequest, request: Request, db: Session = De
                 fantasy_team_id=team.id,
                 matchday_id=matchday.id,
                 points_this_matchday=0,
+                cumulative_points=0,
                 transfer_penalty=0
             )
             db.add(ts)
@@ -252,3 +253,51 @@ def update_squad(payload: SquadUpdateRequest, request: Request, db: Session = De
     db.commit()
     
     return {"status": "success", "penalty_incurred": total_penalty}
+
+@router.get("/leaderboard")
+def get_leaderboard(request: Request, db: Session = Depends(get_db)):
+    user_id = get_current_user_id(request)
+    season = db.query(models.Season).filter(models.Season.status == models.SeasonStatus.active).first()
+    if not season:
+        return {"leaderboard": []}
+
+    last_matchday = db.query(models.Matchday).filter(
+        models.Matchday.season_id == season.id,
+        models.Matchday.status != models.MatchdayStatus.scheduled
+    ).order_by(models.Matchday.id.desc()).first()
+
+    if not last_matchday:
+        return {"leaderboard": []}
+        
+    team_scores = db.query(models.TeamScore).filter(
+        models.TeamScore.matchday_id == last_matchday.id
+    ).all()
+    
+    leaderboard = []
+    
+    for ts in team_scores:
+        fantasy_team = ts.fantasy_team
+        total_penalty = db.query(func.sum(models.TeamScore.transfer_penalty)).filter(
+            models.TeamScore.fantasy_team_id == fantasy_team.id,
+            models.TeamScore.matchday_id <= last_matchday.id
+        ).scalar() or 0
+        
+        total_points = ts.cumulative_points - total_penalty
+        matchday_points = ts.points_this_matchday - ts.transfer_penalty
+        
+        leaderboard.append({
+            "id": fantasy_team.id,
+            "name": fantasy_team.name,
+            "user_username": fantasy_team.user.username if fantasy_team.user else "User",
+            "user_id": fantasy_team.user_id,
+            "total_points": total_points,
+            "matchday_points": matchday_points,
+            "is_current_user": fantasy_team.user_id == user_id
+        })
+        
+    leaderboard.sort(key=lambda x: x["total_points"], reverse=True)
+    
+    for idx, team in enumerate(leaderboard):
+        team["rank"] = idx + 1
+        
+    return {"leaderboard": leaderboard}

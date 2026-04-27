@@ -416,27 +416,27 @@
         }, 30000);
       },
 
-      loadTeams() {
-        // generate fresh placeholder data (could simulate backend call)
-        this.allTeams = generateMockTeams();
+      async loadTeams() {
+        try {
+          const resp = await fetch('/squad/leaderboard', { headers: { 'Authorization': 'Bearer dummy-token-user-1' } });
+          if (resp.ok) {
+            const data = await resp.json();
+            this.allTeams = data.leaderboard || [];
+          } else {
+            console.warn("Failed to load real leaderboard data, using mock", resp.statusText);
+            this.allTeams = generateMockTeams();
+          }
+        } catch (e) {
+          console.warn("Failed to fetch leaderboard API, falling back to mock", e);
+          this.allTeams = generateMockTeams();
+        }
         this.updatePaginated();
       },
 
-      refreshData() {
-        // simulate API refresh (new random points but keep relative order to mimic scoring update)
-        // for realism: regenerate points but preserve user identity
-        const currentUserIdTeam = this.allTeams.find(t => t.is_current_user);
-        const newTeams = generateMockTeams();
-        // ensure the same user's team keeps "is_current_user = true"
-        if (currentUserIdTeam) {
-          const freshUserTeam = newTeams.find(t => t.id === currentUserIdTeam.id);
-          if (freshUserTeam) freshUserTeam.is_current_user = true;
-        }
-        this.allTeams = newTeams;
-        this.updatePaginated();
+      async refreshData() {
+        await this.loadTeams();
         this.lastUpdated = new Date();
         this.updateTimestamp();
-        // small visual feedback: toast-like not needed but fine
       },
 
       updatePaginated() {
