@@ -884,23 +884,25 @@ button { font-family: var(--font); cursor: pointer; border: none; background: no
 }
 
 @media (min-width: 1024px) {
-  /* Full layout: pool | field | squad side by side */
-  body { overflow: hidden; }
-  .tab-bar { display: none; }
-  .tab-content { display: block !important; }
-
-  .app-layout-desktop {
-    display: grid;
-    grid-template-columns: 320px 1fr 300px;
-    height: calc(100dvh - 57px);
+    /* Keep tabs visible and functional */
+    .tab-bar {
+      display: flex !important; /* already set, but ensure it stays */
+    }
+    /* Do NOT force .tab-content to be block – let Alpine control visibility */
+    /* Optionally adjust the field canvas size */
+    .field-wrapper {
+      height: 55vw;
+      max-height: 560px;
+    }
+    .jersey-shape {
+      width: 52px;
+      height: 47px;
+    }
+    .jersey-name {
+      font-size: 0.65rem;
+      max-width: 60px;
+    }
   }
-
-  .filter-section { top: 57px; }
-
-  .tab-content:nth-child(3) { /* field */
-    overflow-y: auto;
-  }
-}
 
 /* ── UTILITY ── */
 [x-cloak] { display: none !important; }
