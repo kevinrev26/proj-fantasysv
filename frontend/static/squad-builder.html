@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en" x-data="squadBuilder()" x-init="init()">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Squad Builder</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <span class="logo-icon">⚽</span>
+      <span class="logo-label">Squad Builder</span>
+    </div>
+    <div class="budget-pill" :class="remainingCredits < 0 ? 'over' : remainingCredits < 10 ? 'warn' : ''">
+      <span class="budget-pill-label">Budget</span>
+      <span class="budget-pill-value" x-text="remainingCredits.toFixed(1) + ' CR'"></span>
+    </div>
+  </div>
+</header>
+
+<!-- ── TABS (mobile) ── -->
+<div class="tab-bar">
+  <button class="tab-btn" :class="activeTab==='field' && 'active'" @click="activeTab='field'">
+    <span class="tab-icon">🏟️</span> Field
+  </button>
+  <button class="tab-btn" :class="activeTab==='pool' && 'active'" @click="activeTab='pool'">
+    <span class="tab-icon">👥</span> Players
+    <span class="tab-badge" x-show="selectedPlayers.length > 0" x-text="selectedPlayers.length"></span>
+  </button>
+  <button class="tab-btn" :class="activeTab==='squad' && 'active'" @click="activeTab='squad'">
+    <span class="tab-icon">📋</span> Squad
+  </button>
+</div>
+
+<!-- ══════════════ FIELD TAB ══════════════ -->
+<div class="tab-content" x-show="activeTab==='field'">
+
+  <!-- 3D Field Canvas -->
+  <div class="field-wrapper">
+    <canvas id="field-canvas"></canvas>
+
+    <!-- Formation overlay rendered on top of 3D -->
+    <div class="formation-overlay">
+
+      <!-- Formation picker -->
+      <div class="formation-bar">
+        <template x-for="f in formations" :key="f.id">
+          <button class="fmn-btn" :class="currentFormation.id===f.id && 'active'" @click="changeFormation(f)" x-text="f.label"></button>
+        </template>
+      </div>
+
+      <!-- Jersey slots rendered in CSS grid positions -->
+      <div class="pitch-grid" :data-formation="currentFormation.id">
+
+        <!-- GK -->
+        <div class="pitch-zone zone-gk">
+          <template x-for="slot in getSlotsByPos('GK')" :key="slot.id">
+            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'" @click="slot.player && removePlayer(slot.player)">
+              <template x-if="slot.player">
+                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase()">
+                  <div class="jersey-shape">
+                    <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
+                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                      <path d="M22 18 C24 8 36 8 38 18" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                      <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" opacity="0.9" x-text="slot.player.rating"></text>
+                    </svg>
+                  </div>
+                  <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
+                  <span class="jersey-pos" x-text="slot.player.pos"></span>
+                  <div class="remove-hint">✕ Remove</div>
+                </div>
+              </template>
+              <template x-if="!slot.player">
+                <div class="jersey-empty-slot">
+                  <div class="empty-jersey">
+                    <svg viewBox="0 0 60 55" class="jersey-svg jersey-empty-svg">
+                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    </svg>
+                  </div>
+                  <span class="empty-pos-label" x-text="slot.pos"></span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+
+        <!-- DF -->
+        <div class="pitch-zone zone-df">
+          <template x-for="slot in getSlotsByPos('DF')" :key="slot.id">
+            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'" @click="slot.player && removePlayer(slot.player)">
+              <template x-if="slot.player">
+                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase()">
+                  <div class="jersey-shape">
+                    <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
+                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                      <path d="M22 18 C24 8 36 8 38 18" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                      <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" opacity="0.9" x-text="slot.player.rating"></text>
+                    </svg>
+                  </div>
+                  <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
+                  <span class="jersey-pos" x-text="slot.player.pos"></span>
+                  <div class="remove-hint">✕ Remove</div>
+                </div>
+              </template>
+              <template x-if="!slot.player">
+                <div class="jersey-empty-slot">
+                  <div class="empty-jersey">
+                    <svg viewBox="0 0 60 55" class="jersey-svg jersey-empty-svg">
+                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    </svg>
+                  </div>
+                  <span class="empty-pos-label" x-text="slot.pos"></span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+
+        <!-- MF -->
+        <div class="pitch-zone zone-mf">
+          <template x-for="slot in getSlotsByPos('MF')" :key="slot.id">
+            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'" @click="slot.player && removePlayer(slot.player)">
+              <template x-if="slot.player">
+                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase()">
+                  <div class="jersey-shape">
+                    <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
+                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                      <path d="M22 18 C24 8 36 8 38 18" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                      <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" opacity="0.9" x-text="slot.player.rating"></text>
+                    </svg>
+                  </div>
+                  <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
+                  <span class="jersey-pos" x-text="slot.player.pos"></span>
+                  <div class="remove-hint">✕ Remove</div>
+                </div>
+              </template>
+              <template x-if="!slot.player">
+                <div class="jersey-empty-slot">
+                  <div class="empty-jersey">
+                    <svg viewBox="0 0 60 55" class="jersey-svg jersey-empty-svg">
+                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    </svg>
+                  </div>
+                  <span class="empty-pos-label" x-text="slot.pos"></span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+
+        <!-- FW -->
+        <div class="pitch-zone zone-fw">
+          <template x-for="slot in getSlotsByPos('FW')" :key="slot.id">
+            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'" @click="slot.player && removePlayer(slot.player)">
+              <template x-if="slot.player">
+                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase()">
+                  <div class="jersey-shape">
+                    <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
+                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                      <path d="M22 18 C24 8 36 8 38 18" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+                      <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" opacity="0.9" x-text="slot.player.rating"></text>
+                    </svg>
+                  </div>
+                  <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
+                  <span class="jersey-pos" x-text="slot.player.pos"></span>
+                  <div class="remove-hint">✕ Remove</div>
+                </div>
+              </template>
+              <template x-if="!slot.player">
+                <div class="jersey-empty-slot">
+                  <div class="empty-jersey">
+                    <svg viewBox="0 0 60 55" class="jersey-svg jersey-empty-svg">
+                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    </svg>
+                  </div>
+                  <span class="empty-pos-label" x-text="slot.pos"></span>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+
+      </div><!-- /pitch-grid -->
+    </div><!-- /formation-overlay -->
+  </div><!-- /field-wrapper -->
+
+  <!-- Bench -->
+  <div class="bench-section">
+    <h3 class="bench-title">Bench</h3>
+    <div class="bench-row">
+      <template x-for="i in [0,1,2,3]" :key="i">
+        <div class="bench-card" :class="benchPlayers[i] ? 'filled' : ''" @click="benchPlayers[i] && removePlayer(benchPlayers[i])">
+          <template x-if="benchPlayers[i]">
+            <div class="bench-player">
+              <svg viewBox="0 0 60 55" class="bench-jersey" :class="'jersey-color-'+benchPlayers[i].pos.toLowerCase()">
+                <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+                <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" opacity="0.9" x-text="benchPlayers[i].rating"></text>
+              </svg>
+              <span class="bench-name" x-text="benchPlayers[i].name.split(' ').pop()"></span>
+              <span class="bench-pos" x-text="benchPlayers[i].pos"></span>
+            </div>
+          </template>
+          <template x-if="!benchPlayers[i]">
+            <div class="bench-empty">
+              <svg viewBox="0 0 60 55" class="bench-jersey bench-jersey-empty">
+                <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="4 3"/>
+              </svg>
+              <span class="bench-pos-label">SUB <span x-text="i+1"></span></span>
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- Budget ring -->
+  <div class="budget-section">
+    <div class="budget-ring-container">
+      <svg class="budget-donut" viewBox="0 0 160 160">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00d4aa"/>
+            <stop offset="100%" stop-color="#00a8e8"/>
+          </linearGradient>
+          <linearGradient id="ringOver" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ff6b6b"/>
+            <stop offset="100%" stop-color="#ee0979"/>
+          </linearGradient>
+        </defs>
+        <circle cx="80" cy="80" r="66" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14"/>
+        <circle cx="80" cy="80" r="66" fill="none"
+          :stroke="remainingCredits < 0 ? 'url(#ringOver)' : 'url(#ringGrad)'"
+          stroke-width="14"
+          stroke-linecap="round"
+          stroke-dasharray="414.69"
+          :stroke-dashoffset="414.69 - (Math.min(totalCost, 100)/100)*414.69"
+          transform="rotate(-90 80 80)"
+          style="transition: stroke-dashoffset 0.5s cubic-bezier(.4,0,.2,1), stroke 0.3s"/>
+        <text x="80" y="70" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.5)" font-family="Nunito" font-weight="600">SPENT</text>
+        <text x="80" y="92" text-anchor="middle" font-size="26" font-weight="800" font-family="Nunito"
+          :fill="remainingCredits < 0 ? '#ff6b6b' : '#ffffff'"
+          x-text="totalCost.toFixed(1)"></text>
+        <text x="80" y="110" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.4)" font-family="Nunito">of 100 CR</text>
+      </svg>
+    </div>
+
+    <div class="budget-stats">
+      <div class="bstat">
+        <span class="bstat-val" x-text="selectedPlayers.length + '/15'"></span>
+        <span class="bstat-label">Players</span>
+      </div>
+      <div class="bstat-divider"></div>
+      <div class="bstat">
+        <span class="bstat-val" :class="remainingCredits < 0 ? 'over' : ''" x-text="remainingCredits.toFixed(1)"></span>
+        <span class="bstat-label">Remaining</span>
+      </div>
+      <div class="bstat-divider"></div>
+      <div class="bstat">
+        <span class="bstat-val" x-text="validationErrors.length === 0 ? '✓' : validationErrors.length"></span>
+        <span class="bstat-label" x-text="validationErrors.length === 0 ? 'Ready!' : 'Issues'"></span>
+      </div>
+    </div>
+
+    <template x-if="validationErrors.length > 0">
+      <div class="val-chips">
+        <template x-for="e in validationErrors" :key="e">
+          <span class="val-chip" x-text="e"></span>
+        </template>
+      </div>
+    </template>
+
+    <button class="submit-btn"
+      :class="canSubmit ? 'ready' : 'locked'"
+      :disabled="!canSubmit"
+      @click="submitSquad()">
+      <span x-text="canSubmit ? '🚀 Submit Squad' : '🔒 Squad Incomplete'"></span>
+    </button>
+  </div>
+
+</div><!-- /field tab -->
+
+<!-- ══════════════ PLAYERS TAB ══════════════ -->
+<div class="tab-content" x-show="activeTab==='pool'">
+  <div class="pool-header">
+    <h2 class="pool-title">Pick Players</h2>
+    <p class="pool-sub">Tap a player to add them to your squad</p>
+  </div>
+
+  <div class="filter-section">
+    <input class="search-box" type="text" placeholder="🔍 Search player or club…" x-model="searchQuery"/>
+    <div class="filter-scroll">
+      <template x-for="pos in ['ALL','GK','DF','MF','FW']" :key="pos">
+        <button class="filt-pill" :class="filterPos===pos && 'active'" @click="filterPos=pos" x-text="pos"></button>
+      </template>
+      <div class="filt-divider"></div>
+      <template x-for="tier in ['ALL','ELITE','PRO','RISING']" :key="tier">
+        <button class="filt-pill filt-tier" :class="filterTier===tier && 'active'" @click="filterTier=tier" x-text="tier"></button>
+      </template>
+    </div>
+  </div>
+
+  <div class="player-list">
+    <template x-for="p in filteredPlayers" :key="p.id">
+      <div class="player-row"
+        :class="{
+          selected: isSelected(p.id),
+          disabled: !isSelected(p.id) && squadFull
+        }"
+        @click="togglePlayer(p)">
+
+        <!-- Jersey icon -->
+        <div class="row-jersey-wrap">
+          <svg viewBox="0 0 60 55" class="row-jersey" :class="'jersey-color-'+p.pos.toLowerCase()">
+            <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+            <text x="30" y="40" text-anchor="middle" font-size="13" font-weight="800" font-family="Nunito" fill="white" opacity="0.9" x-text="p.rating"></text>
+          </svg>
+        </div>
+
+        <div class="row-info">
+          <div class="row-name" x-text="p.name"></div>
+          <div class="row-meta">
+            <span class="row-club" x-text="p.club"></span>
+            <span class="row-tier-badge" :class="'tb-'+p.tier.toLowerCase()" x-text="p.tier"></span>
+          </div>
+        </div>
+
+        <div class="row-right">
+          <span class="row-pos" :class="'pos-badge-'+p.pos.toLowerCase()" x-text="p.pos"></span>
+          <span class="row-cost" x-text="p.cost + ' CR'"></span>
+          <span class="row-check" x-show="isSelected(p.id)">✓</span>
+          <span class="row-add" x-show="!isSelected(p.id)">+</span>
+        </div>
+      </div>
+    </template>
+
+    <div class="empty-pool" x-show="filteredPlayers.length===0">
+      <span style="font-size:2.5rem">🤷</span>
+      <p>No players found</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SQUAD TAB ══════════════ -->
+<div class="tab-content" x-show="activeTab==='squad'">
+  <div class="pool-header">
+    <h2 class="pool-title">My Squad</h2>
+    <p class="pool-sub" x-text="selectedPlayers.length + ' of 15 players selected'"></p>
+  </div>
+
+  <!-- Composition bars -->
+  <div class="comp-card">
+    <h3 class="comp-card-title">Formation Rules</h3>
+    <template x-for="rule in compositionRules" :key="rule.pos">
+      <div class="comp-bar-row">
+        <span class="comp-label">
+          <span class="comp-pos-dot" :class="'dot-'+rule.pos.toLowerCase()"></span>
+          <span x-text="rule.pos"></span>
+        </span>
+        <div class="comp-track">
+          <div class="comp-fill"
+            :class="countInSquad(rule.pos) >= rule.min ? 'fill-ok' : 'fill-warn'"
+            :style="'width:'+Math.min(countInSquad(rule.pos)/rule.max*100,100)+'%'">
+          </div>
+        </div>
+        <span class="comp-nums" :class="countInSquad(rule.pos) >= rule.min ? 'nums-ok' : 'nums-warn'">
+          <span x-text="countInSquad(rule.pos)"></span>/<span x-text="rule.max"></span>
+        </span>
+        <span class="comp-req" x-text="'min '+rule.min" :class="countInSquad(rule.pos) >= rule.min ? 'req-ok' : 'req-warn'"></span>
+      </div>
+    </template>
+  </div>
+
+  <!-- Selected players list by position -->
+  <template x-for="pos in ['GK','DF','MF','FW']" :key="pos">
+    <div class="squad-group" x-show="countInSquad(pos) > 0">
+      <div class="squad-group-header">
+        <span class="squad-group-dot" :class="'dot-'+pos.toLowerCase()"></span>
+        <span class="squad-group-label" x-text="posLabel(pos)"></span>
+        <span class="squad-group-count" x-text="countInSquad(pos)"></span>
+      </div>
+      <template x-for="p in selectedPlayers.filter(pl=>pl.pos===pos)" :key="p.id">
+        <div class="squad-row">
+          <svg viewBox="0 0 60 55" class="squad-jersey" :class="'jersey-color-'+p.pos.toLowerCase()">
+            <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+            <text x="30" y="40" text-anchor="middle" font-size="13" font-weight="800" font-family="Nunito" fill="white" x-text="p.rating"></text>
+          </svg>
+          <div class="squad-info">
+            <span class="squad-name" x-text="p.name"></span>
+            <span class="squad-club" x-text="p.club"></span>
+          </div>
+          <span class="squad-cost" x-text="p.cost + ' CR'"></span>
+          <button class="squad-remove" @click.stop="removePlayer(p)">✕</button>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- Bench in squad tab -->
+  <div class="squad-group" x-show="benchPlayers.filter(b=>b).length > 0">
+    <div class="squad-group-header">
+      <span class="squad-group-dot" style="background:#888"></span>
+      <span class="squad-group-label">Bench</span>
+      <span class="squad-group-count" x-text="benchPlayers.filter(b=>b).length"></span>
+    </div>
+    <template x-for="p in benchPlayers.filter(b=>b)" :key="p.id">
+      <div class="squad-row">
+        <svg viewBox="0 0 60 55" class="squad-jersey" :class="'jersey-color-'+p.pos.toLowerCase()">
+          <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+          <text x="30" y="40" text-anchor="middle" font-size="13" font-weight="800" font-family="Nunito" fill="white" x-text="p.rating"></text>
+        </svg>
+        <div class="squad-info">
+          <span class="squad-name" x-text="p.name"></span>
+          <span class="squad-club" x-text="p.club"></span>
+        </div>
+        <span class="squad-cost" x-text="p.cost + ' CR'"></span>
+        <button class="squad-remove" @click.stop="removePlayer(p)">✕</button>
+      </div>
+    </template>
+  </div>
+
+  <div class="squad-empty-state" x-show="selectedPlayers.length===0">
+    <span style="font-size:3rem">🎽</span>
+    <p>No players yet! Head to the Players tab to start building.</p>
+  </div>
+
+  <!-- Submit -->
+  <div class="squad-submit-wrap">
+    <template x-if="validationErrors.length > 0">
+      <div class="squad-errors">
+        <template x-for="e in validationErrors" :key="e">
+          <div class="squad-error-row">⚠️ <span x-text="e"></span></div>
+        </template>
+      </div>
+    </template>
+    <button class="submit-btn"
+      :class="canSubmit ? 'ready' : 'locked'"
+      :disabled="!canSubmit"
+      @click="submitSquad()">
+      <span x-text="canSubmit ? '🚀 Submit Squad' : '🔒 Squad Incomplete'"></span>
+    </button>
+  </div>
+
+</div>
+
+<!-- ══ SUCCESS MODAL ══ -->
+<div class="modal-bg" x-show="showSuccess" @click.self="showSuccess=false">
+  <div class="modal-card" x-show="showSuccess" x-transition:enter="modal-enter" x-transition:enter-start="modal-enter-start" x-transition:enter-end="modal-enter-end">
+    <div class="modal-emoji">🏆</div>
+    <h2 class="modal-title">Squad Submitted!</h2>
+    <p class="modal-body">Your squad is locked in for the upcoming matchday. Time to enjoy the game!</p>
+    <button class="modal-btn" @click="showSuccess=false">Awesome! 🎉</button>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script>
+// ─── THREE.JS FIELD ───────────────────────────────────────
+function initField() {
+  const canvas = document.getElementById('field-canvas');
+  if (!canvas || !window.THREE) return;
+
+  const W = canvas.parentElement.clientWidth;
+  const H = canvas.parentElement.clientHeight;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0a1628, 18, 45);
+
+  const camera = new THREE.PerspectiveCamera(52, W / H, 0.1, 100);
+  camera.position.set(0, 11, 14);
+  camera.lookAt(0, 0, 0);
+
+  // Lighting
+  const ambient = new THREE.AmbientLight(0x223355, 1.8);
+  scene.add(ambient);
+
+  const sun = new THREE.DirectionalLight(0xffffff, 2.5);
+  sun.position.set(5, 18, 8);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.camera.near = 0.5;
+  sun.shadow.camera.far = 60;
+  sun.shadow.camera.left = -15;
+  sun.shadow.camera.right = 15;
+  sun.shadow.camera.top = 15;
+  sun.shadow.camera.bottom = -15;
+  scene.add(sun);
+
+  const fill = new THREE.DirectionalLight(0x4488ff, 0.8);
+  fill.position.set(-8, 6, -5);
+  scene.add(fill);
+
+  const spotA = new THREE.SpotLight(0x88ccff, 1.2, 40, Math.PI/5, 0.4);
+  spotA.position.set(-8, 16, 2);
+  scene.add(spotA);
+  const spotB = new THREE.SpotLight(0x88ccff, 1.2, 40, Math.PI/5, 0.4);
+  spotB.position.set(8, 16, 2);
+  scene.add(spotB);
+
+  // ── PITCH ──
+  // Alternating stripe grass
+  const pitchW = 22, pitchD = 30;
+  const pitchGeo = new THREE.PlaneGeometry(pitchW, pitchD, 1, 1);
+  const pitchMat = new THREE.MeshLambertMaterial({ color: 0x2d8a4e });
+  const pitch = new THREE.Mesh(pitchGeo, pitchMat);
+  pitch.rotation.x = -Math.PI / 2;
+  pitch.receiveShadow = true;
+  scene.add(pitch);
+
+  // Darker stripe overlay
+  for (let i = 0; i < 6; i++) {
+    const stripeGeo = new THREE.PlaneGeometry(pitchW, pitchD/6*0.88, 1, 1);
+    const stripeMat = new THREE.MeshLambertMaterial({ color: 0x267a44, transparent: true, opacity: 0.6 });
+    const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+    stripe.rotation.x = -Math.PI / 2;
+    stripe.position.set(0, 0.001, -pitchD/2 + pitchD/6*(i+0.5) + pitchD/12);
+    scene.add(stripe);
+  }
+
+  // Lines
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75 });
+  function addLine(x, y, z, w, d, h=0.015) {
+    const g = new THREE.BoxGeometry(w, h, d);
+    const m = new THREE.Mesh(g, lineMat);
+    m.position.set(x, y, z);
+    scene.add(m);
+  }
+  // Boundary
+  addLine(0, 0.01, 0, pitchW, 0.12); // top
+  addLine(0, 0.01, 0, 0.12, pitchD); // sides via pairs
+  addLine(-pitchW/2+0.06, 0.01, 0, 0.12, pitchD);
+  addLine(pitchW/2-0.06, 0.01, 0, 0.12, pitchD);
+  addLine(0, 0.01, -pitchD/2+0.06, pitchW, 0.12);
+  addLine(0, 0.01, pitchD/2-0.06, pitchW, 0.12);
+  // Centre line
+  addLine(0, 0.01, 0, pitchW, 0.12);
+  addLine(0, 0.01, 0, 0.12, pitchD);
+  // Halfway
+  addLine(0, 0.01, 0, pitchW, 0.12);
+
+  // Centre circle
+  const ccPoints = [];
+  for (let i = 0; i <= 64; i++) {
+    const a = (i/64)*Math.PI*2;
+    ccPoints.push(new THREE.Vector3(Math.cos(a)*3.2, 0.012, Math.sin(a)*3.2));
+  }
+  const ccGeo = new THREE.BufferGeometry().setFromPoints(ccPoints);
+  const ccLine = new THREE.LineLoop(ccGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 }));
+  scene.add(ccLine);
+
+  // Penalty boxes (top & bottom)
+  [-1, 1].forEach(side => {
+    const bz = side * (pitchD/2 - 4.5);
+    addLine(0, 0.01, bz, 10, 0.12);
+    addLine(-5+0.06, 0.01, bz - side*4.5/2, 0.12, 4.5);
+    addLine(5-0.06, 0.01, bz - side*4.5/2, 0.12, 4.5);
+  });
+
+  // Stadium stands (simple boxes around the pitch)
+  const standMat = new THREE.MeshLambertMaterial({ color: 0x0f2340, transparent: true, opacity: 0.85 });
+  [
+    [0, 3, -(pitchD/2+3.5), pitchW+14, 6, 7],
+    [0, 3,  (pitchD/2+3.5), pitchW+14, 6, 7],
+    [-(pitchW/2+4.5), 3, 0, 9, 6, pitchD+6],
+    [ (pitchW/2+4.5), 3, 0, 9, 6, pitchD+6],
+  ].forEach(([x,y,z,w,h,d]) => {
+    const g = new THREE.BoxGeometry(w, h, d);
+    const m = new THREE.Mesh(g, standMat);
+    m.position.set(x,y,z);
+    scene.add(m);
+  });
+
+  // Stadium lights (4 poles)
+  const poleMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+  [[-12,0,-17],[12,0,-17],[-12,0,17],[12,0,17]].forEach(([x,y,z]) => {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.22,14,8), poleMat);
+    pole.position.set(x,7,z);
+    scene.add(pole);
+    const light = new THREE.PointLight(0xfff5e0, 0.5, 30);
+    light.position.set(x,14,z);
+    scene.add(light);
+  });
+
+  window.addEventListener('resize', () => {
+    const nw = canvas.parentElement.clientWidth;
+    const nh = canvas.parentElement.clientHeight;
+    renderer.setSize(nw, nh);
+    camera.aspect = nw / nh;
+    camera.updateProjectionMatrix();
+  });
+
+  let t = 0;
+  (function animate() {
+    requestAnimationFrame(animate);
+    t += 0.005;
+    camera.position.x = Math.sin(t * 0.3) * 1.5;
+    camera.position.y = 11 + Math.sin(t * 0.2) * 0.4;
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+  })();
+}
+
+// ─── ALPINE COMPONENT ────────────────────────────────────
+function squadBuilder() {
+  return {
+    activeTab: 'field',
+    showSuccess: false,
+    filterPos: 'ALL',
+    filterTier: 'ALL',
+    searchQuery: '',
+    selectedPlayers: [],
+
+    formations: [
+      { id:'4-3-3',  label:'4-3-3',  df:4, mf:3, fw:3 },
+      { id:'4-4-2',  label:'4-4-2',  df:4, mf:4, fw:2 },
+      { id:'3-5-2',  label:'3-5-2',  df:3, mf:5, fw:2 },
+      { id:'4-2-3-1',label:'4-2-3-1',df:4, mf:3, fw:3 },
+    ],
+    currentFormation: null,
+
+    compositionRules: [
+      { pos:'GK', min:1, max:1 },
+      { pos:'DF', min:3, max:5 },
+      { pos:'MF', min:2, max:5 },
+      { pos:'FW', min:1, max:3 },
+    ],
+
+    players: [
+      // GKs
+      { id:1,  name:'Thibaut Courtois',      pos:'GK', tier:'ELITE',  club:'Real Madrid',       rating:91, cost:12.5, active:true },
+      { id:2,  name:'Alisson Becker',         pos:'GK', tier:'ELITE',  club:'Liverpool',          rating:90, cost:11.5, active:true },
+      { id:3,  name:'David Raya',             pos:'GK', tier:'PRO',    club:'Arsenal',            rating:85, cost:8.0,  active:true },
+      { id:4,  name:'Mike Maignan',           pos:'GK', tier:'PRO',    club:'AC Milan',           rating:87, cost:9.0,  active:true },
+      { id:5,  name:'Gregor Kobel',           pos:'GK', tier:'PRO',    club:'Dortmund',           rating:83, cost:7.0,  active:true },
+      { id:6,  name:'Giorgi Mamardashvili',   pos:'GK', tier:'RISING', club:'Valencia',           rating:80, cost:5.5,  active:true },
+      // DFs
+      { id:7,  name:'Virgil van Dijk',        pos:'DF', tier:'ELITE',  club:'Liverpool',          rating:90, cost:11.0, active:true },
+      { id:8,  name:'William Saliba',         pos:'DF', tier:'ELITE',  club:'Arsenal',            rating:88, cost:10.0, active:true },
+      { id:9,  name:'Rúben Dias',             pos:'DF', tier:'ELITE',  club:'Man City',           rating:89, cost:10.5, active:true },
+      { id:10, name:'Trent Alexander-Arnold', pos:'DF', tier:'ELITE',  club:'Real Madrid',        rating:87, cost:10.0, active:true },
+      { id:11, name:'Theo Hernandez',         pos:'DF', tier:'PRO',    club:'AC Milan',           rating:85, cost:8.5,  active:true },
+      { id:12, name:'Alejandro Grimaldo',     pos:'DF', tier:'PRO',    club:'Bayer Leverkusen',   rating:84, cost:8.0,  active:true },
+      { id:13, name:'Ezri Konsa',             pos:'DF', tier:'PRO',    club:'Aston Villa',        rating:82, cost:6.5,  active:true },
+      { id:14, name:'Micky van de Ven',       pos:'DF', tier:'PRO',    club:'Tottenham',          rating:83, cost:7.0,  active:true },
+      { id:15, name:'Castello Lukeba',        pos:'DF', tier:'RISING', club:'RB Leipzig',         rating:79, cost:5.0,  active:true },
+      { id:16, name:'Leny Yoro',              pos:'DF', tier:'RISING', club:'Man United',         rating:78, cost:4.5,  active:true },
+      // MFs
+      { id:17, name:'Kevin De Bruyne',        pos:'MF', tier:'ELITE',  club:'Man City',           rating:91, cost:12.0, active:true },
+      { id:18, name:'Pedri',                  pos:'MF', tier:'ELITE',  club:'Barcelona',          rating:88, cost:10.0, active:true },
+      { id:19, name:'Jude Bellingham',        pos:'MF', tier:'ELITE',  club:'Real Madrid',        rating:91, cost:13.0, active:true },
+      { id:20, name:'Martin Ødegaard',        pos:'MF', tier:'ELITE',  club:'Arsenal',            rating:88, cost:10.5, active:true },
+      { id:21, name:'Florian Wirtz',          pos:'MF', tier:'ELITE',  club:'Bayer Leverkusen',   rating:89, cost:11.0, active:true },
+      { id:22, name:'Granit Xhaka',           pos:'MF', tier:'PRO',    club:'Bayer Leverkusen',   rating:84, cost:7.5,  active:true },
+      { id:23, name:'Alexis Mac Allister',    pos:'MF', tier:'PRO',    club:'Liverpool',          rating:84, cost:7.5,  active:true },
+      { id:24, name:'Sandro Tonali',          pos:'MF', tier:'PRO',    club:'Newcastle',          rating:83, cost:6.5,  active:true },
+      { id:25, name:'Manu Koné',              pos:'MF', tier:'RISING', club:'AS Monaco',          rating:80, cost:5.0,  active:true },
+      { id:26, name:'Warren Zaïre-Emery',     pos:'MF', tier:'RISING', club:'PSG',                rating:79, cost:4.5,  active:true },
+      // FWs
+      { id:27, name:'Erling Haaland',         pos:'FW', tier:'ELITE',  club:'Man City',           rating:93, cost:14.0, active:true },
+      { id:28, name:'Kylian Mbappé',          pos:'FW', tier:'ELITE',  club:'Real Madrid',        rating:92, cost:14.0, active:true },
+      { id:29, name:'Harry Kane',             pos:'FW', tier:'ELITE',  club:'Bayern Munich',      rating:91, cost:12.5, active:true },
+      { id:30, name:'Vinicius Jr.',           pos:'FW', tier:'ELITE',  club:'Real Madrid',        rating:92, cost:13.5, active:true },
+      { id:31, name:'Lamine Yamal',           pos:'FW', tier:'ELITE',  club:'Barcelona',          rating:87, cost:11.0, active:true },
+      { id:32, name:'Bukayo Saka',            pos:'FW', tier:'ELITE',  club:'Arsenal',            rating:88, cost:11.5, active:true },
+      { id:33, name:'Rafael Leão',            pos:'FW', tier:'PRO',    club:'AC Milan',           rating:86, cost:9.5,  active:true },
+      { id:34, name:'Leroy Sané',             pos:'FW', tier:'PRO',    club:'Bayern Munich',      rating:85, cost:8.5,  active:true },
+      { id:35, name:'Kaoru Mitoma',           pos:'FW', tier:'PRO',    club:'Brighton',           rating:83, cost:7.0,  active:true },
+      { id:36, name:'Evan Ferguson',          pos:'FW', tier:'RISING', club:'Brighton',           rating:79, cost:5.0,  active:true },
+      { id:37, name:'Mathys Tel',             pos:'FW', tier:'RISING', club:'Bayern Munich',      rating:78, cost:4.5,  active:true },
+    ],
+
+    init() {
+      this.currentFormation = this.formations[0];
+      this.$nextTick(() => initField());
+    },
+
+    changeFormation(f) { this.currentFormation = f; },
+
+    get activePlayers() { return this.players.filter(p => p.active); },
+
+    get filteredPlayers() {
+      return this.activePlayers.filter(p => {
+        const pm = this.filterPos === 'ALL' || p.pos === this.filterPos;
+        const tm = this.filterTier === 'ALL' || p.tier === this.filterTier;
+        const sm = !this.searchQuery || p.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || p.club.toLowerCase().includes(this.searchQuery.toLowerCase());
+        return pm && tm && sm;
+      });
+    },
+
+    getSlotsByPos(pos) {
+      const f = this.currentFormation;
+      const count = pos === 'GK' ? 1 : pos === 'DF' ? f.df : pos === 'MF' ? f.mf : f.fw;
+      const filled = this.selectedPlayers.filter(p => p.pos === pos);
+      return Array.from({ length: count }, (_, i) => ({
+        id: pos + '-' + i,
+        pos,
+        player: filled[i] || null,
+      }));
+    },
+
+    get benchPlayers() {
+      const starters = this.selectedPlayers.slice(0, 11);
+      return this.selectedPlayers.slice(11, 15);
+    },
+
+    isSelected(id) { return this.selectedPlayers.some(p => p.id === id); },
+
+    get squadFull() { return this.selectedPlayers.length >= 15; },
+
+    get totalCost() { return this.selectedPlayers.reduce((s, p) => s + p.cost, 0); },
+
+    get remainingCredits() { return parseFloat((100 - this.totalCost).toFixed(1)); },
+
+    countInSquad(pos) { return this.selectedPlayers.filter(p => p.pos === pos).length; },
+
+    togglePlayer(player) {
+      if (this.isSelected(player.id)) { this.removePlayer(player); return; }
+      this.addPlayer(player);
+    },
+
+    addPlayer(player) {
+      if (this.squadFull) { this.toast('Squad is full! (15/15)'); return; }
+      if (this.totalCost + player.cost > 100) { this.toast('Not enough budget! 💸'); return; }
+      const rule = this.compositionRules.find(r => r.pos === player.pos);
+      if (rule && this.countInSquad(player.pos) >= rule.max) { this.toast('Position limit reached!'); return; }
+      this.selectedPlayers.push(player);
+    },
+
+    removePlayer(player) {
+      this.selectedPlayers = this.selectedPlayers.filter(p => p.id !== player.id);
+    },
+
+    toast(msg) {
+      const el = document.createElement('div');
+      el.className = 'toast-item';
+      el.textContent = msg;
+      document.getElementById('toast-wrap').appendChild(el);
+      setTimeout(() => el.classList.add('show'), 10);
+      setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 2500);
+    },
+
+    get validationErrors() {
+      const e = [];
+      if (this.selectedPlayers.length < 15) e.push('Need ' + (15 - this.selectedPlayers.length) + ' more player(s)');
+      if (this.remainingCredits < 0) e.push('Over budget by ' + Math.abs(this.remainingCredits) + ' CR');
+      if (this.countInSquad('GK') < 1) e.push('Need at least 1 GK');
+      if (this.countInSquad('DF') < 3) e.push('Need at least 3 defenders');
+      if (this.countInSquad('MF') < 2) e.push('Need at least 2 midfielders');
+      if (this.countInSquad('FW') < 1) e.push('Need at least 1 forward');
+      return e;
+    },
+
+    get canSubmit() { return this.validationErrors.length === 0; },
+
+    posLabel(pos) {
+      return { GK:'Goalkeepers', DF:'Defenders', MF:'Midfielders', FW:'Forwards' }[pos] || pos;
+    },
+
+    submitSquad() {
+      if (!this.canSubmit) return;
+      this.showSuccess = true;
+    },
+  };
+}
+</script>
+</body>
+</html>
