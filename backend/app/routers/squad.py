@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
+from datetime import datetime, timezone
 from pydantic import BaseModel
 from ..database import get_db
 from .. import models
@@ -88,7 +89,8 @@ def get_squad(request: Request, db: Session = Depends(get_db)):
             "squad": [],
             "budget": 100,
             "free_transfers_remaining": free_transfers_allowed,
-            "is_locked": False if matchday and matchday.status == models.MatchdayStatus.scheduled else True
+            "is_locked": matchday is None or matchday.status != models.MatchdayStatus.scheduled,
+            "matchday_deadline": matchday.deadline_utc.isoformat() if matchday and matchday.deadline_utc else None
         }
         
     players = []
@@ -107,7 +109,8 @@ def get_squad(request: Request, db: Session = Depends(get_db)):
         "squad": players,
         "budget": 100 - total_cost,
         "free_transfers_remaining": free_remaining,
-        "is_locked": False if matchday and matchday.status == models.MatchdayStatus.scheduled else True
+        "is_locked": matchday is None or matchday.status != models.MatchdayStatus.scheduled,
+        "matchday_deadline": matchday.deadline_utc.isoformat() if matchday and matchday.deadline_utc else None
     }
 
 @router.put("/")
@@ -126,6 +129,11 @@ def update_squad(payload: SquadUpdateRequest, request: Request, db: Session = De
     if not matchday:
         raise HTTPException(status_code=400, detail="No upcoming matchday")
         
+    if matchday.deadline_utc:
+        now_utc = datetime.now(timezone.utc)
+        if now_utc > matchday.deadline_utc:
+            raise HTTPException(status_code=423, detail="The transfer deadline for this matchday has passed.")
+            
     if matchday.status == models.MatchdayStatus.in_progress:
         raise HTTPException(status_code=400, detail="Matchday in progress. Squads are locked.")
         

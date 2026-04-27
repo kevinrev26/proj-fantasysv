@@ -4,9 +4,35 @@ from ..database import get_db
 from .. import models, schemas
 from ..worker import recalculate_matchday_scores_task, deactivate_players_for_teams_task, reactivate_players_for_teams_task
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+class MatchdayUpdateRequest(BaseModel):
+    deadline_utc: Optional[datetime] = None
+    status: Optional[str] = None
+
+@router.patch("/matchday/{matchday_id}", status_code=200)
+def update_matchday(
+    matchday_id: int,
+    payload: MatchdayUpdateRequest,
+    db: Session = Depends(get_db)
+):
+    matchday = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
+    if not matchday:
+        raise HTTPException(status_code=404, detail="Matchday not found")
+        
+    if payload.deadline_utc is not None:
+        matchday.deadline_utc = payload.deadline_utc
+    if payload.status is not None:
+        try:
+            matchday.status = models.MatchdayStatus(payload.status)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid status")
+            
+    db.commit()
+    return {"status": "success", "matchday_id": matchday.id}
 
 class PlayerStatsUpdate(BaseModel):
     player_id: int

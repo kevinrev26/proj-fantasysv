@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, DateTime, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -70,6 +70,7 @@ class Matchday(Base):
     name = Column(String, nullable=False)
     season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
     status = Column(SQLEnum(MatchdayStatus), default=MatchdayStatus.scheduled, nullable=False)
+    deadline_utc = Column(DateTime(timezone=True), nullable=True)
     task_id = Column(String, nullable=True)
     task_status = Column(String, default="pending")
     

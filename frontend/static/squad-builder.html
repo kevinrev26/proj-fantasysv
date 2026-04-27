@@ -556,7 +556,6 @@ function squadBuilder() {
 
     async init() {
       this.currentFormation = this.formations[0];
-      this.initDeadline();
       this.startCountdownTimer();
       
       try {
@@ -571,6 +570,13 @@ function squadBuilder() {
         const resp = await fetch('/squad/', { headers: { 'Authorization': 'Bearer dummy-token-user-1' } });
         if (resp.ok) {
           const data = await resp.json();
+          
+          if (data.matchday_deadline) {
+            this.matchdayDeadline = new Date(data.matchday_deadline);
+          } else {
+            this.matchdayDeadline = null;
+          }
+          
           if (data.squad && data.squad.length > 0) {
              this.selectedPlayers = data.squad.map(sq => this.players.find(p => p.id === sq.player_id)).filter(p => !!p);
              const wildcardObj = data.squad.find(s => s.is_x2_joker);
@@ -578,15 +584,10 @@ function squadBuilder() {
              if (data.free_transfers_remaining !== undefined) {
                setTimeout(() => this.toast(`Free Transfers left: ${data.free_transfers_remaining}`), 1000);
              }
-          } else {
-             this.loadFromLocalStorage();
           }
-        } else {
-           this.loadFromLocalStorage();
         }
       } catch (e) {
-        console.warn("API failed, loading from local storage", e);
-        this.loadFromLocalStorage();
+        console.warn("API failed", e);
       }
       
       this.$nextTick(() => initField());
@@ -718,7 +719,6 @@ function squadBuilder() {
       if (this.totalCost + player.cost > 100) { this.toast('Not enough budget!'); return; }
       const rule = this.compositionRules.find(r => r.pos === player.pos);
       if (rule && this.countInSquad(player.pos) >= rule.max) { this.toast(`Max ${rule.max} ${player.pos} already selected`); return; }
-      // ensure formation slot still available
       const limit = { GK:1, DF:this.currentFormation.df, MF:this.currentFormation.mf, FW:this.currentFormation.fw }[player.pos];
       if (this.countInSquad(player.pos) >= limit) { this.toast(`No more ${player.pos} slots in the current formation`); return; }
       this.selectedPlayers.push(player);
@@ -825,66 +825,8 @@ function squadBuilder() {
       }
     },
     wildcardPlayerId: null,
-    matchdayDeadline: new Date('2027-06-01T00:00:00Z'),
-    get isDeadlinePassed() {
-      return new Date() > this.matchdayDeadline;
-    },
     matchdayDeadline: null, 
-    adminUnlocked: false,
-    showAdminPanel: false,
-    tempDeadlineStr: '',
     currentTimestamp: Date.now(),
-    initDeadline() {
-      const stored = localStorage.getItem('matchday_deadline');
-      if (stored) {
-        this.matchdayDeadline = new Date(stored);
-      } else {
-        // Default: next Saturday 23:59
-        const now = new Date();
-        const daysUntilSaturday = (6 - now.getDay() + 7) % 7;
-        const nextSaturday = new Date(now);
-        nextSaturday.setDate(now.getDate() + daysUntilSaturday);
-        nextSaturday.setHours(23, 59, 0, 0);
-        this.matchdayDeadline = nextSaturday;
-      }
-      this.tempDeadlineStr = this.formatDateForInput(this.matchdayDeadline);
-      this.saveDeadlineToStorage();
-    },
-    saveDeadlineToStorage() {
-      localStorage.setItem('matchday_deadline', this.matchdayDeadline.toISOString());
-    },
-    // Format date for datetime-local input
-    formatDateForInput(date) {
-      const d = new Date(date);
-      return d.toISOString().slice(0, 16);
-    },
-
-    // Admin: Set new deadline
-    setDeadline() {
-      if (this.tempDeadlineStr) {
-        this.matchdayDeadline = new Date(this.tempDeadlineStr);
-        this.saveDeadlineToStorage();
-        this.adminUnlocked = false; // Reset override when setting new deadline
-        this.toast(`Deadline set to ${this.matchdayDeadline.toLocaleString()}`);
-        this.showAdminPanel = false;
-      }
-    },
-
-    // Admin: Toggle unlock override
-    toggleAdminUnlock() {
-      this.adminUnlocked = !this.adminUnlocked;
-      const status = this.adminUnlocked ? 'unlocked' : 'locked';
-      this.toast(`Admin override: Matchday ${status}`);
-    },
-
-    // Admin: Quick lock (set deadline to now)
-    lockNow() {
-      this.matchdayDeadline = new Date();
-      this.saveDeadlineToStorage();
-      this.adminUnlocked = false;
-      this.tempDeadlineStr = this.formatDateForInput(this.matchdayDeadline);
-      this.toast('Matchday locked immediately');
-    },
 
     // Start countdown timer (call in init)
     startCountdownTimer() {
@@ -911,39 +853,20 @@ function squadBuilder() {
       return `${minutes}m ${seconds}s`;
     },
     get isLocked() {
-      // Locked if deadline passed AND no admin override
-      if (this.adminUnlocked) return false;
       if (!this.matchdayDeadline) return false;
       return new Date() > this.matchdayDeadline;
     },
 
+    get isDeadlinePassed() {
+      return this.isLocked;
+    },
+
     get lockMessage() {
-      if (this.adminUnlocked) return '⚠️ Admin Override: Editing Allowed';
       if (this.isLocked) return '🔒 Matchday Locked - No changes allowed';
       return '';
     },
   };
 }
 </script>
-<!-- Admin Panel -->
-<div class="admin-panel" x-data="{ open: false }">
-  <button class="admin-toggle" @click="open = !open">
-    🔧 Admin
-  </button>
-  <div class="admin-card" x-show="open" @click.outside="open = false">
-    <h4>Matchday Controls</h4>
-    <input type="datetime-local" x-model="tempDeadlineStr" />
-    <button @click="setDeadline()" class="primary">Set Deadline</button>
-    <button @click="lockNow()">Lock Now</button>
-    <button @click="toggleAdminUnlock()" 
-            :class="adminUnlocked ? 'unlock-active' : ''">
-      <span x-text="adminUnlocked ? '🔓 Unlocked (Disable)' : '🔒 Unlock Override'"></span>
-    </button>
-    <hr style="margin: 10px 0; border-color: rgba(255,255,255,0.1);" />
-    <div style="font-size: 0.7rem; color: var(--text-dim);">
-      Current Deadline: <span x-text="matchdayDeadline ? matchdayDeadline.toLocaleString() : 'Not set'"></span>
-    </div>
-  </div>
-</div>
 </body>
 </html>
