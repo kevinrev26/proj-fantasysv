@@ -94,7 +94,7 @@
           <template x-for="slot in getSlotsByPos('FW')" :key="slot.id">
             <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'" @click="slot.player && removePlayer(slot.player)">
               <template x-if="slot.player">
-                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase()">
+                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase() + (wildcardPlayerId === slot.player.id ? ' wildcard-active' : '')">
                   <div class="jersey-shape">
                     <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
                       <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
@@ -105,6 +105,11 @@
                   <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
                   <span class="jersey-pos" x-text="slot.player.pos"></span>
                   <div class="remove-hint">✕ Remove</div>
+                    <!-- Wildcard Toggle Button (only if deadline not passed) -->
+                    <div class="wildcard-toggle-btn" x-show="!isDeadlinePassed" @click.stop="toggleWildcard(slot.player.id)">
+                      <span x-show="wildcardPlayerId !== slot.player.id">☆</span>
+                      <span x-show="wildcardPlayerId === slot.player.id">★</span>
+                    </div>
                 </div>
               </template>
               <template x-if="!slot.player">
@@ -126,7 +131,7 @@
           <template x-for="slot in getSlotsByPos('MF')" :key="slot.id">
             <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'" @click="slot.player && removePlayer(slot.player)">
               <template x-if="slot.player">
-                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase()">
+                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase() + (wildcardPlayerId === slot.player.id ? ' wildcard-active' : '')">
                   <div class="jersey-shape">
                     <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
                       <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
@@ -137,6 +142,11 @@
                   <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
                   <span class="jersey-pos" x-text="slot.player.pos"></span>
                   <div class="remove-hint">✕ Remove</div>
+                    <!-- Wildcard Toggle Button (only if deadline not passed) -->
+                    <div class="wildcard-toggle-btn" x-show="!isDeadlinePassed" @click.stop="toggleWildcard(slot.player.id)">
+                      <span x-show="wildcardPlayerId !== slot.player.id">☆</span>
+                      <span x-show="wildcardPlayerId === slot.player.id">★</span>
+                    </div>
                 </div>
               </template>
               <template x-if="!slot.player">
@@ -156,7 +166,7 @@
         <!-- DF -->
         <div class="pitch-zone zone-df">
           <template x-for="slot in getSlotsByPos('DF')" :key="slot.id">
-            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'" @click="slot.player && removePlayer(slot.player)">
+            <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase() + (wildcardPlayerId === slot.player.id ? ' wildcard-active' : '')">
               <template x-if="slot.player">
                 <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase()">
                   <div class="jersey-shape">
@@ -169,6 +179,10 @@
                   <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
                   <span class="jersey-pos" x-text="slot.player.pos"></span>
                   <div class="remove-hint">✕ Remove</div>
+                    <div class="wildcard-toggle-btn" x-show="!isDeadlinePassed" @click.stop="toggleWildcard(slot.player.id)">
+                      <span x-show="wildcardPlayerId !== slot.player.id">☆</span>
+                      <span x-show="wildcardPlayerId === slot.player.id">★</span>
+                    </div>
                 </div>
               </template>
               <template x-if="!slot.player">
@@ -190,7 +204,7 @@
           <template x-for="slot in getSlotsByPos('GK')" :key="slot.id">
             <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'" @click="slot.player && removePlayer(slot.player)">
               <template x-if="slot.player">
-                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase()">
+                <div class="jersey-card" :class="'tier-'+slot.player.tier.toLowerCase() + (wildcardPlayerId === slot.player.id ? ' wildcard-active' : '')">
                   <div class="jersey-shape">
                     <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
                       <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
@@ -201,6 +215,11 @@
                   <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
                   <span class="jersey-pos" x-text="slot.player.pos"></span>
                   <div class="remove-hint">✕ Remove</div>
+                    <!-- Wildcard Toggle Button (only if deadline not passed) -->
+                    <div class="wildcard-toggle-btn" x-show="!isDeadlinePassed" @click.stop="toggleWildcard(slot.player.id)">
+                      <span x-show="wildcardPlayerId !== slot.player.id">☆</span>
+                      <span x-show="wildcardPlayerId === slot.player.id">★</span>
+                    </div>
                 </div>
               </template>
               <template x-if="!slot.player">
@@ -219,6 +238,12 @@
       </div>
     </div>
   </div><!-- /field-wrapper -->
+  <div class="wildcard-locked-msg" x-show="isDeadlinePassed && wildcardPlayerId">
+    ⏰ Matchday deadline passed – wildcard locked.
+  </div>
+  <div class="wildcard-locked-msg" x-show="!isDeadlinePassed && !wildcardPlayerId && selectedPlayers.length >= 11">
+    ☆ Click the star on any starter to set as Wildcard (double points).
+  </div>
 
   <!-- Bench -->
   <div class="bench-section">
@@ -328,7 +353,7 @@
   </div>
   <template x-for="pos in ['GK','DF','MF','FW']" :key="pos">
     <div class="squad-group" x-show="countInSquad(pos)>0"><div class="squad-group-header"><span class="squad-group-dot" :class="'dot-'+pos.toLowerCase()"></span><span class="squad-group-label" x-text="posLabel(pos)"></span><span class="squad-group-count" x-text="countInSquad(pos)"></span></div>
-    <template x-for="p in selectedPlayers.filter(pl=>pl.pos===pos)" :key="p.id"><div class="squad-row"><svg viewBox="0 0 60 55" class="squad-jersey" :class="'jersey-color-'+p.pos.toLowerCase()"><path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><text x="30" y="40" text-anchor="middle" font-size="13" font-weight="800" fill="white" x-text="p.rating"></text></svg><div class="squad-info"><span class="squad-name" x-text="p.name"></span><span class="squad-club" x-text="p.club"></span></div><span class="squad-cost" x-text="p.cost+' CR'"></span><button class="squad-remove" @click.stop="removePlayer(p)">✕</button></div></template></div>
+    <template x-for="p in selectedPlayers.filter(pl=>pl.pos===pos)" :key="p.id"><div class="squad-row"><svg viewBox="0 0 60 55" class="squad-jersey" :class="'jersey-color-'+p.pos.toLowerCase()"><path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><text x="30" y="40" text-anchor="middle" font-size="13" font-weight="800" fill="white" x-text="p.rating"></text></svg><div class="squad-info"><span class="squad-name" x-text="p.name"></span><span class="squad-club" x-text="p.club"></span></div><span class="squad-cost" x-text="p.cost+' CR'"></span><span class="squad-wildcard" x-show="wildcardPlayerId === p.id" style="color: gold; margin-right: 8px;">★</span><button class="squad-remove" @click.stop="removePlayer(p)">✕</button></div></template></div>
   </template>
   <div class="squad-group" x-show="benchPlayers.filter(b=>b).length>0"><div class="squad-group-header"><span class="squad-group-dot" style="background:#888"></span><span class="squad-group-label">Bench</span><span class="squad-group-count" x-text="benchPlayers.filter(b=>b).length"></span></div>
   <template x-for="p in benchPlayers.filter(b=>b)" :key="p.id"><div class="squad-row"><svg viewBox="0 0 60 55" class="squad-jersey" :class="'jersey-color-'+p.pos.toLowerCase()"><path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><text x="30" y="40" text-anchor="middle" font-size="13" font-weight="800" fill="white" x-text="p.rating"></text></svg><div class="squad-info"><span class="squad-name" x-text="p.name"></span><span class="squad-club" x-text="p.club"></span></div><span class="squad-cost" x-text="p.cost+' CR'"></span><button class="squad-remove" @click.stop="removePlayer(p)">✕</button></div></template></div>
@@ -521,6 +546,7 @@ function squadBuilder() {
       if (saved) {
         try {
           const data = JSON.parse(saved);
+          this.wildcardPlayerId = data.wildcardPlayerId || null;
           this.selectedPlayers = data.selectedPlayers || [];
           const formationId = data.formationId;
           const found = this.formations.find(f => f.id === formationId);
@@ -528,13 +554,17 @@ function squadBuilder() {
         } catch(e) {}
       }
       this.validateAndTrimSquad(); // ensure formation constraints
+      if (this.wildcardPlayerId && !this.selectedPlayers.slice(0,11).some(p => p.id === this.wildcardPlayerId)) {
+        this.wildcardPlayerId = null;
+      }
     },
 
     saveToLocalStorage() {
       const key = `squad_md${this.matchdayId}`;
       localStorage.setItem(key, JSON.stringify({
         selectedPlayers: this.selectedPlayers,
-        formationId: this.currentFormation.id
+        formationId: this.currentFormation.id,
+        wildcardPlayerId: this.wildcardPlayerId
       }));
     },
 
@@ -628,6 +658,28 @@ function squadBuilder() {
       this.saveToLocalStorage();
     },
 
+    toggleWildcard(playerId) {
+      if (this.isDeadlinePassed) {
+        this.toast('Deadline passed, cannot change wildcard.');
+        return;
+      }
+      // Check if player is a starter (first 11 players)
+      const isStarter = this.selectedPlayers.slice(0, 11).some(p => p.id === playerId);
+      if (!isStarter) {
+        this.toast('Only starters can be wildcard!');
+        return;
+      }
+      if (this.wildcardPlayerId === playerId) {
+        this.wildcardPlayerId = null;
+        this.toast('Wildcard removed.');
+      } else {
+        this.wildcardPlayerId = playerId;
+        const player = this.selectedPlayers.find(p => p.id === playerId);
+        this.toast(`★ Wildcard set to ${player.name}`);
+      }
+      this.saveToLocalStorage();
+    },
+
     toast(msg) {
       const el = document.createElement('div');
       el.className = 'toast-item';
@@ -650,7 +702,12 @@ function squadBuilder() {
 
     get canSubmit() { return this.validationErrors.length === 0; },
     posLabel(p) { return { GK:'Goalkeepers', DF:'Defenders', MF:'Midfielders', FW:'Forwards' }[p]; },
-    submitSquad() { if (this.canSubmit) this.showSuccess = true; }
+    submitSquad() { if (this.canSubmit) this.showSuccess = true; },
+    wildcardPlayerId: null,
+    matchdayDeadline: new Date('2027-06-01T00:00:00Z'),
+    get isDeadlinePassed() {
+      return new Date() > this.matchdayDeadline;
+    }
   };
 }
 </script>
