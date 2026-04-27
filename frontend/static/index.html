@@ -2,16 +2,242 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fantasy Football - El Salvador</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Fantasy World Cup – Admin Match Entry</title>
+    <link rel="stylesheet" href="/style.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div x-data="{ message: 'Welcome to Fantasy Football (Salvadoran League)' }">
-        <h1 x-text="message"></h1>
-        <p>Teams and player names have been changed for legal reasons.</p>
-        <button @click="message = '¡Vamos equipo!'">Click me</button>
+    <div class="container" x-data="matchEntryApp()" x-init="init()">
+        <header>
+            <h1>📊 Match Result Entry</h1>
+            <div class="matchday-info" x-show="matchdayId">
+                <label>Matchday ID: 
+                    <input type="number" x-model.number="matchdayId" @change="loadPlayers()" min="1">
+                </label>
+            </div>
+        </header>
+
+        <div x-show="loading" class="loading">Loading players...</div>
+
+        <template x-if="!loading && teams.length">
+            <form @submit.prevent="submitStats">
+                <div class="table-responsive">
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Team / Player</th>
+                                <th>Min</th>
+                                <th>G</th>
+                                <th>A</th>
+                                <th>GC</th>
+                                <th>YC</th>
+                                <th>RC</th>
+                                <th>OG</th>
+                                <th>PM</th>
+                                <th>PS</th>
+                            </tr>
+                            <tr class="legend">
+                                <td colspan="10">
+                                    <small>Min=Minutes, G=Goals, A=Assists, GC=Goals Conceded, YC=Yellow, RC=Red, OG=Own Goal, PM=Penalty Missed, PS=Penalty Saved</small>
+                                </td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="team in teams" :key="team.team_id">
+                                <!-- Team separator row -->
+                                <tr class="team-separator">
+                                    <td colspan="10" x-text="team.team_name"></td>
+                                </tr>
+                                <template x-for="player in team.players" :key="player.player_id">
+                                    <tr :data-team="team.team_id">
+                                        <td class="player-name" x-text="player.name"></td>
+                                        <td><input type="number" x-model="player.stats.minutes_played" min="0" step="1" required></td>
+                                        <td><input type="number" x-model="player.stats.goals" min="0" step="1"></td>
+                                        <td><input type="number" x-model="player.stats.assists" min="0" step="1"></td>
+                                        <td><input type="number" x-model="player.stats.goals_conceded" min="0" step="1"></td>
+                                        <td><input type="number" x-model="player.stats.yellow_card" min="0" step="1"></td>
+                                        <td><input type="number" x-model="player.stats.red_card" min="0" step="1"></td>
+                                        <td><input type="number" x-model="player.stats.own_goal" min="0" step="1"></td>
+                                        <td><input type="number" x-model="player.stats.penalty_missed" min="0" step="1"></td>
+                                        <td><input type="number" x-model="player.stats.penalty_saved" min="0" step="1"></td>
+                                    </tr>
+                                </template>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" :disabled="submitting">
+                        <span x-show="!submitting">📤 Submit Match Results</span>
+                        <span x-show="submitting">⏳ Submitting...</span>
+                    </button>
+                </div>
+            </form>
+        </template>
+
+        <!-- Confirmation / error messages -->
+        <div x-show="message" class="message" :class="messageType" x-text="message"></div>
+
+        <!-- Task status polling display -->
+        <div x-show="taskStatus" class="task-status">
+            <strong>Task Status:</strong> <span x-text="taskStatus"></span>
+            <progress x-show="taskStatus === 'processing'" class="progress"></progress>
+        </div>
     </div>
+
+    <script>
+        function matchEntryApp() {
+            return {
+                matchdayId: 1,
+                teams: [],
+                loading: false,
+                submitting: false,
+                message: '',
+                messageType: '',
+                taskId: null,
+                taskStatus: null,
+                pollInterval: null,
+
+                async init() {
+                    if (this.matchdayId) await this.loadPlayers();
+                },
+
+                async loadPlayers() {
+                    if (!this.matchdayId) return;
+                    this.loading = true;
+                    this.message = '';
+                    try {
+                        const res = await fetch(`/admin/matchday/${this.matchdayId}/players`);
+                        if (!res.ok) throw new Error('Failed to load players');
+                        const data = await res.json();
+                        // Initialize stats object for each player
+                        this.teams = data.teams.map(team => ({
+                            ...team,
+                            players: team.players.map(player => ({
+                                ...player,
+                                stats: {
+                                    minutes_played: 0,
+                                    goals: 0,
+                                    assists: 0,
+                                    goals_conceded: 0,
+                                    yellow_card: 0,
+                                    red_card: 0,
+                                    own_goal: 0,
+                                    penalty_missed: 0,
+                                    penalty_saved: 0
+                                }
+                            }))
+                        }));
+                    } catch (err) {
+                        this.showMessage(err.message, 'error');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                validateStats() {
+                    for (const team of this.teams) {
+                        for (const player of team.players) {
+                            const min = player.stats.minutes_played;
+                            if (min === undefined || min === null || min < 0 || !Number.isInteger(min)) {
+                                this.showMessage(`Minutes played for ${player.name} must be a non‑negative integer`, 'error');
+                                return false;
+                            }
+                            // All other stats are optional but must be integers >=0
+                            const fields = ['goals', 'assists', 'goals_conceded', 'yellow_card', 'red_card', 'own_goal', 'penalty_missed', 'penalty_saved'];
+                            for (const f of fields) {
+                                const val = player.stats[f];
+                                if (val === undefined || val === null || val < 0 || !Number.isInteger(val)) {
+                                    this.showMessage(`${f} for ${player.name} must be a non‑negative integer`, 'error');
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                    return true;
+                },
+
+                async submitStats() {
+                    if (!this.validateStats()) return;
+                    this.submitting = true;
+                    this.message = '';
+                    this.taskStatus = null;
+
+                    // Build payload: list of player stat objects
+                    const stats = [];
+                    for (const team of this.teams) {
+                        for (const player of team.players) {
+                            stats.push({
+                                player_id: player.player_id,
+                                minutes_played: player.stats.minutes_played,
+                                goals: player.stats.goals,
+                                assists: player.stats.assists,
+                                goals_conceded: player.stats.goals_conceded,
+                                yellow_card: player.stats.yellow_card,
+                                red_card: player.stats.red_card,
+                                own_goal: player.stats.own_goal,
+                                penalty_missed: player.stats.penalty_missed,
+                                penalty_saved: player.stats.penalty_saved
+                            });
+                        }
+                    }
+
+                    try {
+                        const res = await fetch(`/admin/matchday/${this.matchdayId}/results`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ stats })
+                        });
+                        if (!res.ok) {
+                            const err = await res.json();
+                            throw new Error(err.detail || 'Submission failed');
+                        }
+                        const data = await res.json();
+                        this.taskId = data.task_id;
+                        this.showMessage(`Task queued (ID: ${this.taskId}). Processing...`, 'success');
+                        this.startPolling();
+                    } catch (err) {
+                        this.showMessage(err.message, 'error');
+                    } finally {
+                        this.submitting = false;
+                    }
+                },
+
+                startPolling() {
+                    if (this.pollInterval) clearInterval(this.pollInterval);
+                    this.pollInterval = setInterval(async () => {
+                        if (!this.taskId) return;
+                        try {
+                            const res = await fetch(`/admin/matchday/${this.matchdayId}/task-status`);
+                            if (!res.ok) throw new Error();
+                            const data = await res.json();
+                            this.taskStatus = data.status;
+                            if (data.status === 'done' || data.status === 'failed') {
+                                clearInterval(this.pollInterval);
+                                this.pollInterval = null;
+                                if (data.status === 'done') {
+                                    this.showMessage('Matchday calculation completed successfully!', 'success');
+                                } else {
+                                    this.showMessage('Task failed. Check logs.', 'error');
+                                }
+                            }
+                        } catch (err) {
+                            // Ignore polling errors
+                        }
+                    }, 2000); // poll every 2 seconds
+                },
+
+                showMessage(msg, type) {
+                    this.message = msg;
+                    this.messageType = type;
+                    setTimeout(() => {
+                        if (this.message === msg) this.message = '';
+                    }, 5000);
+                }
+            }
+        }
+    </script>
 </body>
 </html>
