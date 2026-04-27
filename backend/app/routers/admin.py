@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models, schemas
-from ..worker import recalculate_matchday_scores_task
+from ..worker import recalculate_matchday_scores_task, deactivate_players_for_teams_task, reactivate_players_for_teams_task
 from pydantic import BaseModel
 from typing import List
 
@@ -107,3 +107,57 @@ def get_task_status(matchday_id: int, db: Session = Depends(get_db)):
         "task_id": matchday.task_id,
         "status": matchday.task_status
     }
+
+class EliminationRequest(BaseModel):
+    team_ids: List[int]
+
+@router.post("/phase/{phase_id}/eliminate", status_code=202)
+def eliminate_teams(
+    phase_id: int,
+    payload: EliminationRequest,
+    db: Session = Depends(get_db),
+    # TODO: add admin role dependency
+):
+    # Verify phase exists
+    phase = db.query(models.TournamentPhase).filter(models.TournamentPhase.id == phase_id).first()
+    if not phase:
+        raise HTTPException(404, "Phase not found")
+    
+    # Verify all teams exist and are not already eliminated in a higher phase? (optional)
+    teams = db.query(models.Team).filter(models.Team.id.in_(payload.team_ids)).all()
+    if len(teams) != len(payload.team_ids):
+        raise HTTPException(400, "One or more team IDs invalid")
+    
+    # Mark teams as eliminated in this phase (atomic)
+    for team in teams:
+        team.eliminated_in_phase_id = phase_id
+    db.commit()
+    
+    # Enqueue Celery task to deactivate players of these teams
+    task = deactivate_players_for_teams_task.delay(payload.team_ids)
+    
+    return {"task_id": task.id, "status": "accepted", "teams_eliminated": payload.team_ids}
+
+@router.post("/phase/{phase_id}/restore", status_code=202)
+def restore_teams(
+    phase_id: int,
+    payload: EliminationRequest,
+    db: Session = Depends(get_db),
+):
+    # Optional: ensure the teams were eliminated in this phase
+    teams = db.query(models.Team).filter(
+        models.Team.id.in_(payload.team_ids),
+        models.Team.eliminated_in_phase_id == phase_id
+    ).all()
+    if len(teams) != len(payload.team_ids):
+        raise HTTPException(400, "Some teams are not eliminated in this phase")
+    
+    # Clear elimination flag
+    for team in teams:
+        team.eliminated_in_phase_id = None
+    db.commit()
+    
+    # Re-activate players of these teams
+    task = reactivate_players_for_teams_task.delay(payload.team_ids)
+    
+    return {"task_id": task.id, "status": "accepted", "teams_restored": payload.team_ids}

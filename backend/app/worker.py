@@ -1,5 +1,6 @@
 import sentry_sdk
 import structlog
+from typing import List
 from celery import Celery, shared_task
 from celery.signals import setup_logging as celery_setup_logging
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -164,6 +165,8 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
             ).all()
             
             for fp in fantasy_players:
+                if not fp.player.is_active:
+                    continue
                 # Find the corresponding PlayerScore for this player and matchday
                 ps = next((p for p in player_scores if p.player_id == fp.player_id), None)
                 if not ps:
@@ -230,3 +233,49 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
         raise self.retry(exc=e)
     finally:
         db.close()
+
+
+@celery_app.task(
+    name="deactivate_players_for_teams",
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3
+)
+def deactivate_players_for_teams_task(self, team_ids: List[int]):
+    db = SessionLocal()
+    try:
+        # Atomic bulk update
+        db.query(Player).filter(Player.team_id.in_(team_ids)).update(
+            {Player.is_active: False},
+            synchronize_session=False
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise self.retry(exc=e)
+    finally:
+        db.close()
+    return {"deactivated_teams": team_ids}
+
+@celery_app.task(
+    name="reactivate_players_for_teams",
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3
+)
+def reactivate_players_for_teams_task(self, team_ids: List[int]):
+    db = SessionLocal()
+    try:
+        db.query(Player).filter(Player.team_id.in_(team_ids)).update(
+            {Player.is_active: True},
+            synchronize_session=False
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise self.retry(exc=e)
+    finally:
+        db.close()
+    return {"reactivated_teams": team_ids}
