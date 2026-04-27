@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Leaderboard — EA FC Fantasy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    /* ========== GLOBAL & VARIABLES (same aesthetic as squad builder) ========== */
+    :root {
+      --navy:        #0a1628;
+      --navy-mid:    #0f2040;
+      --navy-light:  #162a50;
+      --navy-card:   #1a3260;
+      --teal:        #00d4aa;
+      --teal-dark:   #00a88a;
+      --teal-glow:   rgba(0, 212, 170, 0.25);
+      --gold:        #f5c842;
+      --gold-dark:   #d4a800;
+      --blue-accent: #00a8e8;
+      --red-accent:  #ff5f6d;
+      --orange:      #ff9f43;
+      --text-white:  #ffffff;
+      --text-dim:    rgba(255,255,255,0.55);
+      --text-muted:  rgba(255,255,255,0.3);
+      --radius:      14px;
+      --radius-sm:   8px;
+      --shadow-card: 0 8px 32px rgba(0,0,0,0.45);
+      --font: 'Nunito', sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing: border-box; }
+    body {
+      font-family: var(--font);
+      background: var(--navy);
+      color: var(--text-white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* header (compact) */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10,22,40,0.96);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-icon { font-size: 1.5rem; }
+    .logo-label {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+    .nav-link {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    .nav-link.active {
+      color: var(--teal);
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 4px;
+    }
+    .nav-link:hover { color: var(--teal); }
+
+    /* main container */
+    .leaderboard-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+    .leaderboard-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .leaderboard-title h1 {
+      font-size: 1.8rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--teal), var(--blue-accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .leaderboard-title p {
+      color: var(--text-dim);
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+    .refresh-info {
+      background: rgba(0,212,170,0.1);
+      border-radius: 40px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--teal);
+      border: 1px solid rgba(0,212,170,0.3);
+    }
+    .refresh-info span:first-child { font-size: 1rem; }
+
+    /* TABLE WRAPPER (responsive) */
+    .table-wrapper {
+      background: var(--navy-mid);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow-x: auto;
+      box-shadow: var(--shadow-card);
+    }
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      min-width: 600px;
+    }
+    .leaderboard-table th {
+      text-align: left;
+      padding: 1rem 1rem;
+      background: rgba(0,0,0,0.3);
+      color: var(--text-dim);
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .leaderboard-table td {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .leaderboard-table tr:hover td {
+      background: rgba(0,212,170,0.05);
+    }
+    /* rank style */
+    .rank-cell {
+      font-weight: 800;
+      color: var(--gold);
+      width: 70px;
+    }
+    .team-name {
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .team-badge {
+      width: 24px;
+      height: 24px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+    }
+    .points-md, .points-total {
+      font-weight: 800;
+      color: var(--teal);
+    }
+    /* highlighted row (current user) */
+    .current-user-row {
+      background: linear-gradient(90deg, rgba(0,212,170,0.12), rgba(0,168,232,0.08));
+      border-left: 4px solid var(--teal);
+      box-shadow: inset 0 0 0 1px rgba(0,212,170,0.2);
+      position: relative;
+    }
+    .current-user-row td:first-child {
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+    }
+    .current-user-row td:last-child {
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+    .user-badge {
+      background: var(--teal);
+      color: var(--navy);
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 50px;
+      margin-left: 8px;
+    }
+
+    /* pagination */
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 2rem;
+    }
+    .page-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 8px 14px;
+      border-radius: 50px;
+      font-weight: 700;
+      color: var(--text-dim);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .page-btn.active {
+      background: var(--teal);
+      color: var(--navy);
+      border-color: var(--teal);
+    }
+    .page-btn:hover:not(.disabled) {
+      background: rgba(0,212,170,0.2);
+      color: var(--teal);
+      transform: translateY(-1px);
+    }
+    .page-btn.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .page-indicator {
+      color: var(--text-dim);
+      font-weight: 600;
+      background: rgba(0,0,0,0.3);
+      padding: 6px 14px;
+      border-radius: 50px;
+    }
+
+    /* empty / loading state */
+    .empty-row td {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* mobile card fallback (table is already scrollable, but fine) */
+    @media (max-width: 680px) {
+      .leaderboard-table th, .leaderboard-table td {
+        padding: 0.7rem 0.8rem;
+        font-size: 0.8rem;
+      }
+      .rank-cell { width: 55px; }
+      .user-badge { font-size: 0.55rem; margin-left: 4px; }
+      .leaderboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    /* footer or subtle */
+    .footer-note {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    .highlight-gold {
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <span class="logo-icon">⚽</span>
+      <span class="logo-label">Squad Builder</span>
+    </div>
+    <div class="nav-links">
+      <a href="#" class="nav-link">Pitch</a>
+      <a href="#" class="nav-link">Players</a>
+      <a href="#" class="nav-link active">Leaderboard</a>
+    </div>
+  </div>
+</header>
+
+<main x-data="leaderboardApp()" x-init="init()">
+  <div class="leaderboard-container">
+    <div class="leaderboard-header">
+      <div class="leaderboard-title">
+        <h1>🏆 Leaderboard</h1>
+        <p>Season 2026 · Global rankings updated after each matchday</p>
+      </div>
+      <div class="refresh-info">
+        <span>🔄</span>
+        <span>Last update: <span x-text="lastUpdatedText"></span></span>
+        <button @click="refreshData" style="background: none; border: none; color: inherit; cursor: pointer; font-weight: bold;">⟳</button>
+      </div>
+    </div>
+
+    <!-- TABLE (responsive wrapper) -->
+    <div class="table-wrapper">
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Team Name</th>
+            <th>Matchday Points</th>
+            <th>Total Points</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(team, idx) in paginatedTeams" :key="team.id">
+            <tr :class="team.is_current_user ? 'current-user-row' : ''">
+              <td class="rank-cell">
+                <span x-text="team.rank"></span>
+                <span x-show="team.is_current_user" class="user-badge">You</span>
+              </td>
+              <td class="team-name">
+                <span class="team-badge">⚡</span>
+                <span x-text="team.name"></span>
+              </td>
+              <td class="points-md" x-text="team.matchday_points + ' pts'"></td>
+              <td class="points-total" x-text="team.total_points + ' pts'"></td>
+            </tr>
+          </template>
+          <tr x-show="paginatedTeams.length === 0">
+            <td colspan="4" class="empty-row">🏟️ No teams available – check back after matchday starts</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" x-show="totalPages > 1">
+      <button class="page-btn" :class="{ disabled: currentPage === 1 }" @click="prevPage" :disabled="currentPage === 1">← Prev</button>
+      <template x-for="page in visiblePages" :key="page">
+        <button class="page-btn" :class="{ active: currentPage === page }" @click="goToPage(page)" x-text="page"></button>
+      </template>
+      <button class="page-btn" :class="{ disabled: currentPage === totalPages }" @click="nextPage" :disabled="currentPage === totalPages">Next →</button>
+      <span class="page-indicator" x-text="`Page ${currentPage} of ${totalPages}`"></span>
+    </div>
+    <div class="footer-note">
+      * Points update automatically after each matchday calculation. Highlighted row = your team.
+    </div>
+  </div>
+</main>
+
+<script>
+  // ------------------------------
+  // GENERATE PLACEHOLDER DATA (50 fantasy teams)
+  // ------------------------------
+  const generateMockTeams = () => {
+    const firstNames = ["Elite", "Thunder", "Phoenix", "Legend", "Vortex", "Apex", "Fury", "Shadow", "Blazers", "Dynamo"];
+    const secondNames = ["FC", "United", "City", "Warriors", "Stars", "XI", "Academy", "Wolves", "Knights", "Gladiators"];
+    const teamList = [];
+    // current user will be team with id = 5 (simulate logged-in user's team)
+    for (let i = 1; i <= 50; i++) {
+      const rand1 = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const rand2 = secondNames[Math.floor(Math.random() * secondNames.length)];
+      let name = `${rand1} ${rand2}`;
+      if (i % 7 === 0) name = "Invincible XI";
+      if (i === 5) name = "★ My Awesome Squad ★";  // current user's team
+      const totalPoints = Math.floor(Math.random() * 450) + 120;
+      const matchdayPoints = Math.floor(Math.random() * 85) + 15;
+      teamList.push({
+        id: i,
+        name: name,
+        total_points: totalPoints,
+        matchday_points: matchdayPoints,
+        is_current_user: (i === 5),   // simulate logged-in user's team id = 5
+      });
+    }
+    // sort by total points descending to assign ranks
+    teamList.sort((a,b) => b.total_points - a.total_points);
+    // assign ranks (handle ties not needed)
+    teamList.forEach((team, idx) => { team.rank = idx + 1; });
+    // re-sort by rank ascending for display
+    teamList.sort((a,b) => a.rank - b.rank);
+    return teamList;
+  };
+
+  function leaderboardApp() {
+    return {
+      allTeams: [],
+      paginatedTeams: [],
+      currentPage: 1,
+      itemsPerPage: 10,
+      lastUpdated: new Date(),
+      lastUpdatedText: '',
+
+      init() {
+        this.loadTeams();
+        this.updateTimestamp();
+        // auto refresh every 30 seconds? simulate "after scoring task", but user can manually refresh.
+        // For demo we set interval for placeholder only (but not required)
+        setInterval(() => {
+          // dummy: just update timestamp to simulate "new calculation"
+          this.lastUpdated = new Date();
+          this.updateTimestamp();
+        }, 30000);
+      },
+
+      loadTeams() {
+        // generate fresh placeholder data (could simulate backend call)
+        this.allTeams = generateMockTeams();
+        this.updatePaginated();
+      },
+
+      refreshData() {
+        // simulate API refresh (new random points but keep relative order to mimic scoring update)
+        // for realism: regenerate points but preserve user identity
+        const currentUserIdTeam = this.allTeams.find(t => t.is_current_user);
+        const newTeams = generateMockTeams();
+        // ensure the same user's team keeps "is_current_user = true"
+        if (currentUserIdTeam) {
+          const freshUserTeam = newTeams.find(t => t.id === currentUserIdTeam.id);
+          if (freshUserTeam) freshUserTeam.is_current_user = true;
+        }
+        this.allTeams = newTeams;
+        this.updatePaginated();
+        this.lastUpdated = new Date();
+        this.updateTimestamp();
+        // small visual feedback: toast-like not needed but fine
+      },
+
+      updatePaginated() {
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = start + this.itemsPerPage;
+        this.paginatedTeams = this.allTeams.slice(start, end);
+      },
+
+      updateTimestamp() {
+        this.lastUpdatedText = this.lastUpdated.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      },
+
+      goToPage(page) {
+        if (page < 1 || page > this.totalPages) return;
+        this.currentPage = page;
+        this.updatePaginated();
+      },
+      prevPage() { this.goToPage(this.currentPage - 1); },
+      nextPage() { this.goToPage(this.currentPage + 1); },
+
+      get totalPages() {
+        return Math.ceil(this.allTeams.length / this.itemsPerPage);
+      },
+
+      get visiblePages() {
+        const total = this.totalPages;
+        const current = this.currentPage;
+        let start = Math.max(1, current - 2);
+        let end = Math.min(total, start + 4);
+        if (end - start < 4) start = Math.max(1, end - 4);
+        const pages = [];
+        for (let i = start; i <= end; i++) pages.push(i);
+        return pages;
+      }
+    };
+  }
+</script>
+</body>
+</html>
