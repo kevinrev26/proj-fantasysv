@@ -826,6 +826,134 @@ button { font-family: var(--font); cursor: pointer; border: none; background: no
   box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
   animation: slideUp 0.4s cubic-bezier(.34,1.56,.64,1);
 }
+
+/* Locked state styles */
+.locked-overlay {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.formation-bar.disabled .fmn-btn,
+.formation-bar.disabled .fmn-btn.active {
+  opacity: 0.5;
+  pointer-events: none;
+  filter: grayscale(0.3);
+}
+
+.lock-badge {
+  background: rgba(255, 95, 109, 0.2);
+  border: 1px solid var(--red-accent);
+  border-radius: 50px;
+  padding: 4px 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--red-accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.countdown-timer {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  border-radius: 50px;
+  padding: 6px 14px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--teal);
+}
+
+.countdown-timer.warning {
+  color: var(--orange);
+  animation: pulse 1s infinite;
+}
+
+.countdown-timer.locked {
+  color: var(--red-accent);
+  background: rgba(255, 95, 109, 0.15);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Admin Panel */
+.admin-panel {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.admin-toggle {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--gold);
+  border-radius: 50px;
+  padding: 10px 16px;
+  color: var(--gold);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-toggle:hover {
+  background: var(--gold);
+  color: var(--navy);
+}
+
+.admin-card {
+  position: absolute;
+  bottom: 60px;
+  right: 0;
+  background: var(--navy-card);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 16px;
+  width: 280px;
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-card);
+}
+
+.admin-card h4 {
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  color: var(--gold);
+}
+
+.admin-card input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  color: white;
+}
+
+.admin-card button {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: white;
+  font-weight: 600;
+}
+
+.admin-card button.primary {
+  background: var(--teal);
+  color: var(--navy);
+}
+
+.unlock-active {
+  background: var(--orange) !important;
+  color: var(--navy) !important;
+}
+
 @keyframes slideUp { from { transform: translateY(100%); } }
 .modal-emoji { font-size: 3.5rem; margin-bottom: 12px; }
 .modal-title { font-size: 1.7rem; font-weight: 900; margin-bottom: 8px; }

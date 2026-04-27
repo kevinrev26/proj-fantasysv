@@ -51,12 +51,24 @@
       <span class="logo-icon">⚽</span>
       <span class="logo-label">Squad Builder</span>
     </div>
-    <div class="budget-pill" :class="remainingCredits < 0 ? 'over' : remainingCredits < 10 ? 'warn' : ''">
-      <span class="budget-pill-label">Budget</span>
-      <span class="budget-pill-value" x-text="remainingCredits.toFixed(1) + ' CR'"></span>
+    <div class="header-right" style="display: flex; align-items: center; gap: 12px;">
+      <div class="countdown-timer" 
+          :class="{
+            'warning': !isLocked && matchdayDeadline && (matchdayDeadline - currentTimestamp < 3600000),
+            'locked': isLocked && !adminUnlocked
+          }">
+        ⏱️ <span x-text="getCountdownText()"></span>
+      </div>
+      <div class="budget-pill" :class="remainingCredits < 0 ? 'over' : remainingCredits < 10 ? 'warn' : ''">
+        <span class="budget-pill-label">Budget</span>
+        <span class="budget-pill-value" x-text="remainingCredits.toFixed(1) + ' CR'"></span>
+      </div>
     </div>
   </div>
 </header>
+<div x-show="lockMessage" class="lock-badge" style="margin: 8px 16px; justify-content: center;">
+  <span x-text="lockMessage"></span>
+</div>
 
 <!-- ── TABS (always visible) ── -->
 <div class="tab-bar">
@@ -81,9 +93,13 @@
 
     <div class="formation-overlay">
       <!-- Formation picker (6 formations) -->
-      <div class="formation-bar">
+      <div class="formation-bar" :class="isLocked && !adminUnlocked ? 'disabled' : ''">
         <template x-for="f in formations" :key="f.id">
-          <button class="fmn-btn" :class="currentFormation.id===f.id && 'active'" @click="changeFormation(f)" x-text="f.label"></button>
+          <button class="fmn-btn" 
+                  :class="currentFormation.id===f.id && 'active'" 
+                  @click="changeFormation(f)" 
+                  :disabled="isLocked && !adminUnlocked"
+                  x-text="f.label"></button>
         </template>
       </div>
 
@@ -276,7 +292,7 @@
 
   <!-- Budget ring & submit -->
   <div class="budget-section">
-    <div class="budget-ring-container">
+    <div class="budget-ring-container" :class="{ 'locked-overlay': isLocked && !adminUnlocked }">
       <svg class="budget-donut" viewBox="0 0 160 160">
         <defs>
           <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -328,7 +344,12 @@
   </div>
   <div class="player-list">
     <template x-for="p in filteredPlayers" :key="p.id">
-      <div class="player-row" :class="{selected: isSelected(p.id), disabled: !isSelected(p.id) && squadFull}" @click="togglePlayer(p)">
+      <div class="player-row" 
+     :class="{
+       selected: isSelected(p.id), 
+       disabled: (!isSelected(p.id) && squadFull) || (isLocked && !adminUnlocked)
+     }" 
+     @click="!isLocked && togglePlayer(p)">
         <div class="row-jersey-wrap">
           <svg viewBox="0 0 60 55" class="row-jersey" :class="'jersey-color-'+p.pos.toLowerCase()">
             <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
@@ -536,11 +557,25 @@ function squadBuilder() {
 
     init() {
       this.currentFormation = this.formations[0];
+      this.initDeadline();
+      this.startCountdownTimer();
       this.loadFromLocalStorage();
       this.$nextTick(() => initField());
     },
 
     loadFromLocalStorage() {
+      const storedDeadline = localStorage.getItem('matchday_deadline');
+      if (storedDeadline) {
+        this.matchdayDeadline = new Date(storedDeadline);
+        this.tempDeadlineStr = this.formatDateForInput(this.matchdayDeadline);
+      }
+      
+      // Load admin unlock state (optional persistence)
+      const storedUnlock = localStorage.getItem('admin_unlocked');
+      if (storedUnlock) {
+        this.adminUnlocked = storedUnlock === 'true';
+      }
+
       const key = `squad_md${this.matchdayId}`;
       const saved = localStorage.getItem(key);
       if (saved) {
@@ -595,6 +630,10 @@ function squadBuilder() {
     },
 
     changeFormation(f) {
+      if (this.isLocked) {
+        this.toast(this.lockMessage);
+        return;
+      }
       this.currentFormation = f;
       this.validateAndTrimSquad();
       this.saveToLocalStorage();
@@ -637,6 +676,10 @@ function squadBuilder() {
     countInSquad(pos) { return this.selectedPlayers.filter(p => p.pos === pos).length; },
 
     togglePlayer(player) {
+      if (this.isLocked) {
+        this.toast(this.lockMessage);
+        return;
+      }
       if (this.isSelected(player.id)) { this.removePlayer(player); return; }
       this.addPlayer(player);
     },
@@ -654,11 +697,19 @@ function squadBuilder() {
     },
 
     removePlayer(player) {
+      if (this.isLocked) {
+        this.toast(this.lockMessage);
+        return;
+      }
       this.selectedPlayers = this.selectedPlayers.filter(p => p.id !== player.id);
       this.saveToLocalStorage();
     },
 
     toggleWildcard(playerId) {
+      if (this.isLocked) {
+        this.toast(this.lockMessage);
+        return;
+      }
       if (this.isDeadlinePassed) {
         this.toast('Deadline passed, cannot change wildcard.');
         return;
@@ -697,19 +748,143 @@ function squadBuilder() {
       if (this.countInSquad('DF') < 3) err.push('At least 3 defenders needed');
       if (this.countInSquad('MF') < 2) err.push('At least 2 midfielders needed');
       if (this.countInSquad('FW') < 1) err.push('At least 1 forward needed');
+      if (this.isLocked && !this.adminUnlocked) {
+        err.push('🔒 Matchday is locked - no changes allowed');
+      }
       return err;
     },
 
     get canSubmit() { return this.validationErrors.length === 0; },
     posLabel(p) { return { GK:'Goalkeepers', DF:'Defenders', MF:'Midfielders', FW:'Forwards' }[p]; },
-    submitSquad() { if (this.canSubmit) this.showSuccess = true; },
+    submitSquad() {
+      if (this.isLocked) {
+        this.toast(`Cannot submit: ${this.lockMessage}`);
+        return;
+      }
+      if (this.canSubmit) {
+        this.showSuccess = true;
+      }
+    },
     wildcardPlayerId: null,
     matchdayDeadline: new Date('2027-06-01T00:00:00Z'),
     get isDeadlinePassed() {
       return new Date() > this.matchdayDeadline;
-    }
+    },
+    matchdayDeadline: null, 
+    adminUnlocked: false,
+    showAdminPanel: false,
+    tempDeadlineStr: '',
+    currentTimestamp: Date.now(),
+    initDeadline() {
+      const stored = localStorage.getItem('matchday_deadline');
+      if (stored) {
+        this.matchdayDeadline = new Date(stored);
+      } else {
+        // Default: next Saturday 23:59
+        const now = new Date();
+        const daysUntilSaturday = (6 - now.getDay() + 7) % 7;
+        const nextSaturday = new Date(now);
+        nextSaturday.setDate(now.getDate() + daysUntilSaturday);
+        nextSaturday.setHours(23, 59, 0, 0);
+        this.matchdayDeadline = nextSaturday;
+      }
+      this.tempDeadlineStr = this.formatDateForInput(this.matchdayDeadline);
+      this.saveDeadlineToStorage();
+    },
+    saveDeadlineToStorage() {
+      localStorage.setItem('matchday_deadline', this.matchdayDeadline.toISOString());
+    },
+    // Format date for datetime-local input
+    formatDateForInput(date) {
+      const d = new Date(date);
+      return d.toISOString().slice(0, 16);
+    },
+
+    // Admin: Set new deadline
+    setDeadline() {
+      if (this.tempDeadlineStr) {
+        this.matchdayDeadline = new Date(this.tempDeadlineStr);
+        this.saveDeadlineToStorage();
+        this.adminUnlocked = false; // Reset override when setting new deadline
+        this.toast(`Deadline set to ${this.matchdayDeadline.toLocaleString()}`);
+        this.showAdminPanel = false;
+      }
+    },
+
+    // Admin: Toggle unlock override
+    toggleAdminUnlock() {
+      this.adminUnlocked = !this.adminUnlocked;
+      const status = this.adminUnlocked ? 'unlocked' : 'locked';
+      this.toast(`Admin override: Matchday ${status}`);
+    },
+
+    // Admin: Quick lock (set deadline to now)
+    lockNow() {
+      this.matchdayDeadline = new Date();
+      this.saveDeadlineToStorage();
+      this.adminUnlocked = false;
+      this.tempDeadlineStr = this.formatDateForInput(this.matchdayDeadline);
+      this.toast('Matchday locked immediately');
+    },
+
+    // Start countdown timer (call in init)
+    startCountdownTimer() {
+      setInterval(() => {
+        this.currentTimestamp = Date.now();
+      }, 1000);
+    },
+
+    // Get countdown text (computed)
+    getCountdownText() {
+      if (!this.matchdayDeadline) return 'No deadline set';
+      const now = this.currentTimestamp;
+      const diff = this.matchdayDeadline - now;
+      
+      if (diff <= 0) return '⏰ LOCKED';
+      
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (86400000)) / (3600000));
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      
+      if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+      if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+      return `${minutes}m ${seconds}s`;
+    },
+    get isLocked() {
+      // Locked if deadline passed AND no admin override
+      if (this.adminUnlocked) return false;
+      if (!this.matchdayDeadline) return false;
+      return new Date() > this.matchdayDeadline;
+    },
+
+    get lockMessage() {
+      if (this.adminUnlocked) return '⚠️ Admin Override: Editing Allowed';
+      if (this.isLocked) return '🔒 Matchday Locked - No changes allowed';
+      return '';
+    },
   };
 }
 </script>
+<!-- Admin Panel -->
+<div class="admin-panel" x-data="{ open: false }">
+  <button class="admin-toggle" @click="open = !open">
+    🔧 Admin
+  </button>
+  <div class="admin-card" x-show="open" @click.outside="open = false">
+    <h4>Matchday Controls</h4>
+    <input type="datetime-local" x-model="tempDeadlineStr" />
+    <button @click="setDeadline()" class="primary">Set Deadline</button>
+    <button @click="lockNow()">Lock Now</button>
+    <button @click="toggleAdminUnlock()" 
+            :class="adminUnlocked ? 'unlock-active' : ''">
+      <span x-text="adminUnlocked ? '🔓 Unlocked (Disable)' : '🔒 Unlock Override'"></span>
+    </button>
+    <hr style="margin: 10px 0; border-color: rgba(255,255,255,0.1);" />
+    <div style="font-size: 0.7rem; color: var(--text-dim);">
+      Current Deadline: <span x-text="matchdayDeadline ? matchdayDeadline.toLocaleString() : 'Not set'"></span>
+    </div>
+  </div>
+</div>
 </body>
 </html>
