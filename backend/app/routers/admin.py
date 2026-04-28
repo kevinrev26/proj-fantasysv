@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Header
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models, schemas
@@ -7,7 +7,11 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+def verify_admin(authorization: str = Header(...)):
+    if authorization not in ("Bearer dummy-admin-token", "dummy-admin-token"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(verify_admin)])
 
 class MatchdayUpdateRequest(BaseModel):
     deadline_utc: Optional[datetime] = None
@@ -187,3 +191,105 @@ def restore_teams(
     task = reactivate_players_for_teams_task.delay(payload.team_ids)
     
     return {"task_id": task.id, "status": "accepted", "teams_restored": payload.team_ids}
+
+@router.post("/seasons", status_code=201)
+def create_season(payload: schemas.SeasonCreate, db: Session = Depends(get_db)):
+    season = models.Season(
+        name=payload.name,
+        start_date=payload.start_date,
+        end_date=payload.end_date
+    )
+    db.add(season)
+    db.commit()
+    db.refresh(season)
+    return season
+
+@router.post("/seasons/{season_id}/matchdays", status_code=201)
+def create_matchday(season_id: int, payload: schemas.MatchdayCreate, db: Session = Depends(get_db)):
+    season = db.query(models.Season).filter(models.Season.id == season_id).first()
+    if not season:
+        raise HTTPException(status_code=404, detail="Season not found")
+        
+    matchday = models.Matchday(
+        name=payload.name,
+        season_id=season_id,
+        deadline_utc=payload.deadline_utc
+    )
+    db.add(matchday)
+    db.commit()
+    db.refresh(matchday)
+    return matchday
+
+@router.post("/seasons/{season_id}/leagues", status_code=201)
+def create_league(season_id: int, payload: schemas.LeagueCreate, db: Session = Depends(get_db)):
+    season = db.query(models.Season).filter(models.Season.id == season_id).first()
+    if not season:
+        raise HTTPException(status_code=404, detail="Season not found")
+        
+    league = models.League(
+        name=payload.name,
+        season_id=season_id
+    )
+    db.add(league)
+    db.commit()
+    db.refresh(league)
+    return league
+
+@router.post("/leagues/{league_id}/teams", status_code=201)
+def create_team(league_id: int, payload: schemas.TeamCreate, db: Session = Depends(get_db)):
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if not league:
+        raise HTTPException(status_code=404, detail="League not found")
+        
+    team = models.Team(
+        name=payload.name,
+        league_id=league_id
+    )
+    db.add(team)
+    db.commit()
+    db.refresh(team)
+    return team
+
+@router.post("/teams/{team_id}/players", status_code=201)
+def create_player(team_id: int, payload: schemas.PlayerCreate, db: Session = Depends(get_db)):
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+        
+    try:
+        position = models.PlayerPosition(payload.position)
+        tier = models.PlayerTier(payload.tier)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid position or tier")
+        
+    player = models.Player(
+        name=payload.name,
+        position=position,
+        tier=tier,
+        credit_value=payload.credit_value,
+        team_id=team_id
+    )
+    db.add(player)
+    db.commit()
+    db.refresh(player)
+    return player
+
+@router.patch("/players/{player_id}", status_code=200)
+def update_player(player_id: int, payload: schemas.PlayerUpdate, db: Session = Depends(get_db)):
+    player = db.query(models.Player).filter(models.Player.id == player_id).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+        
+    if payload.is_active is not None:
+        player.is_active = payload.is_active
+    if payload.credit_value is not None:
+        player.credit_value = payload.credit_value
+    if payload.tier is not None:
+        try:
+            player.tier = models.PlayerTier(payload.tier)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tier")
+            
+    db.commit()
+    db.refresh(player)
+    return player

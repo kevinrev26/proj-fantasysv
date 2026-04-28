@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Fantasy SV</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f111a;
+            --surface-color: #1a1d2d;
+            --surface-color-light: #252a40;
+            --primary-color: #FF2E93;
+            --primary-glow: rgba(255, 46, 147, 0.4);
+            --secondary-color: #00F0FF;
+            --text-color: #ffffff;
+            --text-muted: #8b92b2;
+            --danger-color: #ff3366;
+            --success-color: #00e676;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: var(--surface-color);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-item {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background-color: var(--surface-color-light);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(255, 46, 147, 0.1) 0%, transparent 100%);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 3rem 4rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 1rem;
+        }
+
+        h1, h2 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .auth-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background-color: var(--surface-color);
+            padding: 0.8rem 1.2rem;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        input[type="password"] {
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            outline: none;
+            width: 200px;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        textarea {
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            min-height: 200px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+            white-space: pre;
+        }
+
+        textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--primary-glow);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary-color), #ff5eaf);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--primary-glow);
+            filter: brightness(1.1);
+        }
+
+        button:disabled {
+            background: var(--surface-color-light);
+            box-shadow: none;
+            cursor: not-allowed;
+            color: var(--text-muted);
+        }
+
+        .instructions {
+            background-color: rgba(0, 240, 255, 0.05);
+            border-left: 4px solid var(--secondary-color);
+            padding: 1rem 1.5rem;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .console {
+            background-color: #0b0c10;
+            border-radius: 8px;
+            padding: 1rem;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .log-success { color: var(--success-color); }
+        .log-error { color: var(--danger-color); }
+        .log-info { color: #5bc0de; }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface-color-light); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3e466b; 
+        }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">⚽ Fantasy Admin</div>
+        <div class="nav-item active" data-target="seasons-sec">🌍 Seasons</div>
+        <div class="nav-item" data-target="matchdays-sec">⏱️ Matchdays</div>
+        <div class="nav-item" data-target="leagues-sec">🏆 Leagues</div>
+        <div class="nav-item" data-target="teams-sec">🛡️ Teams</div>
+        <div class="nav-item" data-target="players-sec">🏃 Players (Create)</div>
+        <div class="nav-item" data-target="players-update-sec">⚙️ Players (Update)</div>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>Data Management</h1>
+                <p style="color: var(--text-muted); margin-top: 5px;">Bulk import entities via CSV</p>
+            </div>
+            <div class="auth-container">
+                <span title="Admin Token">🔑</span>
+                <input type="password" id="admin-token" placeholder="Enter Dummy Admin Token" value="dummy-admin-token">
+            </div>
+        </div>
+
+        <!-- SEASONS -->
+        <section id="seasons-sec" class="section active">
+            <div class="card">
+                <h2>Import Seasons</h2>
+                <div class="instructions">
+                    Headers required: <code>name, start_date, end_date</code><br>
+                    Format: <code>YYYY-MM-DD</code> for dates.
+                </div>
+                <div class="form-group">
+                    <textarea id="csv-seasons" placeholder="name,start_date,end_date&#10;Season 2026/2027,2026-08-01,2027-05-31"></textarea>
+                </div>
+                <button onclick="processCSV('csv-seasons', '/admin/seasons', ['name', 'start_date', 'end_date'])">Run Import</button>
+                <div class="console" id="log-seasons"></div>
+            </div>
+        </section>
+
+        <!-- MATCHDAYS -->
+        <section id="matchdays-sec" class="section">
+            <div class="card">
+                <h2>Import Matchdays</h2>
+                <div class="instructions">
+                    Headers required: <code>season_id, name, deadline_utc</code><br>
+                    Format: <code>deadline_utc</code> is optional (e.g. <code>2026-08-15T12:00:00Z</code>).
+                </div>
+                <div class="form-group">
+                    <textarea id="csv-matchdays" placeholder="season_id,name,deadline_utc&#10;1,Matchday 1,2026-08-15T12:00:00Z"></textarea>
+                </div>
+                <button onclick="processCSV('csv-matchdays', '/admin/seasons/{season_id}/matchdays', ['name', 'deadline_utc'])">Run Import</button>
+                <div class="console" id="log-matchdays"></div>
+            </div>
+        </section>
+
+        <!-- LEAGUES -->
+        <section id="leagues-sec" class="section">
+            <div class="card">
+                <h2>Import Leagues</h2>
+                <div class="instructions">
+                    Headers required: <code>season_id, name</code><br>
+                </div>
+                <div class="form-group">
+                    <textarea id="csv-leagues" placeholder="season_id,name&#10;1,Premier League"></textarea>
+                </div>
+                <button onclick="processCSV('csv-leagues', '/admin/seasons/{season_id}/leagues', ['name'])">Run Import</button>
+                <div class="console" id="log-leagues"></div>
+            </div>
+        </section>
+
+        <!-- TEAMS -->
+        <section id="teams-sec" class="section">
+            <div class="card">
+                <h2>Import Teams</h2>
+                <div class="instructions">
+                    Headers required: <code>league_id, name</code><br>
+                </div>
+                <div class="form-group">
+                    <textarea id="csv-teams" placeholder="league_id,name&#10;1,Arsenal FC"></textarea>
+                </div>
+                <button onclick="processCSV('csv-teams', '/admin/leagues/{league_id}/teams', ['name'])">Run Import</button>
+                <div class="console" id="log-teams"></div>
+            </div>
+        </section>
+
+        <!-- PLAYERS -->
+        <section id="players-sec" class="section">
+            <div class="card">
+                <h2>Import Players</h2>
+                <div class="instructions">
+                    Headers required: <code>team_id, name, position, tier, credit_value</code><br>
+                    Values constraint: position (GK, DF, MF, FW), tier (A, B, C, D).
+                </div>
+                <div class="form-group">
+                    <textarea id="csv-players" placeholder="team_id,name,position,tier,credit_value&#10;1,T. Henry,FW,A,12"></textarea>
+                </div>
+                <button onclick="processCSV('csv-players', '/admin/teams/{team_id}/players', ['name', 'position', 'tier', 'credit_value'])">Run Import</button>
+                <div class="console" id="log-players"></div>
+            </div>
+        </section>
+
+        <!-- PLAYERS UPDATE (PATCH) -->
+        <section id="players-update-sec" class="section">
+            <div class="card">
+                <h2>Update Players</h2>
+                <div class="instructions">
+                    Headers required: <code>player_id</code><br>
+                    Optional params: <code>is_active, credit_value, tier</code> (only provided ones will be updated).
+                </div>
+                <div class="form-group">
+                    <textarea id="csv-players-update" placeholder="player_id,is_active,credit_value,tier&#10;1,false,,B"></textarea>
+                </div>
+                <button onclick="processCSV('csv-players-update', '/admin/players/{player_id}', ['is_active', 'credit_value', 'tier'], 'PATCH')">Run Update</button>
+                <div class="console" id="log-players-update"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                
+                item.classList.add('active');
+                document.getElementById(item.dataset.target).classList.add('active');
+            });
+        });
+
+        function log(targetId, msg, type="info") {
+            const consoleEl = document.getElementById(targetId.replace('csv-', 'log-'));
+            const div = document.createElement('div');
+            div.className = `log-${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            consoleEl.appendChild(div);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        async function processCSV(textareaId, urlTemplate, payloadFields, method="POST") {
+            const btn = document.querySelector(`#${textareaId}`).parentElement.nextElementSibling;
+            btn.disabled = true;
+            document.getElementById(textareaId.replace('csv-', 'log-')).innerHTML = "";
+            log(textareaId, "Starting bulk process...");
+
+            const token = document.getElementById('admin-token').value;
+            if(!token) {
+                log(textareaId, "Missing admin token!", "error");
+                btn.disabled = false;
+                return;
+            }
+
+            const raw = document.getElementById(textareaId).value.trim();
+            if(!raw) {
+                log(textareaId, "CSV is empty.", "error");
+                btn.disabled = false;
+                return;
+            }
+
+            const lines = raw.split('\n').filter(l => l.trim() !== "");
+            const headers = lines[0].split(',').map(h => h.trim());
+
+            log(textareaId, `Found ${lines.length - 1} records to process.`);
+
+            for(let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                let rowData = {};
+                
+                headers.forEach((h, index) => {
+                    let val = values[index];
+                    if(val === '' || val === undefined) val = null;
+                    else if(val.toLowerCase() === 'true') val = true;
+                    else if(val.toLowerCase() === 'false') val = false;
+                    else if(!isNaN(val) && val !== null && !val.includes('T')) val = Number(val); // Avoid converting iso dates
+                    rowData[h] = val;
+                });
+
+                // Generate Dynamic URL
+                let finalUrl = urlTemplate;
+                if(finalUrl.includes('{season_id}')) finalUrl = finalUrl.replace('{season_id}', rowData.season_id);
+                if(finalUrl.includes('{league_id}')) finalUrl = finalUrl.replace('{league_id}', rowData.league_id);
+                if(finalUrl.includes('{team_id}')) finalUrl = finalUrl.replace('{team_id}', rowData.team_id);
+                if(finalUrl.includes('{player_id}')) finalUrl = finalUrl.replace('{player_id}', rowData.player_id);
+
+                // Build Payload
+                let payload = {};
+                payloadFields.forEach(pf => {
+                    if(rowData[pf] !== null) {
+                        payload[pf] = rowData[pf];
+                    }
+                });
+
+                try {
+                    const response = await fetch(finalUrl, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if(response.ok) {
+                        const json = await response.json();
+                        log(textareaId, `Row ${i}: Success (ID: ${json.id || Object.values(json)[0]})`, "success");
+                    } else {
+                        const error = await response.json();
+                        log(textareaId, `Row ${i}: Failed - ${JSON.stringify(error)}`, "error");
+                    }
+                } catch(err) {
+                    log(textareaId, `Row ${i}: Error - ${err.message}`, "error");
+                }
+            }
+            
+            log(textareaId, "Process finished.");
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>
