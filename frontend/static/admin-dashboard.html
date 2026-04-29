@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -89,7 +90,8 @@
             padding-bottom: 1rem;
         }
 
-        h1, h2 {
+        h1,
+        h2 {
             margin: 0;
             font-weight: 700;
         }
@@ -123,15 +125,22 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .card {
             background-color: var(--surface-color);
             padding: 2rem;
             border-radius: var(--border-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.05);
             margin-bottom: 2rem;
         }
@@ -215,30 +224,41 @@
             font-family: monospace;
             font-size: 0.85rem;
             margin-top: 1rem;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .log-success { color: var(--success-color); }
-        .log-error { color: var(--danger-color); }
-        .log-info { color: #5bc0de; }
+        .log-success {
+            color: var(--success-color);
+        }
+
+        .log-error {
+            color: var(--danger-color);
+        }
+
+        .log-info {
+            color: #5bc0de;
+        }
 
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
+
         ::-webkit-scrollbar-track {
-            background: var(--bg-color); 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--surface-color-light); 
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #3e466b; 
+            background: var(--bg-color);
         }
 
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface-color-light);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3e466b;
+        }
     </style>
 </head>
+
 <body>
 
     <aside class="sidebar">
@@ -272,9 +292,11 @@
                     Format: <code>YYYY-MM-DD</code> for dates.
                 </div>
                 <div class="form-group">
-                    <textarea id="csv-seasons" placeholder="name,start_date,end_date&#10;Season 2026/2027,2026-08-01,2027-05-31"></textarea>
+                    <textarea id="csv-seasons"
+                        placeholder="name,start_date,end_date&#10;Season 2026/2027,2026-08-01,2027-05-31"></textarea>
                 </div>
-                <button onclick="processCSV('csv-seasons', '/admin/seasons', ['name', 'start_date', 'end_date'])">Run Import</button>
+                <button onclick="processCSV('csv-seasons', '/admin/seasons', ['name', 'start_date', 'end_date'])">Run
+                    Import</button>
                 <div class="console" id="log-seasons"></div>
             </div>
         </section>
@@ -288,9 +310,12 @@
                     Format: <code>deadline_utc</code> is optional (e.g. <code>2026-08-15T12:00:00Z</code>).
                 </div>
                 <div class="form-group">
-                    <textarea id="csv-matchdays" placeholder="season_id,name,deadline_utc&#10;1,Matchday 1,2026-08-15T12:00:00Z"></textarea>
+                    <textarea id="csv-matchdays"
+                        placeholder="season_id,name,deadline_utc&#10;1,Matchday 1,2026-08-15T12:00:00Z"></textarea>
                 </div>
-                <button onclick="processCSV('csv-matchdays', '/admin/seasons/{season_id}/matchdays', ['name', 'deadline_utc'])">Run Import</button>
+                <button
+                    onclick="processCSV('csv-matchdays', '/admin/seasons/{season_id}/matchdays', ['name', 'deadline_utc'])">Run
+                    Import</button>
                 <div class="console" id="log-matchdays"></div>
             </div>
         </section>
@@ -305,7 +330,8 @@
                 <div class="form-group">
                     <textarea id="csv-leagues" placeholder="season_id,name&#10;1,Premier League"></textarea>
                 </div>
-                <button onclick="processCSV('csv-leagues', '/admin/seasons/{season_id}/leagues', ['name'])">Run Import</button>
+                <button onclick="processCSV('csv-leagues', '/admin/seasons/{season_id}/leagues', ['name'])">Run
+                    Import</button>
                 <div class="console" id="log-leagues"></div>
             </div>
         </section>
@@ -320,7 +346,8 @@
                 <div class="form-group">
                     <textarea id="csv-teams" placeholder="league_id,name&#10;1,Arsenal FC"></textarea>
                 </div>
-                <button onclick="processCSV('csv-teams', '/admin/leagues/{league_id}/teams', ['name'])">Run Import</button>
+                <button onclick="processCSV('csv-teams', '/admin/leagues/{league_id}/teams', ['name'])">Run
+                    Import</button>
                 <div class="console" id="log-teams"></div>
             </div>
         </section>
@@ -334,9 +361,12 @@
                     Values constraint: position (GK, DF, MF, FW), tier (A, B, C, D).
                 </div>
                 <div class="form-group">
-                    <textarea id="csv-players" placeholder="team_id,name,position,tier,credit_value&#10;1,T. Henry,FW,A,12"></textarea>
+                    <textarea id="csv-players"
+                        placeholder="team_id,name,position,tier,credit_value&#10;1,T. Henry,FW,A,12"></textarea>
                 </div>
-                <button onclick="processCSV('csv-players', '/admin/teams/{team_id}/players', ['name', 'position', 'tier', 'credit_value'])">Run Import</button>
+                <button
+                    onclick="processCSV('csv-players', '/admin/teams/{team_id}/players', ['name', 'position', 'tier', 'credit_value'])">Run
+                    Import</button>
                 <div class="console" id="log-players"></div>
             </div>
         </section>
@@ -350,9 +380,12 @@
                     Optional params: <code>is_active, credit_value, tier</code> (only provided ones will be updated).
                 </div>
                 <div class="form-group">
-                    <textarea id="csv-players-update" placeholder="player_id,is_active,credit_value,tier&#10;1,false,,B"></textarea>
+                    <textarea id="csv-players-update"
+                        placeholder="player_id,is_active,credit_value,tier&#10;1,false,,B"></textarea>
                 </div>
-                <button onclick="processCSV('csv-players-update', '/admin/players/{player_id}', ['is_active', 'credit_value', 'tier'], 'PATCH')">Run Update</button>
+                <button
+                    onclick="processCSV('csv-players-update', '/admin/players/{player_id}', ['is_active', 'credit_value', 'tier'], 'PATCH')">Run
+                    Update</button>
                 <div class="console" id="log-players-update"></div>
             </div>
         </section>
@@ -365,13 +398,13 @@
             item.addEventListener('click', () => {
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                
+
                 item.classList.add('active');
                 document.getElementById(item.dataset.target).classList.add('active');
             });
         });
 
-        function log(targetId, msg, type="info") {
+        function log(targetId, msg, type = "info") {
             const consoleEl = document.getElementById(targetId.replace('csv-', 'log-'));
             const div = document.createElement('div');
             div.className = `log-${type}`;
@@ -380,21 +413,21 @@
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
-        async function processCSV(textareaId, urlTemplate, payloadFields, method="POST") {
+        async function processCSV(textareaId, urlTemplate, payloadFields, method = "POST") {
             const btn = document.querySelector(`#${textareaId}`).parentElement.nextElementSibling;
             btn.disabled = true;
             document.getElementById(textareaId.replace('csv-', 'log-')).innerHTML = "";
             log(textareaId, "Starting bulk process...");
 
             const token = document.getElementById('admin-token').value;
-            if(!token) {
+            if (!token) {
                 log(textareaId, "Missing admin token!", "error");
                 btn.disabled = false;
                 return;
             }
 
             const raw = document.getElementById(textareaId).value.trim();
-            if(!raw) {
+            if (!raw) {
                 log(textareaId, "CSV is empty.", "error");
                 btn.disabled = false;
                 return;
@@ -403,32 +436,31 @@
             const lines = raw.split('\n').filter(l => l.trim() !== "");
             const headers = lines[0].split(',').map(h => h.trim());
 
-            log(textareaId, `Found ${lines.length - 1} records to process.`);
-
-            for(let i = 1; i < lines.length; i++) {
+            for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',').map(v => v.trim());
                 let rowData = {};
-                
+
                 headers.forEach((h, index) => {
                     let val = values[index];
-                    if(val === '' || val === undefined) val = null;
-                    else if(val.toLowerCase() === 'true') val = true;
-                    else if(val.toLowerCase() === 'false') val = false;
-                    else if(!isNaN(val) && val !== null && !val.includes('T')) val = Number(val); // Avoid converting iso dates
+                    if (val === '' || val === undefined) val = null;
+                    else if (val.toLowerCase() === 'true') val = true;
+                    else if (val.toLowerCase() === 'false') val = false;
+                    else if (!isNaN(val) && val !== null && !val.includes('T')) val = Number(val); // Avoid converting iso dates
                     rowData[h] = val;
                 });
 
                 // Generate Dynamic URL
-                let finalUrl = urlTemplate;
-                if(finalUrl.includes('{season_id}')) finalUrl = finalUrl.replace('{season_id}', rowData.season_id);
-                if(finalUrl.includes('{league_id}')) finalUrl = finalUrl.replace('{league_id}', rowData.league_id);
-                if(finalUrl.includes('{team_id}')) finalUrl = finalUrl.replace('{team_id}', rowData.team_id);
-                if(finalUrl.includes('{player_id}')) finalUrl = finalUrl.replace('{player_id}', rowData.player_id);
+                let baseUrl = "http://localhost:8000";
+                let finalUrl = baseUrl + urlTemplate;
+                if (finalUrl.includes('{season_id}')) finalUrl = finalUrl.replace('{season_id}', rowData.season_id);
+                if (finalUrl.includes('{league_id}')) finalUrl = finalUrl.replace('{league_id}', rowData.league_id);
+                if (finalUrl.includes('{team_id}')) finalUrl = finalUrl.replace('{team_id}', rowData.team_id);
+                if (finalUrl.includes('{player_id}')) finalUrl = finalUrl.replace('{player_id}', rowData.player_id);
 
                 // Build Payload
                 let payload = {};
                 payloadFields.forEach(pf => {
-                    if(rowData[pf] !== null) {
+                    if (rowData[pf] !== null) {
                         payload[pf] = rowData[pf];
                     }
                 });
@@ -443,21 +475,22 @@
                         body: JSON.stringify(payload)
                     });
 
-                    if(response.ok) {
+                    if (response.ok) {
                         const json = await response.json();
                         log(textareaId, `Row ${i}: Success (ID: ${json.id || Object.values(json)[0]})`, "success");
                     } else {
                         const error = await response.json();
                         log(textareaId, `Row ${i}: Failed - ${JSON.stringify(error)}`, "error");
                     }
-                } catch(err) {
+                } catch (err) {
                     log(textareaId, `Row ${i}: Error - ${err.message}`, "error");
                 }
             }
-            
+
             log(textareaId, "Process finished.");
             btn.disabled = false;
         }
     </script>
 </body>
+
 </html>

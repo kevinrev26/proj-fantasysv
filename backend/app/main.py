@@ -23,8 +23,17 @@ if settings.SENTRY_DSN:
     )
 
 from .routers import auth, squad, admin
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Fantasy Football API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth.router)
 app.include_router(squad.router)
