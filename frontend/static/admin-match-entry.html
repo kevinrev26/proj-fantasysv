@@ -32,16 +32,49 @@
     <div class="container" x-data="matchEntryApp()" x-init="init()">
         <header>
             <h1>📊 Match Result Entry</h1>
-            <div class="matchday-info" x-show="matchdayId">
-                <label>Matchday ID: 
-                    <input type="number" x-model.number="matchdayId" @change="loadPlayers()" min="1">
+            <div class="filters-row" style="display: flex; gap: 15px; margin-top: 15px;">
+                <label>Season:
+                    <select x-model="selectedSeasonId" @change="loadLeaguesAndMatchdays()" style="padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        <option value="">-- Select Season --</option>
+                        <template x-for="s in seasons" :key="s.id">
+                            <option :value="s.id" x-text="s.name"></option>
+                        </template>
+                    </select>
                 </label>
+                <label>League:
+                    <select x-model="selectedLeagueId" @change="loadPlayers()" style="padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        <option value="">-- All Leagues --</option>
+                        <template x-for="l in leagues" :key="l.id">
+                            <option :value="l.id" x-text="l.name"></option>
+                        </template>
+                    </select>
+                </label>
+                <label>Matchday:
+                    <select x-model="matchdayId" @change="onMatchdayChange()" style="padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                        <option value="">-- Select Matchday --</option>
+                        <template x-for="m in matchdays" :key="m.id">
+                            <option :value="m.id" x-text="m.name"></option>
+                        </template>
+                    </select>
+                </label>
+            </div>
+            <div x-show="matchdayDeadline" style="margin-top: 10px; font-weight: bold; color: var(--teal);">
+                Deadline: <span x-text="new Date(matchdayDeadline).toLocaleString()"></span>
             </div>
         </header>
 
         <div x-show="loading" class="loading">Loading players...</div>
 
         <template x-if="!loading && teams.length">
+            <div>
+                <div class="bulk-import-section" style="margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                    <h3 style="margin-bottom: 10px;">Bulk Import Results (CSV)</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;">
+                        Headers expected: <code>player_id, minutes_played, goals, assists, goals_conceded, yellow_card, red_card, own_goal, penalty_missed, penalty_saved</code>
+                    </p>
+                    <textarea x-model="csvData" rows="5" style="width: 100%; font-family: monospace; padding: 10px; border-radius: 4px; background: var(--navy); color: var(--text-white); border: 1px solid var(--teal);" placeholder="Paste CSV data here..."></textarea>
+                    <button type="button" @click="parseCSV()" style="margin-top: 10px; background: var(--blue-accent); border: none; padding: 8px 15px; border-radius: 4px; color: #fff; font-weight: bold; cursor: pointer;">Load CSV Data</button>
+                </div>
             <form @submit.prevent="submitStats">
                 <div class="table-responsive">
                     <table class="stats-table">
@@ -96,6 +129,9 @@
                     </button>
                 </div>
             </form>
+                </div>
+            </form>
+            </div>
         </template>
 
         <!-- Confirmation / error messages -->
@@ -111,7 +147,14 @@
     <script>
         function matchEntryApp() {
             return {
-                matchdayId: 1,
+                seasons: [],
+                leagues: [],
+                matchdays: [],
+                selectedSeasonId: '',
+                selectedLeagueId: '',
+                matchdayId: '',
+                matchdayDeadline: '',
+                csvData: '',
                 teams: [],
                 loading: false,
                 submitting: false,
@@ -122,15 +165,110 @@
                 pollInterval: null,
 
                 async init() {
-                    if (this.matchdayId) await this.loadPlayers();
+                    // Fetch seasons on load
+                    try {
+                        const res = await fetch('/admin/seasons', { headers: { 'Authorization': 'Bearer dummy-admin-token' } });
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.seasons = data.seasons;
+                        }
+                    } catch (e) {
+                        this.showMessage('Failed to load seasons', 'error');
+                    }
+                },
+
+                async loadLeaguesAndMatchdays() {
+                    this.leagues = [];
+                    this.matchdays = [];
+                    this.selectedLeagueId = '';
+                    this.matchdayId = '';
+                    this.matchdayDeadline = '';
+                    this.teams = [];
+                    if (!this.selectedSeasonId) return;
+                    
+                    try {
+                        const [resL, resM] = await Promise.all([
+                            fetch(`/admin/seasons/${this.selectedSeasonId}/leagues`, { headers: { 'Authorization': 'Bearer dummy-admin-token' } }),
+                            fetch(`/admin/seasons/${this.selectedSeasonId}/matchdays`, { headers: { 'Authorization': 'Bearer dummy-admin-token' } })
+                        ]);
+                        if (resL.ok) {
+                            const dataL = await resL.json();
+                            this.leagues = dataL.leagues;
+                        }
+                        if (resM.ok) {
+                            const dataM = await resM.json();
+                            this.matchdays = dataM.matchdays;
+                        }
+                    } catch (e) {
+                        this.showMessage('Failed to load leagues/matchdays', 'error');
+                    }
+                },
+
+                onMatchdayChange() {
+                    const matchday = this.matchdays.find(m => m.id === parseInt(this.matchdayId));
+                    if (matchday && matchday.deadline_utc) {
+                        this.matchdayDeadline = matchday.deadline_utc;
+                    } else {
+                        this.matchdayDeadline = '';
+                    }
+                    this.loadPlayers();
+                },
+
+                parseCSV() {
+                    if (!this.csvData) return;
+                    const lines = this.csvData.split('\n').filter(l => l.trim() !== "");
+                    if (lines.length < 2) {
+                        this.showMessage("CSV must have headers and at least one data row.", "error");
+                        return;
+                    }
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    
+                    const parsedData = {};
+                    for (let i = 1; i < lines.length; i++) {
+                        const vals = lines[i].split(',').map(v => v.trim());
+                        let row = {};
+                        headers.forEach((h, idx) => {
+                            let val = vals[idx];
+                            row[h] = val ? parseInt(val) : 0;
+                        });
+                        if (row.player_id) {
+                            parsedData[row.player_id] = row;
+                        }
+                    }
+
+                    // map to this.teams
+                    for (let team of this.teams) {
+                        for (let player of team.players) {
+                            if (parsedData[player.player_id]) {
+                                const pData = parsedData[player.player_id];
+                                player.stats.minutes_played = pData.minutes_played || 0;
+                                player.stats.goals = pData.goals || 0;
+                                player.stats.assists = pData.assists || 0;
+                                player.stats.goals_conceded = pData.goals_conceded || 0;
+                                player.stats.yellow_card = pData.yellow_card || 0;
+                                player.stats.red_card = pData.red_card || 0;
+                                player.stats.own_goal = pData.own_goal || 0;
+                                player.stats.penalty_missed = pData.penalty_missed || 0;
+                                player.stats.penalty_saved = pData.penalty_saved || 0;
+                            }
+                        }
+                    }
+                    this.showMessage("CSV data successfully populated into the table.", "success");
                 },
 
                 async loadPlayers() {
-                    if (!this.matchdayId) return;
+                    if (!this.matchdayId) {
+                        this.teams = [];
+                        return;
+                    }
                     this.loading = true;
                     this.message = '';
                     try {
-                        const res = await fetch(`/admin/matchday/${this.matchdayId}/players`);
+                        let url = `/admin/matchday/${this.matchdayId}/players`;
+                        if (this.selectedLeagueId) {
+                            url += `?league_id=${this.selectedLeagueId}`;
+                        }
+                        const res = await fetch(url, { headers: { 'Authorization': 'Bearer dummy-admin-token' } });
                         if (!res.ok) throw new Error('Failed to load players');
                         const data = await res.json();
                         // Initialize stats object for each player
@@ -208,7 +346,10 @@
                     try {
                         const res = await fetch(`/admin/matchday/${this.matchdayId}/results`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer dummy-admin-token'
+                            },
                             body: JSON.stringify({ stats })
                         });
                         if (!res.ok) {
@@ -231,7 +372,7 @@
                     this.pollInterval = setInterval(async () => {
                         if (!this.taskId) return;
                         try {
-                            const res = await fetch(`/admin/matchday/${this.matchdayId}/task-status`);
+                            const res = await fetch(`/admin/matchday/${this.matchdayId}/task-status`, { headers: { 'Authorization': 'Bearer dummy-admin-token' } });
                             if (!res.ok) throw new Error();
                             const data = await res.json();
                             this.taskStatus = data.status;

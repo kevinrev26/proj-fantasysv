@@ -98,19 +98,20 @@ def submit_match_results(
     return {"task_id": task.id, "status": "accepted"}
 
 @router.get("/matchday/{matchday_id}/players")
-def get_matchday_players(matchday_id: int, db: Session = Depends(get_db)):
+def get_matchday_players(matchday_id: int, league_id: Optional[int] = None, db: Session = Depends(get_db)):
     # Fetch matchday and its season
     matchday = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
     if not matchday:
         raise HTTPException(404, "Matchday not found")
     
-    # Get all teams that have players in this matchday (depends on your schedule)
-    # Simplified: assume you have a MatchPlayer table or you can get players from tournament_phase
-    # For demonstration, we return all players from all teams in the season that are still active.
-    players = db.query(models.Player).join(models.Team).filter(
-        models.Player.is_active == True,
-        models.Team.league_id == ... # You need a way to link matchday to specific matches
-    ).all()
+    # Get players
+    query = db.query(models.Player).join(models.Team).filter(
+        models.Player.is_active == True
+    )
+    if league_id is not None:
+        query = query.filter(models.Team.league_id == league_id)
+        
+    players = query.all()
     
     # Group by team
     teams_dict = {}
@@ -191,6 +192,21 @@ def restore_teams(
     task = reactivate_players_for_teams_task.delay(payload.team_ids)
     
     return {"task_id": task.id, "status": "accepted", "teams_restored": payload.team_ids}
+
+@router.get("/seasons")
+def get_seasons(db: Session = Depends(get_db)):
+    seasons = db.query(models.Season).all()
+    return {"seasons": seasons}
+
+@router.get("/seasons/{season_id}/leagues")
+def get_leagues(season_id: int, db: Session = Depends(get_db)):
+    leagues = db.query(models.League).filter(models.League.season_id == season_id).all()
+    return {"leagues": leagues}
+
+@router.get("/seasons/{season_id}/matchdays")
+def get_matchdays(season_id: int, db: Session = Depends(get_db)):
+    matchdays = db.query(models.Matchday).filter(models.Matchday.season_id == season_id).all()
+    return {"matchdays": matchdays}
 
 @router.post("/seasons", status_code=201)
 def create_season(payload: schemas.SeasonCreate, db: Session = Depends(get_db)):
