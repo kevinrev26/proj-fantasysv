@@ -208,6 +208,27 @@ def get_matchdays(season_id: int, db: Session = Depends(get_db)):
     matchdays = db.query(models.Matchday).filter(models.Matchday.season_id == season_id).all()
     return {"matchdays": matchdays}
 
+@router.post("/seasons/{season_id}/phases", status_code=201)
+def create_tournament_phase(season_id: int, payload: schemas.TournamentPhaseCreate, db: Session = Depends(get_db)):
+    season = db.query(models.Season).filter(models.Season.id == season_id).first()
+    if not season:
+        raise HTTPException(status_code=404, detail="Season not found")
+
+    try:
+        phase_name = models.PhaseName(payload.name)
+    except ValueError:
+        valid = [e.value for e in models.PhaseName]
+        raise HTTPException(status_code=400, detail=f"Invalid phase name. Valid values: {valid}")
+
+    phase = models.TournamentPhase(
+        name=phase_name,
+        season_id=season_id
+    )
+    db.add(phase)
+    db.commit()
+    db.refresh(phase)
+    return {"id": phase.id, "name": phase.name.value, "season_id": phase.season_id}
+
 @router.post("/seasons", status_code=201)
 def create_season(payload: schemas.SeasonCreate, db: Session = Depends(get_db)):
     season = models.Season(

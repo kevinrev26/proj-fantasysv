@@ -269,6 +269,7 @@
         <div class="nav-item" data-target="teams-sec">🛡️ Teams</div>
         <div class="nav-item" data-target="players-sec">🏃 Players (Create)</div>
         <div class="nav-item" data-target="players-update-sec">⚙️ Players (Update)</div>
+        <div class="nav-item" data-target="phases-sec">🏆 Tournament Phases</div>
     </aside>
 
     <main class="main-content">
@@ -387,6 +388,24 @@
                     onclick="processCSV('csv-players-update', '/admin/players/{player_id}', ['is_active', 'credit_value', 'tier'], 'PATCH')">Run
                     Update</button>
                 <div class="console" id="log-players-update"></div>
+            </div>
+        </section>
+
+        <!-- TOURNAMENT PHASES -->
+        <section id="phases-sec" class="section">
+            <div class="card">
+                <h2>Import Tournament Phases</h2>
+                <div class="instructions">
+                    Headers required: <code>season_id, name</code><br>
+                    Valid phase names: <code>round_of_64, round_of_32, round_of_16, group, quarterfinal, semifinal, final</code>
+                </div>
+                <div class="form-group">
+                    <textarea id="csv-phases"
+                        placeholder="season_id,name&#10;1,round_of_16&#10;1,quarterfinal"></textarea>
+                </div>
+                <button onclick="processCSV('csv-phases', '/admin/seasons/{season_id}/phases', ['name'])">Run
+                    Import</button>
+                <div class="console" id="log-phases"></div>
             </div>
         </section>
 

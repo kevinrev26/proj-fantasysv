@@ -29,6 +29,9 @@ class FantasySlot(enum.Enum):
     bench = "bench"
 
 class PhaseName(enum.Enum):
+    round_of_64 = "round_of_64"
+    round_of_32 = "round_of_32"
+    round_of_16 = "round_of_16"
     group = "group"
     quarterfinal = "quarterfinal"
     semifinal = "semifinal"

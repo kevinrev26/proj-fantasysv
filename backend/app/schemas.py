@@ -46,3 +46,6 @@ class PlayerUpdate(BaseModel):
     is_active: Optional[bool] = None
     credit_value: Optional[int] = None
     tier: Optional[str] = None
+
+class TournamentPhaseCreate(BaseModel):
+    name: str
