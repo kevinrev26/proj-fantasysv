@@ -43,12 +43,32 @@
 </head>
 <body>
 
+<!-- ── MAIN NAVIGATION ── -->
+<nav class="main-nav">
+  <div class="nav-container">
+    <a href="/" class="nav-brand">
+      <span class="nav-logo-icon">⚽</span>
+      Fantasy SV
+    </a>
+    
+    <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="nav-links" id="nav-links">
+      <a href="squad-builder.html" class="nav-link">My Squad</a>
+      <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <button class="sign-out-btn">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
 <!-- ── HEADER ── -->
 <header class="app-header">
   <div class="header-inner">
     <div class="header-logo">
-      <span class="logo-icon">⚽</span>
-      <span class="logo-label">Squad Builder</span>
+      <span class="logo-label" style="font-size: 1.1rem; opacity: 0.8;">Squad Builder</span>
     </div>
     <div class="header-right" style="display: flex; align-items: center; gap: 12px;">
       <div class="countdown-timer" 

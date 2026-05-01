@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Leaderboard — EA FC Fantasy</title>
+  <link rel="stylesheet" href="style.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
@@ -285,19 +286,26 @@
 </head>
 <body>
 
-<header class="app-header">
-  <div class="header-inner">
-    <div class="header-logo">
-      <span class="logo-icon">⚽</span>
-      <span class="logo-label">Squad Builder</span>
-    </div>
-    <div class="nav-links">
-      <a href="#" class="nav-link">Pitch</a>
-      <a href="#" class="nav-link">Players</a>
-      <a href="#" class="nav-link active">Leaderboard</a>
+<!-- ── MAIN NAVIGATION ── -->
+<nav class="main-nav">
+  <div class="nav-container">
+    <a href="/" class="nav-brand">
+      <span class="nav-logo-icon">⚽</span>
+      Fantasy SV
+    </a>
+    
+    <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="nav-links" id="nav-links">
+      <a href="squad-builder.html" class="nav-link">My Squad</a>
+      <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <button class="sign-out-btn">Sign Out</button>
     </div>
   </div>
-</header>
+</nav>
 
 <main x-data="leaderboardApp()" x-init="init()">
   <div class="leaderboard-container">
