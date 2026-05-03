@@ -12,6 +12,8 @@ class UserResponse(BaseModel):
     username: str
     email: EmailStr
     role: str
+    is_active: bool
+    onboarding_complete: bool
     
     class Config:
         from_attributes = True
@@ -20,6 +22,12 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
+
+class ActivateAccountRequest(BaseModel):
+    token: str
+
+class SetTeamNameRequest(BaseModel):
+    team_name: str
 
 class SeasonCreate(BaseModel):
     name: str

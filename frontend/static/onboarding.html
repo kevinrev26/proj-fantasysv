@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" x-data="onboardingApp()" x-init="init()">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Name Your Team — Fantasy SV</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    .auth-page {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 60%, #1a2233 100%);
+      padding: 24px 16px;
+    }
+    .auth-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 20px; padding: 40px 36px; width: 100%; max-width: 440px;
+      backdrop-filter: blur(12px);
+    }
+    .auth-logo { text-align: center; margin-bottom: 32px; }
+    .auth-logo .logo-icon { font-size: 2.8rem; display: block; margin-bottom: 8px; }
+    .auth-logo h1 { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 4px; }
+    .auth-logo p { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin: 0; }
+    .step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 28px; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+    .step-dot.done { background: rgba(0,212,170,0.5); }
+    .step-dot.active { background: #00d4aa; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .team-name-input {
+      width: 100%; padding: 16px; border-radius: 12px;
+      background: rgba(255,255,255,0.07); border: 2px solid rgba(255,255,255,0.12);
+      color: #fff; font-family: inherit; font-size: 1.3rem; font-weight: 800;
+      text-align: center; outline: none; transition: border-color 0.2s; box-sizing: border-box;
+    }
+    .team-name-input:focus { border-color: #00d4aa; background: rgba(0,212,170,0.07); }
+    .char-count { text-align: right; color: rgba(255,255,255,0.3); font-size: 0.8rem; margin-top: 6px; }
+    .submit-btn {
+      width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer;
+      background: linear-gradient(135deg, #00d4aa, #00a8e8);
+      color: #fff; font-family: inherit; font-size: 1.05rem; font-weight: 800;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .submit-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .alert { padding: 14px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
+    .alert-error { background: rgba(255,95,109,0.15); border: 1px solid rgba(255,95,109,0.4); color: #ff9aa4; }
+    .suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .suggestion-chip {
+      padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.2s;
+    }
+    .suggestion-chip:hover { background: rgba(0,212,170,0.12); border-color: rgba(0,212,170,0.4); color: #00d4aa; }
+    .tip { color: rgba(255,255,255,0.3); font-size: 0.8rem; text-align: center; margin-top: 12px; }
+  </style>
+</head>
+<body style="margin:0;font-family:'Nunito',sans-serif;">
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="logo-icon">🏆</span>
+      <h1>Fantasy SV</h1>
+      <p>Name Your Team — Step 3 of 3</p>
+    </div>
+
+    <div class="step-indicator">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+
+    <div x-show="errorMsg" class="alert alert-error" x-text="errorMsg"></div>
+
+    <div>
+      <p style="color:rgba(255,255,255,0.55);margin:0 0 24px;line-height:1.6;text-align:center;">
+        Every great team needs a legendary name. What will yours be?
+      </p>
+
+      <div class="form-group">
+        <label>Team Name</label>
+        <input type="text" class="team-name-input" x-model="teamName"
+               placeholder="e.g. Los Galácticos" maxlength="50"
+               @keydown.enter="submit()" autocomplete="off"/>
+        <div class="char-count" x-text="`${teamName.length}/50`"></div>
+      </div>
+
+      <!-- Quick suggestions -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Need inspiration?</div>
+        <div class="suggestions">
+          <template x-for="s in suggestions" :key="s">
+            <button class="suggestion-chip" @click="teamName = s" x-text="s"></button>
+          </template>
+        </div>
+      </div>
+
+      <button class="submit-btn" @click="submit()" :disabled="loading || teamName.trim().length < 2">
+        <span x-text="loading ? 'Saving…' : 'Build My Squad →'"></span>
+      </button>
+      <p class="tip">You can change your team name later from your profile.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function onboardingApp() {
+  return {
+    teamName: '',
+    loading: false,
+    errorMsg: '',
+    suggestions: [
+      'Los Galácticos', 'The Untouchables', 'Penalty Kings',
+      'Thunder FC', 'The Underdogs', 'Chaos United',
+      'FC Barcelona Jr.', 'Red Rockets', 'Golden Boots'
+    ],
+
+    init() {
+      // Check we have a dummy token from activation step
+      const token = localStorage.getItem('dummy_token');
+      if (!token) {
+        // If no token, redirect to activation
+        // window.location.href = '/activate';
+      }
+    },
+
+    async submit() {
+      const name = this.teamName.trim();
+      if (name.length < 2) return;
+      this.loading = true;
+      this.errorMsg = '';
+      const token = localStorage.getItem('dummy_token') || 'dummy-token-user-1';
+      try {
+        const resp = await fetch('/auth/onboarding/team-name', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ team_name: name })
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          // Onboarding complete — go to squad builder
+          window.location.href = '/squad-builder.html';
+        } else {
+          this.errorMsg = data.detail || 'Could not save team name. Please try again.';
+        }
+      } catch (e) {
+        this.errorMsg = 'Network error. Please check your connection.';
+      } finally {
+        this.loading = false;
+      }
+    }
+  };
+}
+</script>
+</body>
+</html>

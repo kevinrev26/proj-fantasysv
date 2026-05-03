@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" x-data="profileApp()" x-init="init()">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile — Fantasy SV</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    .profile-page { max-width: 520px; margin: 0 auto; padding: 24px 16px 80px; }
+    .profile-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 20px; padding: 32px; margin-bottom: 20px;
+    }
+    .profile-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: linear-gradient(135deg, #00d4aa, #00a8e8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; margin: 0 auto 16px;
+    }
+    .profile-name { text-align: center; font-size: 1.4rem; font-weight: 800; color: #fff; margin: 0 0 4px; }
+    .profile-email { text-align: center; color: rgba(255,255,255,0.4); font-size: 0.9rem; margin: 0 0 20px; }
+    .profile-badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+      border-radius: 20px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; margin: 0 auto; display: block; width: fit-content;
+    }
+    .badge-active { background: rgba(0,212,170,0.15); border: 1px solid rgba(0,212,170,0.4); color: #00d4aa; }
+    .badge-inactive { background: rgba(255,95,109,0.15); border: 1px solid rgba(255,95,109,0.4); color: #ff9aa4; }
+    .badge-admin { background: rgba(245,200,66,0.15); border: 1px solid rgba(245,200,66,0.4); color: #f5c842; }
+    .section-title { font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+    .form-input {
+      width: 100%; padding: 12px 16px; border-radius: 10px;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      color: #fff; font-family: inherit; font-size: 1rem; outline: none;
+      transition: border-color 0.2s; box-sizing: border-box;
+    }
+    .form-input:focus { border-color: #00d4aa; background: rgba(0,212,170,0.07); }
+    .btn { padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer; font-family: inherit; font-size: 0.95rem; font-weight: 700; transition: all 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, #00d4aa, #00a8e8); color: #fff; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-ghost { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+    .btn-danger { background: rgba(255,95,109,0.15); border: 1px solid rgba(255,95,109,0.4); color: #ff9aa4; }
+    .btn-danger:hover { background: rgba(255,95,109,0.25); }
+    .alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 0.88rem; font-weight: 600; }
+    .alert-success { background: rgba(0,212,170,0.15); border: 1px solid rgba(0,212,170,0.4); color: #00d4aa; }
+    .alert-error { background: rgba(255,95,109,0.15); border: 1px solid rgba(255,95,109,0.4); color: #ff9aa4; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; text-align: center; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; color: #fff; }
+    .stat-label { font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 4px; }
+    .skeleton { background: rgba(255,255,255,0.07); border-radius: 8px; height: 20px; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+  </style>
+</head>
+<body>
+
+<nav class="main-nav">
+  <div class="nav-container">
+    <a href="/" class="nav-brand"><span class="nav-logo-icon">⚽</span> Fantasy SV</a>
+    <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-links" id="nav-links">
+      <a href="squad-builder.html" class="nav-link">My Squad</a>
+      <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <button class="sign-out-btn" @click="signOut()">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<div class="profile-page">
+
+  <!-- Loading skeleton -->
+  <template x-if="loading">
+    <div class="profile-card" style="text-align:center;">
+      <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.07);margin:0 auto 16px;animation:pulse 1.5s ease-in-out infinite;"></div>
+      <div class="skeleton" style="width:60%;margin:0 auto 8px;"></div>
+      <div class="skeleton" style="width:40%;margin:0 auto;"></div>
+    </div>
+  </template>
+
+  <!-- Profile card -->
+  <template x-if="!loading && user">
+    <div>
+      <!-- Identity card -->
+      <div class="profile-card">
+        <div class="profile-avatar" x-text="user.username ? user.username[0].toUpperCase() : '?'"></div>
+        <h1 class="profile-name" x-text="user.username"></h1>
+        <p class="profile-email" x-text="user.email"></p>
+        <div style="text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <span class="profile-badge" :class="user.is_active ? 'badge-active' : 'badge-inactive'"
+                x-text="user.is_active ? '✓ Active' : '⚠ Not Activated'"></span>
+          <span x-show="user.role === 'admin'" class="profile-badge badge-admin">⭐ Admin</span>
+        </div>
+      </div>
+
+      <!-- Stats card -->
+      <div class="profile-card">
+        <div class="section-title">Season Stats</div>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="stat-value" x-text="stats.totalPoints ?? '—'"></div>
+            <div class="stat-label">Total Points</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" x-text="stats.rank ? '#' + stats.rank : '—'"></div>
+            <div class="stat-label">Ranking</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" x-text="stats.teamName ?? '—'"></div>
+            <div class="stat-label">Team Name</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" x-text="stats.matchdayPoints ?? '—'"></div>
+            <div class="stat-label">Last GW</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit team name -->
+      <div class="profile-card">
+        <div class="section-title">Edit Team Name</div>
+        <div x-show="teamNameMsg" class="alert" :class="teamNameSuccess ? 'alert-success' : 'alert-error'" x-text="teamNameMsg"></div>
+        <div class="form-group">
+          <label>Team Name</label>
+          <input type="text" class="form-input" x-model="editTeamName" maxlength="50"
+                 placeholder="Your team name" @keydown.enter="saveTeamName()"/>
+        </div>
+        <button class="btn btn-primary" @click="saveTeamName()" :disabled="savingTeamName || editTeamName.trim().length < 2">
+          <span x-text="savingTeamName ? 'Saving…' : 'Save Team Name'"></span>
+        </button>
+      </div>
+
+      <!-- Sign out / danger zone -->
+      <div class="profile-card">
+        <div class="section-title">Account</div>
+        <button class="btn btn-danger" style="width:100%;" @click="signOut()">Sign Out</button>
+      </div>
+    </div>
+  </template>
+
+  <!-- Error state -->
+  <template x-if="!loading && !user">
+    <div class="profile-card" style="text-align:center;">
+      <div style="font-size:3rem;margin-bottom:16px;">⚠️</div>
+      <p style="color:rgba(255,255,255,0.5);">Could not load profile. <a href="/register" style="color:#00d4aa;">Register</a> or check your connection.</p>
+    </div>
+  </template>
+
+</div>
+
+<script>
+function profileApp() {
+  return {
+    user: null,
+    loading: true,
+    stats: { totalPoints: null, rank: null, teamName: null, matchdayPoints: null },
+    editTeamName: '',
+    savingTeamName: false,
+    teamNameMsg: '',
+    teamNameSuccess: false,
+
+    async init() {
+      await this.loadProfile();
+      await this.loadLeaderboard();
+    },
+
+    getToken() {
+      return localStorage.getItem('dummy_token') || 'dummy-token-user-1';
+    },
+
+    async loadProfile() {
+      this.loading = true;
+      try {
+        const resp = await fetch('/auth/me', {
+          headers: { 'Authorization': `Bearer ${this.getToken()}` }
+        });
+        if (resp.ok) {
+          this.user = await resp.json();
+        }
+      } catch (e) {
+        console.warn('Failed to load profile', e);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async loadLeaderboard() {
+      try {
+        const resp = await fetch('/squad/leaderboard', {
+          headers: { 'Authorization': `Bearer ${this.getToken()}` }
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          const myEntry = data.leaderboard?.find(e => e.is_current_user);
+          if (myEntry) {
+            this.stats.totalPoints = myEntry.total_points;
+            this.stats.rank = myEntry.rank;
+            this.stats.teamName = myEntry.name;
+            this.stats.matchdayPoints = myEntry.matchday_points;
+            this.editTeamName = myEntry.name;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load leaderboard', e);
+      }
+    },
+
+    async saveTeamName() {
+      const name = this.editTeamName.trim();
+      if (name.length < 2) return;
+      this.savingTeamName = true;
+      this.teamNameMsg = '';
+      try {
+        const resp = await fetch('/auth/onboarding/team-name', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.getToken()}`
+          },
+          body: JSON.stringify({ team_name: name })
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          this.teamNameMsg = '✓ Team name updated!';
+          this.teamNameSuccess = true;
+          this.stats.teamName = name;
+        } else {
+          this.teamNameMsg = data.detail || 'Failed to update team name.';
+          this.teamNameSuccess = false;
+        }
+      } catch (e) {
+        this.teamNameMsg = 'Network error.';
+        this.teamNameSuccess = false;
+      } finally {
+        this.savingTeamName = false;
+        setTimeout(() => { this.teamNameMsg = ''; }, 3000);
+      }
+    },
+
+    signOut() {
+      localStorage.removeItem('dummy_token');
+      localStorage.removeItem('user_id');
+      window.location.href = '/register';
+    }
+  };
+}
+</script>
+</body>
+</html>

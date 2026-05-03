@@ -330,3 +330,60 @@ def update_player(player_id: int, payload: schemas.PlayerUpdate, db: Session = D
     db.commit()
     db.refresh(player)
     return player
+
+# ── User management ────────────────────────────────────────────────────────────
+
+class UserActivateRequest(BaseModel):
+    is_active: bool
+
+class UserRoleRequest(BaseModel):
+    role: str  # "user" or "admin"
+
+
+@router.get("/users", status_code=200)
+def list_users(db: Session = Depends(get_db)):
+    """List all registered users."""
+    users = db.query(models.User).order_by(models.User.id).all()
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "role": u.role.value,
+            "is_active": u.is_active,
+            "onboarding_complete": u.onboarding_complete,
+        }
+        for u in users
+    ]
+
+
+@router.patch("/users/{user_id}/activate", status_code=200)
+def set_user_active(user_id: int, payload: UserActivateRequest, db: Session = Depends(get_db)):
+    """Manually activate or deactivate a user account."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_active = payload.is_active
+    if payload.is_active:
+        user.activation_token = None  # clear any pending token
+    db.commit()
+    return {"id": user.id, "username": user.username, "is_active": user.is_active}
+
+
+@router.patch("/users/{user_id}/role", status_code=200)
+def set_user_role(user_id: int, payload: UserRoleRequest, db: Session = Depends(get_db)):
+    """Promote a user to admin or demote to regular user."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        user.role = models.UserRole(payload.role)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Role must be 'user' or 'admin'")
+    # Promoted admins should be active
+    if user.role == models.UserRole.admin:
+        user.is_active = True
+        user.onboarding_complete = True
+        user.activation_token = None
+    db.commit()
+    return {"id": user.id, "username": user.username, "role": user.role.value}

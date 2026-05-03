@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" x-data="activateApp()" x-init="init()">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Activate Account — Fantasy SV</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    .auth-page {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 60%, #1a2233 100%);
+      padding: 24px 16px;
+    }
+    .auth-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 20px; padding: 40px 36px; width: 100%; max-width: 420px;
+      backdrop-filter: blur(12px);
+    }
+    .auth-logo { text-align: center; margin-bottom: 32px; }
+    .auth-logo .logo-icon { font-size: 2.8rem; display: block; margin-bottom: 8px; }
+    .auth-logo h1 { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 4px; }
+    .auth-logo p { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin: 0; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+    .form-group input {
+      width: 100%; padding: 12px 16px; border-radius: 10px;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      color: #fff; font-family: inherit; font-size: 1rem; outline: none;
+      transition: border-color 0.2s; box-sizing: border-box; letter-spacing: 0.04em;
+    }
+    .form-group input:focus { border-color: #00d4aa; background: rgba(0,212,170,0.07); }
+    .submit-btn {
+      width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer;
+      background: linear-gradient(135deg, #00d4aa, #00a8e8);
+      color: #fff; font-family: inherit; font-size: 1.05rem; font-weight: 800;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .submit-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .alert { padding: 14px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
+    .alert-error { background: rgba(255,95,109,0.15); border: 1px solid rgba(255,95,109,0.4); color: #ff9aa4; }
+    .alert-success { background: rgba(0,212,170,0.15); border: 1px solid rgba(0,212,170,0.4); color: #00d4aa; }
+    .step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 28px; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: background 0.3s; }
+    .step-dot.active { background: #00d4aa; }
+    .step-dot.done { background: rgba(0,212,170,0.5); }
+    .success-state { text-align: center; }
+    .success-icon { font-size: 3.5rem; margin-bottom: 16px; }
+  </style>
+</head>
+<body style="margin:0;font-family:'Nunito',sans-serif;">
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="logo-icon">⚽</span>
+      <h1>Fantasy SV</h1>
+      <p>Activate your account — Step 2 of 3</p>
+    </div>
+
+    <div class="step-indicator">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <div x-show="errorMsg" class="alert alert-error" x-text="errorMsg"></div>
+
+    <!-- Activation form -->
+    <template x-if="!activated">
+      <div>
+        <p style="color:rgba(255,255,255,0.55);margin:0 0 24px;line-height:1.6;font-size:0.95rem;">
+          Enter the activation token from your email, or paste the full activation link.
+        </p>
+        <div class="form-group">
+          <label>Activation Token</label>
+          <input type="text" x-model="token" placeholder="Paste your token here…"
+                 @keydown.enter="activate()" autocomplete="off"/>
+        </div>
+        <button class="submit-btn" @click="activate()" :disabled="loading || !token.trim()">
+          <span x-text="loading ? 'Activating…' : 'Activate Account →'"></span>
+        </button>
+        <p style="color:rgba(255,255,255,0.3);font-size:0.8rem;text-align:center;margin-top:16px;">
+          💡 Dev tip: check the backend server logs for your token.
+        </p>
+      </div>
+    </template>
+
+    <!-- Success state -->
+    <template x-if="activated">
+      <div class="success-state">
+        <div class="success-icon">🎉</div>
+        <h2 style="color:#fff;margin:0 0 12px;">Account activated!</h2>
+        <p style="color:rgba(255,255,255,0.55);line-height:1.6;margin:0 0 24px;">
+          Your account is now active. Next, give your fantasy team a name!
+        </p>
+        <button class="submit-btn" onclick="window.location.href='/onboarding'">
+          Name My Team →
+        </button>
+      </div>
+    </template>
+  </div>
+</div>
+
+<script>
+function activateApp() {
+  return {
+    token: '',
+    loading: false,
+    activated: false,
+    errorMsg: '',
+
+    init() {
+      // Auto-fill token from URL query param ?token=...
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get('token');
+      if (t) { this.token = t; }
+    },
+
+    async activate() {
+      const t = this.token.trim();
+      if (!t) return;
+      this.loading = true;
+      this.errorMsg = '';
+      try {
+        const resp = await fetch('/auth/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: t })
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+          // Store dummy token for next step (user id from response)
+          localStorage.setItem('dummy_token', `dummy-token-user-${data.id}`);
+          localStorage.setItem('user_id', data.id);
+          this.activated = true;
+        } else {
+          this.errorMsg = data.detail || 'Invalid or expired token. Please try again.';
+        }
+      } catch (e) {
+        this.errorMsg = 'Network error. Please check your connection.';
+      } finally {
+        this.loading = false;
+      }
+    }
+  };
+}
+</script>
+</body>
+</html>

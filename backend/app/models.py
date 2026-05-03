@@ -49,6 +49,9 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(SQLEnum(UserRole), default=UserRole.user, nullable=False)
+    is_active = Column(Boolean, default=False, nullable=False)       # requires email activation
+    onboarding_complete = Column(Boolean, default=False, nullable=False)  # team name step done
+    activation_token = Column(String, nullable=True)                 # one-time token for email activation
     
     fantasy_teams = relationship("FantasyTeam", back_populates="user", cascade="all, delete-orphan")
 
