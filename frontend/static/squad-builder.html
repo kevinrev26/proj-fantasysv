@@ -489,8 +489,8 @@
     <template x-for="rule in compositionRules" :key="rule.pos">
       <div class="comp-bar-row">
         <span class="comp-label"><span class="comp-pos-dot" :class="'dot-'+rule.pos.toLowerCase()"></span><span x-text="rule.pos"></span></span>
-        <div class="comp-track"><div class="comp-fill" :class="countInSquad(rule.pos)>=rule.min?'fill-ok':'fill-warn'" :style="'width:'+Math.min(countInSquad(rule.pos)/rule.max*100,100)+'%'"></div></div>
-        <span class="comp-nums" :class="countInSquad(rule.pos)>=rule.min?'nums-ok':'nums-warn'"><span x-text="countInSquad(rule.pos)"></span>/<span x-text="rule.max"></span></span>
+        <div class="comp-track"><div class="comp-fill" :class="countInSquad(rule.pos)>=rule.min?'fill-ok':'fill-warn'" :style="'width:'+Math.min(Math.min(countInSquad(rule.pos),rule.starterMax)/rule.starterMax*100,100)+'%'"></div></div>
+        <span class="comp-nums" :class="countInSquad(rule.pos)>=rule.min?'nums-ok':'nums-warn'"><span x-text="Math.min(countInSquad(rule.pos),rule.starterMax)"></span>/<span x-text="rule.starterMax"></span></span>
         <span class="comp-req" :class="countInSquad(rule.pos)>=rule.min?'req-ok':'req-warn'">min <span x-text="rule.min"></span></span>
       </div>
     </template>
@@ -729,10 +729,10 @@ function squadBuilder() {
     ],
 
     compositionRules: [
-      { pos:'GK', min:1, max:1 },
-      { pos:'DF', min:3, max:5 },
-      { pos:'MF', min:2, max:5 },
-      { pos:'FW', min:1, max:3 },
+      { pos:'GK', min:1, max:2, starterMax:1 },
+      { pos:'DF', min:3, max:6, starterMax:5 },
+      { pos:'MF', min:2, max:6, starterMax:5 },
+      { pos:'FW', min:1, max:4, starterMax:3 },
     ],
 
     players: [
@@ -1010,7 +1010,7 @@ function squadBuilder() {
       if (this.totalCost + player.cost > 100) { this.toast('Not enough budget!'); return; }
       const rule = this.compositionRules.find(r => r.pos === player.pos);
       if (rule && this.countInSquad(player.pos) >= rule.max) {
-        this.toast(`Max ${rule.max} ${player.pos} players allowed`); return;
+        this.toast(`Max ${rule.starterMax} ${player.pos} starters (${rule.max} total) allowed`); return;
       }
 
       const starterLimit = { GK:1, DF:this.currentFormation.df, MF:this.currentFormation.mf, FW:this.currentFormation.fw }[player.pos] ?? 0;
@@ -1099,7 +1099,7 @@ function squadBuilder() {
       const e = [];
       if (this.selectedPlayers.length < 15) e.push(`Need ${15 - this.selectedPlayers.length} more players`);
       if (this.remainingCredits < 0) e.push(`Over budget by ${-this.remainingCredits} CR`);
-      if (this.countInSquad('GK') !== 1) e.push('Exactly 1 GK required');
+      if (this.starters.filter(p=>p.pos==='GK').length !== 1) e.push('Exactly 1 GK required as starter');
       if (this.countInSquad('DF') < 3)   e.push('At least 3 defenders needed');
       if (this.countInSquad('MF') < 2)   e.push('At least 2 midfielders needed');
       if (this.countInSquad('FW') < 1)   e.push('At least 1 forward needed');

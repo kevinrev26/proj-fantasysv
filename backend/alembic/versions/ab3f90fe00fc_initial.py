@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 56a2e20d9ea9
+Revision ID: ab3f90fe00fc
 Revises: 
-Create Date: 2026-04-19 23:21:53.821504
+Create Date: 2026-05-06 01:04:21.152368
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '56a2e20d9ea9'
+revision: str = 'ab3f90fe00fc'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,11 +30,23 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_season_id'), 'season', ['id'], unique=False)
     op.create_index(op.f('ix_season_name'), 'season', ['name'], unique=False)
+    op.create_table('system_config',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('key', sa.String(), nullable=False),
+    sa.Column('value', sa.String(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_system_config_id'), 'system_config', ['id'], unique=False)
+    op.create_index(op.f('ix_system_config_key'), 'system_config', ['key'], unique=True)
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('hashed_password', sa.String(), nullable=False),
+    sa.Column('role', sa.Enum('user', 'admin', name='userrole'), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('onboarding_complete', sa.Boolean(), nullable=False),
+    sa.Column('activation_token', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)
@@ -45,6 +57,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('season_id', sa.Integer(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['season_id'], ['season.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -65,13 +78,18 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('season_id', sa.Integer(), nullable=False),
     sa.Column('status', sa.Enum('scheduled', 'in_progress', 'closed', name='matchdaystatus'), nullable=False),
+    sa.Column('lock_at_utc', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('is_locked', sa.Boolean(), nullable=False),
+    sa.Column('locked_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('task_id', sa.String(), nullable=True),
+    sa.Column('task_status', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['season_id'], ['season.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_matchday_id'), 'matchday', ['id'], unique=False)
     op.create_table('tournament_phase',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.Enum('group', 'quarterfinal', 'semifinal', 'final', name='phasename'), nullable=False),
+    sa.Column('name', sa.Enum('round_of_64', 'round_of_32', 'round_of_16', 'group', 'quarterfinal', 'semifinal', 'final', name='phasename'), nullable=False),
     sa.Column('season_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['season_id'], ['season.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -94,11 +112,27 @@ def upgrade() -> None:
     sa.Column('matchday_id', sa.Integer(), nullable=False),
     sa.Column('points_this_matchday', sa.Integer(), nullable=False),
     sa.Column('cumulative_points', sa.Integer(), nullable=False),
+    sa.Column('transfer_penalty', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['fantasy_team_id'], ['fantasy_team.id'], ),
     sa.ForeignKeyConstraint(['matchday_id'], ['matchday.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_team_score_id'), 'team_score', ['id'], unique=False)
+    op.create_table('fixture',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('matchday_id', sa.Integer(), nullable=False),
+    sa.Column('home_team_id', sa.Integer(), nullable=False),
+    sa.Column('away_team_id', sa.Integer(), nullable=False),
+    sa.Column('kickoff_utc', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('finished', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['away_team_id'], ['team.id'], ),
+    sa.ForeignKeyConstraint(['home_team_id'], ['team.id'], ),
+    sa.ForeignKeyConstraint(['matchday_id'], ['matchday.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_fixture_id'), 'fixture', ['id'], unique=False)
     op.create_table('player',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
@@ -118,6 +152,7 @@ def upgrade() -> None:
     sa.Column('slot', sa.Enum('starter', 'bench', name='fantasyslot'), nullable=False),
     sa.Column('formation_position', sa.String(), nullable=False),
     sa.Column('is_x2_joker', sa.Boolean(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['fantasy_team_id'], ['fantasy_team.id'], ),
     sa.ForeignKeyConstraint(['player_id'], ['player.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -135,6 +170,7 @@ def upgrade() -> None:
     sa.Column('own_goal', sa.Integer(), nullable=False),
     sa.Column('penalty_missed', sa.Integer(), nullable=False),
     sa.Column('penalty_saved', sa.Integer(), nullable=False),
+    sa.Column('goals_conceded', sa.Integer(), nullable=False),
     sa.Column('base_points', sa.Integer(), nullable=False),
     sa.Column('bonus_points', sa.Integer(), nullable=False),
     sa.Column('final_points', sa.Integer(), nullable=False),
@@ -143,17 +179,35 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_player_score_id'), 'player_score', ['id'], unique=False)
+    op.create_table('transfer',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('fantasy_team_id', sa.Integer(), nullable=False),
+    sa.Column('matchday_id', sa.Integer(), nullable=False),
+    sa.Column('player_in_id', sa.Integer(), nullable=False),
+    sa.Column('player_out_id', sa.Integer(), nullable=False),
+    sa.Column('cost', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['fantasy_team_id'], ['fantasy_team.id'], ),
+    sa.ForeignKeyConstraint(['matchday_id'], ['matchday.id'], ),
+    sa.ForeignKeyConstraint(['player_in_id'], ['player.id'], ),
+    sa.ForeignKeyConstraint(['player_out_id'], ['player.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_transfer_id'), 'transfer', ['id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_transfer_id'), table_name='transfer')
+    op.drop_table('transfer')
     op.drop_index(op.f('ix_player_score_id'), table_name='player_score')
     op.drop_table('player_score')
     op.drop_index(op.f('ix_fantasy_player_id'), table_name='fantasy_player')
     op.drop_table('fantasy_player')
     op.drop_index(op.f('ix_player_id'), table_name='player')
     op.drop_table('player')
+    op.drop_index(op.f('ix_fixture_id'), table_name='fixture')
+    op.drop_table('fixture')
     op.drop_index(op.f('ix_team_score_id'), table_name='team_score')
     op.drop_table('team_score')
     op.drop_index(op.f('ix_team_name'), table_name='team')
@@ -173,6 +227,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_user_id'), table_name='user')
     op.drop_index(op.f('ix_user_email'), table_name='user')
     op.drop_table('user')
+    op.drop_index(op.f('ix_system_config_key'), table_name='system_config')
+    op.drop_index(op.f('ix_system_config_id'), table_name='system_config')
+    op.drop_table('system_config')
     op.drop_index(op.f('ix_season_name'), table_name='season')
     op.drop_index(op.f('ix_season_id'), table_name='season')
     op.drop_table('season')
