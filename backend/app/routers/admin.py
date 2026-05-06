@@ -387,3 +387,125 @@ def set_user_role(user_id: int, payload: UserRoleRequest, db: Session = Depends(
         user.activation_token = None
     db.commit()
     return {"id": user.id, "username": user.username, "role": user.role.value}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FIXTURE endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+class FixtureIn(BaseModel):
+    home_team_id: int
+    away_team_id: int
+    kickoff_utc: datetime
+    finished: bool = False
+
+
+class FixtureBulkRequest(BaseModel):
+    fixtures: List[FixtureIn]
+
+
+@router.get("/matchday/{matchday_id}/fixtures")
+def get_fixtures(matchday_id: int, db: Session = Depends(get_db)):
+    """Return all fixtures for a matchday."""
+    matchday = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
+    if not matchday:
+        raise HTTPException(status_code=404, detail="Matchday not found")
+    return {
+        "fixtures": [
+            {
+                "id": f.id,
+                "matchday_id": f.matchday_id,
+                "home_team_id": f.home_team_id,
+                "away_team_id": f.away_team_id,
+                "kickoff_utc": f.kickoff_utc.isoformat(),
+                "finished": f.finished,
+            }
+            for f in matchday.fixtures
+        ]
+    }
+
+
+@router.post("/matchday/{matchday_id}/fixtures", status_code=201)
+def bulk_create_fixtures(
+    matchday_id: int,
+    payload: FixtureBulkRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Bulk-create fixtures for a matchday.
+
+    Replaces all existing fixtures for the matchday, then recalculates
+    lock_at_utc from the earliest kickoff.
+    """
+    from ..services.matchday_lock_service import initialize_matchday_lock
+    from datetime import timezone
+
+    matchday = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
+    if not matchday:
+        raise HTTPException(status_code=404, detail="Matchday not found")
+
+    # Validate teams exist
+    all_team_ids = {t.id for t in db.query(models.Team.id).all()}
+    for f in payload.fixtures:
+        if f.home_team_id not in all_team_ids:
+            raise HTTPException(status_code=400, detail=f"Home team {f.home_team_id} not found")
+        if f.away_team_id not in all_team_ids:
+            raise HTTPException(status_code=400, detail=f"Away team {f.away_team_id} not found")
+        if f.home_team_id == f.away_team_id:
+            raise HTTPException(status_code=400, detail="Home and away team cannot be the same")
+
+    # Replace fixtures
+    db.query(models.Fixture).filter(models.Fixture.matchday_id == matchday_id).delete()
+    for f in payload.fixtures:
+        kickoff = f.kickoff_utc
+        if kickoff.tzinfo is None:
+            kickoff = kickoff.replace(tzinfo=timezone.utc)
+        db.add(models.Fixture(
+            matchday_id=matchday_id,
+            home_team_id=f.home_team_id,
+            away_team_id=f.away_team_id,
+            kickoff_utc=kickoff,
+            finished=f.finished,
+        ))
+    db.flush()
+
+    # Recalculate lock
+    db.expire(matchday)  # ensure fixtures relationship is fresh
+    lock_at = initialize_matchday_lock(matchday, db)
+
+    return {
+        "created": len(payload.fixtures),
+        "matchday_id": matchday_id,
+        "lock_at_utc": lock_at.isoformat() if lock_at else None,
+    }
+
+
+@router.post("/matchday/{matchday_id}/init-lock", status_code=200)
+def init_matchday_lock(matchday_id: int, db: Session = Depends(get_db)):
+    """Recalculate and persist lock_at_utc from existing fixtures."""
+    from ..services.matchday_lock_service import initialize_matchday_lock
+
+    matchday = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
+    if not matchday:
+        raise HTTPException(status_code=404, detail="Matchday not found")
+    if not matchday.fixtures:
+        raise HTTPException(status_code=400, detail="No fixtures found for this matchday")
+
+    lock_at = initialize_matchday_lock(matchday, db)
+    return {
+        "matchday_id": matchday_id,
+        "lock_at_utc": lock_at.isoformat() if lock_at else None,
+    }
+
+
+@router.get("/seasons/{season_id}/teams")
+def get_teams_for_season(season_id: int, db: Session = Depends(get_db)):
+    """Return all teams belonging to any league in a season (for fixture dropdowns)."""
+    teams = (
+        db.query(models.Team)
+        .join(models.League, models.Team.league_id == models.League.id)
+        .filter(models.League.season_id == season_id)
+        .order_by(models.Team.name)
+        .all()
+    )
+    return {"teams": [{"id": t.id, "name": t.name, "league_id": t.league_id} for t in teams]}

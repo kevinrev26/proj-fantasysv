@@ -3,23 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Fantasy World Cup – Admin Match Entry</title>
+    <title>Fantasy SV – Admin Dashboard</title>
     <link rel="stylesheet" href="/style.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+      .admin-tabs { display:flex; gap:0; border-bottom:2px solid rgba(255,255,255,0.1); margin-bottom:20px; }
+      .admin-tab  { padding:10px 22px; cursor:pointer; font-weight:700; font-size:0.9rem; color:var(--text-dim);
+                    border-bottom:3px solid transparent; margin-bottom:-2px; transition:all .15s; }
+      .admin-tab.active { color:var(--teal); border-bottom-color:var(--teal); }
+      .admin-tab:hover  { color:var(--text-white); }
+
+      .section-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+                      border-radius:10px; padding:18px; margin-bottom:16px; }
+      .section-card h3 { margin:0 0 14px; font-size:1rem; color:var(--teal); }
+
+      /* fixtures table */
+      .fix-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+      .fix-table th { text-align:left; padding:8px 10px; color:var(--text-dim);
+                      font-weight:700; border-bottom:1px solid rgba(255,255,255,0.1); }
+      .fix-table td { padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
+      .fix-table tr:hover td { background:rgba(255,255,255,0.03); }
+      .fix-table input[type=datetime-local],
+      .fix-table select { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15);
+                          color:var(--text-white); border-radius:5px; padding:4px 8px;
+                          font-size:0.82rem; width:100%; }
+      .fix-table input[type=datetime-local]:focus,
+      .fix-table select:focus { outline:none; border-color:var(--teal); }
+      .btn-add-row { margin-top:10px; background:rgba(0,212,170,0.12); color:var(--teal);
+                     border:1px solid var(--teal); border-radius:6px; padding:6px 14px;
+                     cursor:pointer; font-weight:700; font-size:0.82rem; }
+      .btn-add-row:hover { background:rgba(0,212,170,0.25); }
+      .btn-del-row { background:rgba(255,95,109,0.12); color:var(--red-accent);
+                     border:none; border-radius:50%; width:26px; height:26px;
+                     cursor:pointer; font-size:1rem; display:flex; align-items:center;
+                     justify-content:center; }
+      .btn-del-row:hover { background:rgba(255,95,109,0.35); }
+      .btn-primary { background:var(--teal); color:#0d1b2e; border:none; border-radius:7px;
+                     padding:9px 22px; font-weight:800; cursor:pointer; font-size:0.9rem; }
+      .btn-primary:hover { opacity:.88; }
+      .btn-primary:disabled { opacity:.45; cursor:not-allowed; }
+
+      textarea.csv-input { width:100%; font-family:monospace; font-size:0.8rem; padding:10px;
+                           border-radius:6px; background:var(--navy); color:var(--text-white);
+                           border:1px solid var(--teal); resize:vertical; }
+
+      .lock-info { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+      .lock-badge-on  { background:rgba(255,95,109,0.2); border:1px solid var(--red-accent);
+                        color:#ff9aa4; padding:4px 12px; border-radius:50px; font-weight:700; font-size:0.8rem; }
+      .lock-badge-off { background:rgba(0,212,170,0.12); border:1px solid var(--teal);
+                        color:var(--teal); padding:4px 12px; border-radius:50px; font-weight:700; font-size:0.8rem; }
+    </style>
 </head>
 <body>
-<!-- ── MAIN NAVIGATION ── -->
 <nav class="main-nav">
   <div class="nav-container">
-    <a href="/" class="nav-brand">
-      <span class="nav-logo-icon">⚽</span>
-      Fantasy SV
-    </a>
-    
+    <a href="/" class="nav-brand"><span class="nav-logo-icon">⚽</span> Fantasy SV</a>
     <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
       <span></span><span></span><span></span>
     </button>
-
     <div class="nav-links" id="nav-links">
       <a href="squad-builder.html" class="nav-link">My Squad</a>
       <a href="leaderboard.html" class="nav-link">Leaderboard</a>
@@ -29,377 +70,566 @@
   </div>
 </nav>
 
-    <div class="container" x-data="matchEntryApp()" x-init="init()">
-        <header>
-            <h1>📊 Match Result Entry</h1>
-            <div class="filters-row" style="display: flex; gap: 15px; margin-top: 15px;">
-                <label>Season:
-                    <select x-model="selectedSeasonId" @change="loadLeaguesAndMatchdays()" style="padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
-                        <option value="">-- Select Season --</option>
-                        <template x-for="s in seasons" :key="s.id">
-                            <option :value="s.id" x-text="s.name"></option>
-                        </template>
-                    </select>
-                </label>
-                <label>League:
-                    <select x-model="selectedLeagueId" @change="loadPlayers()" style="padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
-                        <option value="">-- All Leagues --</option>
-                        <template x-for="l in leagues" :key="l.id">
-                            <option :value="l.id" x-text="l.name"></option>
-                        </template>
-                    </select>
-                </label>
-                <label>Matchday:
-                    <select x-model="matchdayId" @change="onMatchdayChange()" style="padding: 5px; border-radius: 4px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
-                        <option value="">-- Select Matchday --</option>
-                        <template x-for="m in matchdays" :key="m.id">
-                            <option :value="m.id" x-text="m.name"></option>
-                        </template>
-                    </select>
-                </label>
-            </div>
-            <div x-show="matchdayDeadline" style="margin-top: 10px; font-weight: bold; color: var(--teal);">
-                Deadline: <span x-text="new Date(matchdayDeadline).toLocaleString()"></span>
-            </div>
-        </header>
+<div class="container" x-data="adminApp()" x-init="init()">
+  <header>
+    <h1>⚙️ Admin Dashboard</h1>
+    <!-- Season / League / Matchday selectors -->
+    <div class="filters-row" style="display:flex;gap:15px;margin-top:15px;flex-wrap:wrap;">
+      <label>Season:
+        <select x-model="selectedSeasonId" @change="loadLeaguesAndMatchdays()" style="padding:5px;border-radius:4px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);">
+          <option value="">-- Select Season --</option>
+          <template x-for="s in seasons" :key="s.id">
+            <option :value="s.id" x-text="s.name"></option>
+          </template>
+        </select>
+      </label>
+      <label>League:
+        <select x-model="selectedLeagueId" @change="loadPlayers()" style="padding:5px;border-radius:4px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);">
+          <option value="">-- All Leagues --</option>
+          <template x-for="l in leagues" :key="l.id">
+            <option :value="l.id" x-text="l.name"></option>
+          </template>
+        </select>
+      </label>
+      <label>Matchday:
+        <select x-model="matchdayId" @change="onMatchdayChange()" style="padding:5px;border-radius:4px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);">
+          <option value="">-- Select Matchday --</option>
+          <template x-for="m in matchdays" :key="m.id">
+            <option :value="m.id" x-text="m.name"></option>
+          </template>
+        </select>
+      </label>
+    </div>
+    <!-- Lock status -->
+    <div x-show="matchdayId" style="margin-top:12px;" class="lock-info">
+      <span x-show="matchdayLocked" class="lock-badge-on">🔒 LOCKED</span>
+      <span x-show="!matchdayLocked" class="lock-badge-off">🔓 Open</span>
+      <span x-show="matchdayDeadline" style="font-size:0.85rem;color:var(--text-dim);">
+        Lock at: <strong x-text="matchdayDeadline ? new Date(matchdayDeadline).toLocaleString() : '—'"></strong>
+      </span>
+    </div>
+  </header>
 
-        <div x-show="loading" class="loading">Loading players...</div>
+  <!-- ── ADMIN TABS ── -->
+  <div class="admin-tabs" style="margin-top:20px;">
+    <div class="admin-tab" :class="tab==='results'?'active':''" @click="tab='results'">📤 Match Results</div>
+    <div class="admin-tab" :class="tab==='fixtures'?'active':''" @click="tab='fixtures'">📅 Fixtures</div>
+  </div>
 
+  <!-- ══════════════════════════════════════════════════════
+       TAB 1 — MATCH RESULTS
+  ═══════════════════════════════════════════════════════ -->
+  <div x-show="tab==='results'">
+    <template x-if="!matchdayId">
+      <p style="color:var(--text-dim);padding:20px 0;">Select a matchday to enter results.</p>
+    </template>
+
+    <template x-if="matchdayId">
+      <div>
+        <!-- CSV Bulk Import -->
+        <div class="section-card">
+          <h3>📋 Bulk Import Results (CSV)</h3>
+          <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:10px;">
+            Headers: <code>player_id, minutes_played, goals, assists, goals_conceded, yellow_card, red_card, own_goal, penalty_missed, penalty_saved</code>
+          </p>
+          <textarea class="csv-input" x-model="csvData" rows="5"
+            placeholder="player_id,minutes_played,goals,assists,goals_conceded,yellow_card,red_card,own_goal,penalty_missed,penalty_saved&#10;1,90,1,0,0,0,0,0,0,0&#10;2,45,0,1,1,1,0,0,0,0"></textarea>
+          <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
+            <button type="button" class="btn-primary" @click="parseCSV()">📥 Load CSV</button>
+            <button type="button" class="btn-add-row" @click="downloadCSVTemplate()">⬇️ Download Template</button>
+          </div>
+        </div>
+
+        <!-- Stats Table -->
+        <div x-show="loading" class="loading">Loading players…</div>
         <template x-if="!loading && teams.length">
-            <div>
-                <div class="bulk-import-section" style="margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                    <h3 style="margin-bottom: 10px;">Bulk Import Results (CSV)</h3>
-                    <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px;">
-                        Headers expected: <code>player_id, minutes_played, goals, assists, goals_conceded, yellow_card, red_card, own_goal, penalty_missed, penalty_saved</code>
-                    </p>
-                    <textarea x-model="csvData" rows="5" style="width: 100%; font-family: monospace; padding: 10px; border-radius: 4px; background: var(--navy); color: var(--text-white); border: 1px solid var(--teal);" placeholder="Paste CSV data here..."></textarea>
-                    <button type="button" @click="parseCSV()" style="margin-top: 10px; background: var(--blue-accent); border: none; padding: 8px 15px; border-radius: 4px; color: #fff; font-weight: bold; cursor: pointer;">Load CSV Data</button>
-                </div>
-            <form @submit.prevent="submitStats">
-                <div class="table-responsive">
-                    <table class="stats-table">
-                        <thead>
-                            <tr>
-                                <th>Team / Player</th>
-                                <th>Min</th>
-                                <th>G</th>
-                                <th>A</th>
-                                <th>GC</th>
-                                <th>YC</th>
-                                <th>RC</th>
-                                <th>OG</th>
-                                <th>PM</th>
-                                <th>PS</th>
-                            </tr>
-                            <tr class="legend">
-                                <td colspan="10">
-                                    <small>Min=Minutes, G=Goals, A=Assists, GC=Goals Conceded, YC=Yellow, RC=Red, OG=Own Goal, PM=Penalty Missed, PS=Penalty Saved</small>
-                                </td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="team in teams" :key="team.team_id">
-                                <!-- Team separator row -->
-                                <tr class="team-separator">
-                                    <td colspan="10" x-text="team.team_name"></td>
-                                </tr>
-                                <template x-for="player in team.players" :key="player.player_id">
-                                    <tr :data-team="team.team_id">
-                                        <td class="player-name" x-text="player.name"></td>
-                                        <td><input type="number" x-model="player.stats.minutes_played" min="0" step="1" required></td>
-                                        <td><input type="number" x-model="player.stats.goals" min="0" step="1"></td>
-                                        <td><input type="number" x-model="player.stats.assists" min="0" step="1"></td>
-                                        <td><input type="number" x-model="player.stats.goals_conceded" min="0" step="1"></td>
-                                        <td><input type="number" x-model="player.stats.yellow_card" min="0" step="1"></td>
-                                        <td><input type="number" x-model="player.stats.red_card" min="0" step="1"></td>
-                                        <td><input type="number" x-model="player.stats.own_goal" min="0" step="1"></td>
-                                        <td><input type="number" x-model="player.stats.penalty_missed" min="0" step="1"></td>
-                                        <td><input type="number" x-model="player.stats.penalty_saved" min="0" step="1"></td>
-                                    </tr>
-                                </template>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="actions">
-                    <button type="submit" :disabled="submitting">
-                        <span x-show="!submitting">📤 Submit Match Results</span>
-                        <span x-show="submitting">⏳ Submitting...</span>
-                    </button>
-                </div>
-            </form>
-                </div>
-            </form>
+          <div class="section-card">
+            <h3>🏟️ Player Stats</h3>
+            <div class="table-responsive">
+              <table class="stats-table">
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Min</th><th>G</th><th>A</th><th>GC</th>
+                    <th>YC</th><th>RC</th><th>OG</th><th>PM</th><th>PS</th>
+                  </tr>
+                  <tr class="legend">
+                    <td colspan="10"><small>Min=Minutes · G=Goals · A=Assists · GC=Goals Conceded · YC=Yellow · RC=Red · OG=Own Goal · PM=Pen Missed · PS=Pen Saved</small></td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="team in teams" :key="team.team_id">
+                    <tr class="team-separator" style="display:table-row;">
+                      <td colspan="10" x-text="team.team_name"></td>
+                    </tr>
+                    <template x-for="player in team.players" :key="player.player_id">
+                      <tr>
+                        <td class="player-name" x-text="player.name"></td>
+                        <td><input type="number" x-model.number="player.stats.minutes_played" min="0" step="1" required></td>
+                        <td><input type="number" x-model.number="player.stats.goals"          min="0" step="1"></td>
+                        <td><input type="number" x-model.number="player.stats.assists"        min="0" step="1"></td>
+                        <td><input type="number" x-model.number="player.stats.goals_conceded" min="0" step="1"></td>
+                        <td><input type="number" x-model.number="player.stats.yellow_card"    min="0" step="1"></td>
+                        <td><input type="number" x-model.number="player.stats.red_card"       min="0" step="1"></td>
+                        <td><input type="number" x-model.number="player.stats.own_goal"       min="0" step="1"></td>
+                        <td><input type="number" x-model.number="player.stats.penalty_missed" min="0" step="1"></td>
+                        <td><input type="number" x-model.number="player.stats.penalty_saved"  min="0" step="1"></td>
+                      </tr>
+                    </template>
+                  </template>
+                </tbody>
+              </table>
             </div>
+            <div class="actions" style="margin-top:16px;">
+              <button type="button" class="btn-primary" :disabled="submitting" @click="submitStats()">
+                <span x-show="!submitting">📤 Submit Match Results</span>
+                <span x-show="submitting">⏳ Submitting…</span>
+              </button>
+            </div>
+          </div>
         </template>
 
-        <!-- Confirmation / error messages -->
-        <div x-show="message" class="message" :class="messageType" x-text="message"></div>
-
-        <!-- Task status polling display -->
-        <div x-show="taskStatus" class="task-status">
-            <strong>Task Status:</strong> <span x-text="taskStatus"></span>
-            <progress x-show="taskStatus === 'processing'" class="progress"></progress>
+        <!-- Task status -->
+        <div x-show="taskStatus" class="task-status" style="margin-top:12px;">
+          <strong>Task:</strong> <span x-text="taskStatus"></span>
+          <progress x-show="taskStatus==='processing'" class="progress"></progress>
         </div>
-    </div>
+      </div>
+    </template>
+  </div>
 
-    <script>
-        function matchEntryApp() {
-            return {
-                seasons: [],
-                leagues: [],
-                matchdays: [],
-                selectedSeasonId: '',
-                selectedLeagueId: '',
-                matchdayId: '',
-                matchdayDeadline: '',
-                csvData: '',
-                teams: [],
-                loading: false,
-                submitting: false,
-                message: '',
-                messageType: '',
-                taskId: null,
-                taskStatus: null,
-                pollInterval: null,
+  <!-- ══════════════════════════════════════════════════════
+       TAB 2 — FIXTURES
+  ═══════════════════════════════════════════════════════ -->
+  <div x-show="tab==='fixtures'">
+    <template x-if="!matchdayId">
+      <p style="color:var(--text-dim);padding:20px 0;">Select a matchday to manage its fixtures.</p>
+    </template>
 
-                async init() {
-                    // Fetch seasons on load
-                    try {
-                        const res = await fetch('/admin/seasons', { headers: { 'Authorization': 'Bearer dummy-admin-token' } });
-                        if (res.ok) {
-                            const data = await res.json();
-                            this.seasons = data.seasons;
-                        }
-                    } catch (e) {
-                        this.showMessage('Failed to load seasons', 'error');
-                    }
-                },
+    <template x-if="matchdayId">
+      <div>
 
-                async loadLeaguesAndMatchdays() {
-                    this.leagues = [];
-                    this.matchdays = [];
-                    this.selectedLeagueId = '';
-                    this.matchdayId = '';
-                    this.matchdayDeadline = '';
-                    this.teams = [];
-                    if (!this.selectedSeasonId) return;
-                    
-                    try {
-                        const [resL, resM] = await Promise.all([
-                            fetch(`/admin/seasons/${this.selectedSeasonId}/leagues`, { headers: { 'Authorization': 'Bearer dummy-admin-token' } }),
-                            fetch(`/admin/seasons/${this.selectedSeasonId}/matchdays`, { headers: { 'Authorization': 'Bearer dummy-admin-token' } })
-                        ]);
-                        if (resL.ok) {
-                            const dataL = await resL.json();
-                            this.leagues = dataL.leagues;
-                        }
-                        if (resM.ok) {
-                            const dataM = await resM.json();
-                            this.matchdays = dataM.matchdays;
-                        }
-                    } catch (e) {
-                        this.showMessage('Failed to load leagues/matchdays', 'error');
-                    }
-                },
+        <!-- CSV bulk import for fixtures -->
+        <div class="section-card">
+          <h3>📋 Bulk Import Fixtures (CSV)</h3>
+          <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:10px;">
+            Headers: <code>home_team_id, away_team_id, kickoff_utc</code> &nbsp;·&nbsp;
+            kickoff format: <code>2025-06-01T14:00</code>
+          </p>
+          <textarea class="csv-input" x-model="fixtureCsvData" rows="5"
+            placeholder="home_team_id,away_team_id,kickoff_utc&#10;1,2,2025-06-01T14:00&#10;3,4,2025-06-01T17:00"></textarea>
+          <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
+            <button type="button" class="btn-primary" @click="parseFixtureCsv()">📥 Load CSV</button>
+            <button type="button" class="btn-add-row" @click="downloadFixtureTemplate()">⬇️ Template</button>
+          </div>
+        </div>
 
-                onMatchdayChange() {
-                    const matchday = this.matchdays.find(m => m.id === parseInt(this.matchdayId));
-                    if (matchday && matchday.deadline_utc) {
-                        this.matchdayDeadline = matchday.deadline_utc;
-                    } else {
-                        this.matchdayDeadline = '';
-                    }
-                    this.loadPlayers();
-                },
+        <!-- Fixture rows editor -->
+        <div class="section-card">
+          <h3>📅 Fixture List</h3>
+          <div x-show="fixtureRows.length === 0" style="color:var(--text-dim);font-size:0.88rem;margin-bottom:12px;">
+            No fixtures yet. Add rows below or import via CSV.
+          </div>
+          <div class="table-responsive">
+            <table class="fix-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Home Team</th>
+                  <th>Away Team</th>
+                  <th>Kickoff (UTC)</th>
+                  <th>Finished</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="(row, idx) in fixtureRows" :key="row._key">
+                  <tr>
+                    <td style="color:var(--text-dim);font-size:0.78rem;" x-text="idx+1"></td>
+                    <td>
+                      <select x-model.number="row.home_team_id">
+                        <option value="">— Home —</option>
+                        <template x-for="t in allTeams" :key="t.id">
+                          <option :value="t.id" x-text="t.name"></option>
+                        </template>
+                      </select>
+                    </td>
+                    <td>
+                      <select x-model.number="row.away_team_id">
+                        <option value="">— Away —</option>
+                        <template x-for="t in allTeams" :key="t.id">
+                          <option :value="t.id" x-text="t.name"></option>
+                        </template>
+                      </select>
+                    </td>
+                    <td>
+                      <input type="datetime-local" x-model="row.kickoff_utc">
+                    </td>
+                    <td style="text-align:center;">
+                      <input type="checkbox" x-model="row.finished">
+                    </td>
+                    <td>
+                      <button class="btn-del-row" @click="removeFixtureRow(idx)" title="Remove">✕</button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
 
-                parseCSV() {
-                    if (!this.csvData) return;
-                    const lines = this.csvData.split('\n').filter(l => l.trim() !== "");
-                    if (lines.length < 2) {
-                        this.showMessage("CSV must have headers and at least one data row.", "error");
-                        return;
-                    }
-                    const headers = lines[0].split(',').map(h => h.trim());
-                    
-                    const parsedData = {};
-                    for (let i = 1; i < lines.length; i++) {
-                        const vals = lines[i].split(',').map(v => v.trim());
-                        let row = {};
-                        headers.forEach((h, idx) => {
-                            let val = vals[idx];
-                            row[h] = val ? parseInt(val) : 0;
-                        });
-                        if (row.player_id) {
-                            parsedData[row.player_id] = row;
-                        }
-                    }
+          <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <button class="btn-add-row" @click="addFixtureRow()">+ Add Fixture</button>
+            <button class="btn-primary" :disabled="savingFixtures || fixtureRows.length===0" @click="saveFixtures()">
+              <span x-show="!savingFixtures">💾 Save All Fixtures</span>
+              <span x-show="savingFixtures">⏳ Saving…</span>
+            </button>
+            <button class="btn-add-row" style="margin-left:auto;" @click="initLock()"
+                    x-show="fixtureRows.length > 0" title="Recalculate lock time from earliest kickoff">
+              🔒 Recalculate Lock
+            </button>
+          </div>
+        </div>
 
-                    // map to this.teams
-                    for (let team of this.teams) {
-                        for (let player of team.players) {
-                            if (parsedData[player.player_id]) {
-                                const pData = parsedData[player.player_id];
-                                player.stats.minutes_played = pData.minutes_played || 0;
-                                player.stats.goals = pData.goals || 0;
-                                player.stats.assists = pData.assists || 0;
-                                player.stats.goals_conceded = pData.goals_conceded || 0;
-                                player.stats.yellow_card = pData.yellow_card || 0;
-                                player.stats.red_card = pData.red_card || 0;
-                                player.stats.own_goal = pData.own_goal || 0;
-                                player.stats.penalty_missed = pData.penalty_missed || 0;
-                                player.stats.penalty_saved = pData.penalty_saved || 0;
-                            }
-                        }
-                    }
-                    this.showMessage("CSV data successfully populated into the table.", "success");
-                },
+        <!-- Existing saved fixtures (read from API) -->
+        <div class="section-card" x-show="savedFixtures.length > 0">
+          <h3>✅ Saved Fixtures</h3>
+          <table class="fix-table">
+            <thead>
+              <tr><th>#</th><th>Home</th><th>Away</th><th>Kickoff (UTC)</th><th>Finished</th></tr>
+            </thead>
+            <tbody>
+              <template x-for="(f, i) in savedFixtures" :key="f.id">
+                <tr>
+                  <td x-text="i+1" style="color:var(--text-dim);font-size:0.78rem;"></td>
+                  <td x-text="teamName(f.home_team_id)"></td>
+                  <td x-text="teamName(f.away_team_id)"></td>
+                  <td x-text="new Date(f.kickoff_utc).toLocaleString()"></td>
+                  <td style="text-align:center;" x-text="f.finished ? '✅' : '⏳'"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
 
-                async loadPlayers() {
-                    if (!this.matchdayId) {
-                        this.teams = [];
-                        return;
-                    }
-                    this.loading = true;
-                    this.message = '';
-                    try {
-                        let url = `/admin/matchday/${this.matchdayId}/players`;
-                        if (this.selectedLeagueId) {
-                            url += `?league_id=${this.selectedLeagueId}`;
-                        }
-                        const res = await fetch(url, { headers: { 'Authorization': 'Bearer dummy-admin-token' } });
-                        if (!res.ok) throw new Error('Failed to load players');
-                        const data = await res.json();
-                        // Initialize stats object for each player
-                        this.teams = data.teams.map(team => ({
-                            ...team,
-                            players: team.players.map(player => ({
-                                ...player,
-                                stats: {
-                                    minutes_played: 0,
-                                    goals: 0,
-                                    assists: 0,
-                                    goals_conceded: 0,
-                                    yellow_card: 0,
-                                    red_card: 0,
-                                    own_goal: 0,
-                                    penalty_missed: 0,
-                                    penalty_saved: 0
-                                }
-                            }))
-                        }));
-                    } catch (err) {
-                        this.showMessage(err.message, 'error');
-                    } finally {
-                        this.loading = false;
-                    }
-                },
+      </div>
+    </template>
+  </div>
 
-                validateStats() {
-                    for (const team of this.teams) {
-                        for (const player of team.players) {
-                            const min = player.stats.minutes_played;
-                            if (min === undefined || min === null || min < 0 || !Number.isInteger(min)) {
-                                this.showMessage(`Minutes played for ${player.name} must be a non‑negative integer`, 'error');
-                                return false;
-                            }
-                            // All other stats are optional but must be integers >=0
-                            const fields = ['goals', 'assists', 'goals_conceded', 'yellow_card', 'red_card', 'own_goal', 'penalty_missed', 'penalty_saved'];
-                            for (const f of fields) {
-                                const val = player.stats[f];
-                                if (val === undefined || val === null || val < 0 || !Number.isInteger(val)) {
-                                    this.showMessage(`${f} for ${player.name} must be a non‑negative integer`, 'error');
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                    return true;
-                },
+  <!-- Global message toast -->
+  <div x-show="message" class="message" :class="messageType" x-text="message"
+       style="position:fixed;bottom:24px;right:24px;z-index:999;max-width:360px;"></div>
+</div>
 
-                async submitStats() {
-                    if (!this.validateStats()) return;
-                    this.submitting = true;
-                    this.message = '';
-                    this.taskStatus = null;
+<script>
+function adminApp() {
+  return {
+    // ── state ───────────────────────────────────────────
+    tab: 'results',
+    seasons: [], leagues: [], matchdays: [],
+    selectedSeasonId: '', selectedLeagueId: '', matchdayId: '',
+    matchdayDeadline: '', matchdayLocked: false,
 
-                    // Build payload: list of player stat objects
-                    const stats = [];
-                    for (const team of this.teams) {
-                        for (const player of team.players) {
-                            stats.push({
-                                player_id: player.player_id,
-                                minutes_played: player.stats.minutes_played,
-                                goals: player.stats.goals,
-                                assists: player.stats.assists,
-                                goals_conceded: player.stats.goals_conceded,
-                                yellow_card: player.stats.yellow_card,
-                                red_card: player.stats.red_card,
-                                own_goal: player.stats.own_goal,
-                                penalty_missed: player.stats.penalty_missed,
-                                penalty_saved: player.stats.penalty_saved
-                            });
-                        }
-                    }
+    // results tab
+    csvData: '', teams: [], loading: false,
+    submitting: false, taskId: null, taskStatus: null, pollInterval: null,
 
-                    try {
-                        const res = await fetch(`/admin/matchday/${this.matchdayId}/results`, {
-                            method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Bearer dummy-admin-token'
-                            },
-                            body: JSON.stringify({ stats })
-                        });
-                        if (!res.ok) {
-                            const err = await res.json();
-                            throw new Error(err.detail || 'Submission failed');
-                        }
-                        const data = await res.json();
-                        this.taskId = data.task_id;
-                        this.showMessage(`Task queued (ID: ${this.taskId}). Processing...`, 'success');
-                        this.startPolling();
-                    } catch (err) {
-                        this.showMessage(err.message, 'error');
-                    } finally {
-                        this.submitting = false;
-                    }
-                },
+    // fixtures tab
+    fixtureCsvData: '',
+    fixtureRows: [],      // rows being edited
+    savedFixtures: [],    // rows fetched from API
+    allTeams: [],
+    savingFixtures: false,
+    _rowKey: 0,
 
-                startPolling() {
-                    if (this.pollInterval) clearInterval(this.pollInterval);
-                    this.pollInterval = setInterval(async () => {
-                        if (!this.taskId) return;
-                        try {
-                            const res = await fetch(`/admin/matchday/${this.matchdayId}/task-status`, { headers: { 'Authorization': 'Bearer dummy-admin-token' } });
-                            if (!res.ok) throw new Error();
-                            const data = await res.json();
-                            this.taskStatus = data.status;
-                            if (data.status === 'done' || data.status === 'failed') {
-                                clearInterval(this.pollInterval);
-                                this.pollInterval = null;
-                                if (data.status === 'done') {
-                                    this.showMessage('Matchday calculation completed successfully!', 'success');
-                                } else {
-                                    this.showMessage('Task failed. Check logs.', 'error');
-                                }
-                            }
-                        } catch (err) {
-                            // Ignore polling errors
-                        }
-                    }, 2000); // poll every 2 seconds
-                },
+    message: '', messageType: '',
 
-                showMessage(msg, type) {
-                    this.message = msg;
-                    this.messageType = type;
-                    setTimeout(() => {
-                        if (this.message === msg) this.message = '';
-                    }, 5000);
-                }
-            }
+    // ── init ────────────────────────────────────────────
+    async init() {
+      try {
+        const res = await fetch('/admin/seasons', { headers: this.authHeader() });
+        if (res.ok) { const d = await res.json(); this.seasons = d.seasons; }
+      } catch { this.showMessage('Failed to load seasons', 'error'); }
+    },
+
+    authHeader() { return { 'Authorization': 'Bearer dummy-admin-token' }; },
+
+    // ── season / matchday selectors ──────────────────────
+    async loadLeaguesAndMatchdays() {
+      this.leagues = []; this.matchdays = [];
+      this.selectedLeagueId = ''; this.matchdayId = '';
+      this.matchdayDeadline = ''; this.matchdayLocked = false;
+      this.teams = []; this.savedFixtures = []; this.fixtureRows = [];
+      if (!this.selectedSeasonId) return;
+      try {
+        const [resL, resM] = await Promise.all([
+          fetch(`/admin/seasons/${this.selectedSeasonId}/leagues`,  { headers: this.authHeader() }),
+          fetch(`/admin/seasons/${this.selectedSeasonId}/matchdays`, { headers: this.authHeader() }),
+        ]);
+        if (resL.ok) { const d = await resL.json(); this.leagues = d.leagues; }
+        if (resM.ok) { const d = await resM.json(); this.matchdays = d.matchdays; }
+      } catch { this.showMessage('Failed to load leagues/matchdays', 'error'); }
+    },
+
+    async onMatchdayChange() {
+      const md = this.matchdays.find(m => m.id === parseInt(this.matchdayId));
+      this.matchdayDeadline = md?.lock_at_utc ?? md?.deadline_utc ?? '';
+      this.matchdayLocked   = md?.is_locked ?? false;
+      this.savedFixtures = [];
+      this.fixtureRows   = [];
+      await Promise.all([ this.loadPlayers(), this.loadTeams(), this.loadFixtures() ]);
+    },
+
+    // ── teams (for fixture dropdowns) ────────────────────
+    async loadTeams() {
+      if (!this.selectedSeasonId) return;
+      try {
+        const res = await fetch(`/admin/seasons/${this.selectedSeasonId}/teams`,
+                                { headers: this.authHeader() });
+        if (res.ok) { const d = await res.json(); this.allTeams = d.teams ?? d; }
+      } catch { /* non-critical */ }
+    },
+
+    teamName(id) {
+      return this.allTeams.find(t => t.id === id)?.name ?? `Team ${id}`;
+    },
+
+    // ── FIXTURES TAB ─────────────────────────────────────
+    async loadFixtures() {
+      if (!this.matchdayId) return;
+      try {
+        const res = await fetch(`/admin/matchday/${this.matchdayId}/fixtures`,
+                                { headers: this.authHeader() });
+        if (res.ok) { const d = await res.json(); this.savedFixtures = d.fixtures ?? []; }
+      } catch { /* endpoint may not exist yet */ }
+    },
+
+    addFixtureRow() {
+      this.fixtureRows.push({
+        _key: this._rowKey++,
+        home_team_id: '', away_team_id: '',
+        kickoff_utc: '', finished: false,
+      });
+    },
+
+    removeFixtureRow(idx) { this.fixtureRows.splice(idx, 1); },
+
+    parseFixtureCsv() {
+      const lines = this.fixtureCsvData.trim().split('\n').filter(l => l.trim());
+      if (lines.length < 2) { this.showMessage('CSV needs a header row + data rows', 'error'); return; }
+      const headers = lines[0].split(',').map(h => h.trim());
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.trim());
+        const row = {};
+        headers.forEach((h, idx) => row[h] = vals[idx] ?? '');
+        rows.push({
+          _key: this._rowKey++,
+          home_team_id: parseInt(row.home_team_id) || '',
+          away_team_id: parseInt(row.away_team_id) || '',
+          kickoff_utc:  row.kickoff_utc ?? '',
+          finished: false,
+        });
+      }
+      this.fixtureRows = rows;
+      this.showMessage(`${rows.length} fixture(s) loaded from CSV`, 'success');
+    },
+
+    downloadFixtureTemplate() {
+      const csv = 'home_team_id,away_team_id,kickoff_utc\n1,2,2025-06-01T14:00\n3,4,2025-06-01T17:00\n';
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'fixtures_template.csv';
+      a.click();
+    },
+
+    async saveFixtures() {
+      // Validate
+      for (const r of this.fixtureRows) {
+        if (!r.home_team_id || !r.away_team_id || !r.kickoff_utc) {
+          this.showMessage('All fixture rows must have Home, Away, and Kickoff filled in', 'error');
+          return;
         }
-    </script>
+        if (r.home_team_id === r.away_team_id) {
+          this.showMessage('Home and Away teams cannot be the same', 'error');
+          return;
+        }
+      }
+      this.savingFixtures = true;
+      try {
+        const payload = {
+          fixtures: this.fixtureRows.map(r => ({
+            home_team_id: r.home_team_id,
+            away_team_id: r.away_team_id,
+            // Ensure UTC suffix
+            kickoff_utc: r.kickoff_utc.includes('Z') ? r.kickoff_utc : r.kickoff_utc + ':00Z',
+            finished: r.finished,
+          }))
+        };
+        const res = await fetch(`/admin/matchday/${this.matchdayId}/fixtures`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...this.authHeader() },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Save failed');
+        }
+        const d = await res.json();
+        this.showMessage(`${d.created ?? this.fixtureRows.length} fixture(s) saved. Lock recalculated.`, 'success');
+        this.fixtureRows = [];
+        await this.loadFixtures();
+        // Refresh lock time shown in header
+        const md = this.matchdays.find(m => m.id === parseInt(this.matchdayId));
+        if (d.lock_at_utc) { this.matchdayDeadline = d.lock_at_utc; }
+      } catch (e) {
+        this.showMessage(e.message, 'error');
+      } finally {
+        this.savingFixtures = false;
+      }
+    },
+
+    async initLock() {
+      try {
+        const res = await fetch(`/admin/matchday/${this.matchdayId}/init-lock`, {
+          method: 'POST', headers: this.authHeader(),
+        });
+        if (!res.ok) throw new Error('Lock init failed');
+        const d = await res.json();
+        this.matchdayDeadline = d.lock_at_utc;
+        this.showMessage(`Lock set to ${new Date(d.lock_at_utc).toLocaleString()}`, 'success');
+      } catch (e) { this.showMessage(e.message, 'error'); }
+    },
+
+    // ── RESULTS TAB ──────────────────────────────────────
+    async loadPlayers() {
+      if (!this.matchdayId) { this.teams = []; return; }
+      this.loading = true; this.message = '';
+      try {
+        let url = `/admin/matchday/${this.matchdayId}/players`;
+        if (this.selectedLeagueId) url += `?league_id=${this.selectedLeagueId}`;
+        const res = await fetch(url, { headers: this.authHeader() });
+        if (!res.ok) throw new Error('Failed to load players');
+        const data = await res.json();
+        this.teams = data.teams.map(team => ({
+          ...team,
+          players: team.players.map(p => ({
+            ...p,
+            stats: {
+              minutes_played: 0, goals: 0, assists: 0,
+              goals_conceded: 0, yellow_card: 0, red_card: 0,
+              own_goal: 0, penalty_missed: 0, penalty_saved: 0,
+            }
+          }))
+        }));
+      } catch (err) {
+        this.showMessage(err.message, 'error');
+      } finally { this.loading = false; }
+    },
+
+    parseCSV() {
+      if (!this.csvData) return;
+      const lines = this.csvData.split('\n').filter(l => l.trim());
+      if (lines.length < 2) { this.showMessage('CSV needs header + data rows', 'error'); return; }
+      const headers = lines[0].split(',').map(h => h.trim());
+      const parsed = {};
+      for (let i = 1; i < lines.length; i++) {
+        const vals = lines[i].split(',').map(v => v.trim());
+        const row = {};
+        headers.forEach((h, idx) => { row[h] = parseInt(vals[idx]) || 0; });
+        if (row.player_id) parsed[row.player_id] = row;
+      }
+      let matched = 0;
+      for (const team of this.teams) {
+        for (const p of team.players) {
+          if (parsed[p.player_id]) {
+            const d = parsed[p.player_id];
+            Object.assign(p.stats, {
+              minutes_played: d.minutes_played || 0,
+              goals: d.goals || 0, assists: d.assists || 0,
+              goals_conceded: d.goals_conceded || 0,
+              yellow_card: d.yellow_card || 0, red_card: d.red_card || 0,
+              own_goal: d.own_goal || 0, penalty_missed: d.penalty_missed || 0,
+              penalty_saved: d.penalty_saved || 0,
+            });
+            matched++;
+          }
+        }
+      }
+      this.showMessage(`CSV loaded — ${matched} player(s) matched`, matched ? 'success' : 'error');
+    },
+
+    downloadCSVTemplate() {
+      const headers = 'player_id,minutes_played,goals,assists,goals_conceded,yellow_card,red_card,own_goal,penalty_missed,penalty_saved\n';
+      const rows = this.teams.flatMap(t => t.players.map(p => `${p.player_id},0,0,0,0,0,0,0,0,0`)).join('\n');
+      const blob = new Blob([headers + rows], { type: 'text/csv' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `matchday_${this.matchdayId}_results_template.csv`; a.click();
+    },
+
+    validateStats() {
+      for (const team of this.teams) {
+        for (const p of team.players) {
+          const fields = ['minutes_played','goals','assists','goals_conceded',
+                          'yellow_card','red_card','own_goal','penalty_missed','penalty_saved'];
+          for (const f of fields) {
+            const v = parseInt(p.stats[f]);
+            if (isNaN(v) || v < 0) {
+              this.showMessage(`${f} for ${p.name} must be ≥ 0`, 'error'); return false;
+            }
+            p.stats[f] = v;
+          }
+        }
+      }
+      return true;
+    },
+
+    async submitStats() {
+      if (!this.validateStats()) return;
+      this.submitting = true; this.message = ''; this.taskStatus = null;
+      const stats = this.teams.flatMap(team =>
+        team.players.map(p => ({ player_id: p.player_id, ...p.stats }))
+      );
+      try {
+        const res = await fetch(`/admin/matchday/${this.matchdayId}/results`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...this.authHeader() },
+          body: JSON.stringify({ stats }),
+        });
+        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Submission failed'); }
+        const d = await res.json();
+        this.taskId = d.task_id;
+        this.showMessage(`Task queued (${this.taskId}). Processing…`, 'success');
+        this.startPolling();
+      } catch (err) {
+        this.showMessage(err.message, 'error');
+      } finally { this.submitting = false; }
+    },
+
+    startPolling() {
+      if (this.pollInterval) clearInterval(this.pollInterval);
+      this.pollInterval = setInterval(async () => {
+        if (!this.taskId) return;
+        try {
+          const res = await fetch(`/admin/matchday/${this.matchdayId}/task-status`,
+                                  { headers: this.authHeader() });
+          if (!res.ok) return;
+          const d = await res.json();
+          this.taskStatus = d.status;
+          if (d.status === 'done' || d.status === 'failed') {
+            clearInterval(this.pollInterval); this.pollInterval = null;
+            this.showMessage(d.status === 'done' ? '✅ Calculation complete!' : '❌ Task failed. Check logs.', d.status === 'done' ? 'success' : 'error');
+          }
+        } catch { /* ignore */ }
+      }, 2000);
+    },
+
+    showMessage(msg, type) {
+      this.message = msg; this.messageType = type;
+      setTimeout(() => { if (this.message === msg) this.message = ''; }, 5000);
+    },
+  };
+}
+</script>
 </body>
 </html>
