@@ -141,6 +141,26 @@
         </div>
 
         <!-- Stats Table -->
+
+        <!-- Read-only Fixtures Summary -->
+        <div class="section-card" x-show="savedFixtures.length > 0">
+          <h3>📅 Fixtures <span style="font-size:0.75rem;color:var(--text-dim);font-weight:500;">(read-only — edit in Fixtures tab)</span></h3>
+          <table class="fix-table">
+            <thead><tr><th>#</th><th>Home</th><th>Away</th><th>Kickoff (local)</th><th>Status</th></tr></thead>
+            <tbody>
+              <template x-for="(f, i) in savedFixtures" :key="f.id">
+                <tr>
+                  <td x-text="i+1" style="color:var(--text-dim);font-size:0.78rem;"></td>
+                  <td x-text="teamName(f.home_team_id)" style="font-weight:700;"></td>
+                  <td x-text="teamName(f.away_team_id)" style="font-weight:700;"></td>
+                  <td x-text="new Date(f.kickoff_utc).toLocaleString()" style="color:var(--text-dim);font-size:0.82rem;"></td>
+                  <td><span x-show="f.finished" style="color:var(--teal);font-weight:700;font-size:0.8rem;">✅ Done</span><span x-show="!f.finished" style="color:var(--gold);font-weight:700;font-size:0.8rem;">⏳ Upcoming</span></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
         <div x-show="loading" class="loading">Loading players…</div>
         <template x-if="!loading && teams.length">
           <div class="section-card">
@@ -157,27 +177,27 @@
                     <td colspan="10"><small>Min=Minutes · G=Goals · A=Assists · GC=Goals Conceded · YC=Yellow · RC=Red · OG=Own Goal · PM=Pen Missed · PS=Pen Saved</small></td>
                   </tr>
                 </thead>
-                <tbody>
                   <template x-for="team in teams" :key="team.team_id">
-                    <tr class="team-separator" style="display:table-row;">
-                      <td colspan="10" x-text="team.team_name"></td>
-                    </tr>
-                    <template x-for="player in team.players" :key="player.player_id">
-                      <tr>
-                        <td class="player-name" x-text="player.name"></td>
-                        <td><input type="number" x-model.number="player.stats.minutes_played" min="0" step="1" required></td>
-                        <td><input type="number" x-model.number="player.stats.goals"          min="0" step="1"></td>
-                        <td><input type="number" x-model.number="player.stats.assists"        min="0" step="1"></td>
-                        <td><input type="number" x-model.number="player.stats.goals_conceded" min="0" step="1"></td>
-                        <td><input type="number" x-model.number="player.stats.yellow_card"    min="0" step="1"></td>
-                        <td><input type="number" x-model.number="player.stats.red_card"       min="0" step="1"></td>
-                        <td><input type="number" x-model.number="player.stats.own_goal"       min="0" step="1"></td>
-                        <td><input type="number" x-model.number="player.stats.penalty_missed" min="0" step="1"></td>
-                        <td><input type="number" x-model.number="player.stats.penalty_saved"  min="0" step="1"></td>
+                    <tbody>
+                      <tr class="team-separator">
+                        <td colspan="10" x-text="team.team_name"></td>
                       </tr>
-                    </template>
+                      <template x-for="player in team.players" :key="player.player_id">
+                        <tr>
+                          <td class="player-name" x-text="player.name"></td>
+                          <td><input type="number" x-model.number="player.stats.minutes_played" min="0" step="1" required></td>
+                          <td><input type="number" x-model.number="player.stats.goals"          min="0" step="1"></td>
+                          <td><input type="number" x-model.number="player.stats.assists"        min="0" step="1"></td>
+                          <td><input type="number" x-model.number="player.stats.goals_conceded" min="0" step="1"></td>
+                          <td><input type="number" x-model.number="player.stats.yellow_card"    min="0" step="1"></td>
+                          <td><input type="number" x-model.number="player.stats.red_card"       min="0" step="1"></td>
+                          <td><input type="number" x-model.number="player.stats.own_goal"       min="0" step="1"></td>
+                          <td><input type="number" x-model.number="player.stats.penalty_missed" min="0" step="1"></td>
+                          <td><input type="number" x-model.number="player.stats.penalty_saved"  min="0" step="1"></td>
+                        </tr>
+                      </template>
+                    </tbody>
                   </template>
-                </tbody>
               </table>
             </div>
             <div class="actions" style="margin-top:16px;">
@@ -250,7 +270,7 @@
                       <select x-model.number="row.home_team_id">
                         <option value="">— Home —</option>
                         <template x-for="t in allTeams" :key="t.id">
-                          <option :value="t.id" x-text="t.name"></option>
+                          <option :value="t.id" x-text="t.name" :selected="row.home_team_id === t.id"></option>
                         </template>
                       </select>
                     </td>
@@ -258,7 +278,7 @@
                       <select x-model.number="row.away_team_id">
                         <option value="">— Away —</option>
                         <template x-for="t in allTeams" :key="t.id">
-                          <option :value="t.id" x-text="t.name"></option>
+                          <option :value="t.id" x-text="t.name" :selected="row.away_team_id === t.id"></option>
                         </template>
                       </select>
                     </td>
@@ -422,11 +442,16 @@ function adminApp() {
         const vals = lines[i].split(',').map(v => v.trim());
         const row = {};
         headers.forEach((h, idx) => row[h] = vals[idx] ?? '');
+        // Parse team IDs as integers — must match the numeric ids from allTeams
+        const homeId = parseInt(row.home_team_id);
+        const awayId = parseInt(row.away_team_id);
+        // datetime-local input expects "YYYY-MM-DDTHH:MM" — strip seconds/tz if present
+        const kickoff = (row.kickoff_utc ?? '').replace(/Z$/, '').replace(/:\d{2}(\.\d+)?$/, '').slice(0, 16);
         rows.push({
           _key: this._rowKey++,
-          home_team_id: parseInt(row.home_team_id) || '',
-          away_team_id: parseInt(row.away_team_id) || '',
-          kickoff_utc:  row.kickoff_utc ?? '',
+          home_team_id: isNaN(homeId) ? '' : homeId,
+          away_team_id: isNaN(awayId) ? '' : awayId,
+          kickoff_utc: kickoff,
           finished: false,
         });
       }

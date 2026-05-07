@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Schedule — Fantasy SV</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    /* ── Variables ── */
+    :root {
+      --navy:       #080e1c;
+      --navy-mid:   #0c1830;
+      --card:       #101f3a;
+      --card-hi:    #152444;
+      --teal:       #00d4aa;
+      --teal-dim:   rgba(0,212,170,.18);
+      --gold:       #f5c518;
+      --gold-dim:   rgba(245,197,24,.15);
+      --red:        #ff4d6d;
+      --red-dim:    rgba(255,77,109,.15);
+      --blue:       #00a8e8;
+      --text:       #e8f0ff;
+      --dim:        rgba(232,240,255,.45);
+      --muted:      rgba(232,240,255,.22);
+      --font-head:  'Bebas Neue', sans-serif;
+      --font-body:  'Nunito', sans-serif;
+      --radius:     14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% 10%, rgba(0,212,170,.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 90% 80%, rgba(0,168,232,.06) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(245,197,24,.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ── Nav ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(8,14,28,.88);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(0,212,170,.12);
+      padding: 0 20px;
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; gap: 20px;
+      height: 56px;
+    }
+    .nav-brand {
+      font-family: var(--font-head);
+      font-size: 1.5rem; letter-spacing:.06em;
+      color: var(--teal); text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 4px; margin-left: auto; }
+    .nav-link {
+      font-size: .82rem; font-weight: 700; color: var(--dim);
+      text-decoration: none; padding: 6px 14px; border-radius: 50px;
+      transition: all .15s;
+    }
+    .nav-link:hover, .nav-link.active { color: var(--text); background: rgba(255,255,255,.06); }
+
+    /* ── Page hero ── */
+    .hero {
+      position: relative; z-index: 1;
+      max-width: 1100px; margin: 0 auto;
+      padding: 48px 20px 20px;
+    }
+    .hero-eyebrow {
+      font-size: .78rem; font-weight: 800;
+      letter-spacing: .18em; text-transform: uppercase;
+      color: var(--teal); margin-bottom: 10px;
+    }
+    .hero-title {
+      font-family: var(--font-head);
+      font-size: clamp(3.2rem, 8vw, 6rem);
+      line-height: .95; letter-spacing: .02em;
+      color: var(--text);
+    }
+    .hero-title span { color: var(--teal); }
+    .hero-sub {
+      margin-top: 14px; font-size: 1rem;
+      color: var(--dim); max-width: 460px;
+    }
+
+    /* ── Season / filter bar ── */
+    .filter-bar {
+      position: relative; z-index: 1;
+      max-width: 1100px; margin: 24px auto 0;
+      padding: 0 20px;
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .filter-label { font-size: .78rem; font-weight: 800; color: var(--dim); letter-spacing:.1em; text-transform:uppercase; }
+    .season-select {
+      background: var(--card); border: 1px solid rgba(0,212,170,.25);
+      color: var(--text); border-radius: 8px; padding: 8px 14px;
+      font-family: var(--font-body); font-size: .88rem; font-weight: 700;
+      cursor: pointer; outline: none;
+      transition: border-color .15s;
+    }
+    .season-select:focus { border-color: var(--teal); }
+
+    .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill {
+      padding: 7px 16px; border-radius: 50px; font-weight: 800;
+      font-size: .78rem; letter-spacing: .04em;
+      cursor: pointer; border: 1.5px solid transparent;
+      transition: all .18s;
+    }
+    .pill-all   { background: rgba(255,255,255,.06); color: var(--dim); border-color: rgba(255,255,255,.08); }
+    .pill-upcoming { background: var(--teal-dim); color: var(--teal); border-color: rgba(0,212,170,.3); }
+    .pill-live     { background: var(--gold-dim); color: var(--gold); border-color: rgba(245,197,24,.35); }
+    .pill-finished { background: var(--red-dim); color: var(--dim); border-color: rgba(255,255,255,.1); }
+    .pill.active   { background: var(--teal); color: #080e1c; border-color: var(--teal); }
+    .pill-live.active { background: var(--gold); color: #080e1c; border-color: var(--gold); }
+    .pill-finished.active { background: rgba(255,255,255,.15); color: var(--text); border-color: rgba(255,255,255,.25); }
+
+    /* ── Main layout ── */
+    .main {
+      position: relative; z-index: 1;
+      max-width: 1100px; margin: 32px auto 60px;
+      padding: 0 20px;
+    }
+
+    /* ── Matchday section ── */
+    .matchday-section { margin-bottom: 40px; animation: fadeUp .4s ease both; }
+    @keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform:none; } }
+
+    .matchday-header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 16px;
+    }
+    .matchday-number {
+      font-family: var(--font-head);
+      font-size: 3rem; line-height: 1;
+      color: rgba(255,255,255,.08); letter-spacing: .04em;
+      min-width: 64px; text-align: right;
+    }
+    .matchday-meta { flex: 1; }
+    .matchday-name {
+      font-family: var(--font-head);
+      font-size: 1.4rem; letter-spacing: .05em;
+      color: var(--text);
+    }
+    .matchday-detail {
+      font-size: .78rem; font-weight: 700; color: var(--dim);
+      margin-top: 2px;
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+    .md-status {
+      padding: 3px 10px; border-radius: 50px;
+      font-size: .7rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase;
+    }
+    .md-status.scheduled  { background: var(--teal-dim); color: var(--teal); }
+    .md-status.in_progress{ background: var(--gold-dim); color: var(--gold); animation: pulse 1.6s ease-in-out infinite; }
+    .md-status.closed     { background: rgba(255,255,255,.08); color: var(--muted); }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.55; } }
+
+    .lock-line {
+      font-size: .72rem; color: var(--dim);
+    }
+    .lock-line.locked { color: var(--red); }
+
+    /* ── Divider line ── */
+    .md-divider {
+      flex: 1; height: 1px;
+      background: linear-gradient(90deg, rgba(0,212,170,.25), transparent);
+    }
+
+    /* ── Fixture card ── */
+    .fixtures-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+    }
+
+    .fixture-card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      transition: transform .18s, border-color .18s, box-shadow .18s;
+      position: relative; overflow: hidden;
+    }
+    .fixture-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--teal), transparent);
+      opacity: 0; transition: opacity .18s;
+    }
+    .fixture-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(0,212,170,.2);
+      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    }
+    .fixture-card:hover::before { opacity: 1; }
+    .fixture-card.finished { border-color: rgba(255,255,255,.04); }
+    .fixture-card.finished::before { background: linear-gradient(90deg, rgba(255,255,255,.15), transparent); }
+    .fixture-card.live { border-color: rgba(245,197,24,.3); }
+    .fixture-card.live::before { background: linear-gradient(90deg, var(--gold), transparent); opacity: 1; }
+
+    .fixture-kickoff {
+      font-size: .72rem; font-weight: 800; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--dim);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .kickoff-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--teal); flex-shrink: 0;
+    }
+    .kickoff-dot.live { background: var(--gold); animation: pulse 1s ease-in-out infinite; }
+    .kickoff-dot.done { background: var(--muted); }
+
+    .fixture-matchup {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .team-block {
+      flex: 1; text-align: center;
+    }
+    .team-badge {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-size: 1.1rem;
+      letter-spacing: .04em;
+      margin: 0 auto 6px;
+      transition: transform .15s;
+    }
+    .fixture-card:hover .team-badge { transform: scale(1.08); }
+    .team-name {
+      font-size: .82rem; font-weight: 800;
+      color: var(--text); line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .team-name.dim { color: var(--dim); }
+
+    .vs-block { flex-shrink: 0; text-align: center; }
+    .vs-text {
+      font-family: var(--font-head);
+      font-size: 1.4rem; letter-spacing: .1em;
+      color: var(--muted);
+    }
+    .vs-text.finished { color: var(--dim); font-size: 1rem; }
+
+    /* badge colours by first letter hash */
+    .badge-0  { background: rgba(0,212,170,.2);  color: var(--teal); }
+    .badge-1  { background: rgba(0,168,232,.2);  color: var(--blue); }
+    .badge-2  { background: rgba(245,197,24,.2); color: var(--gold); }
+    .badge-3  { background: rgba(255,77,109,.2); color: var(--red); }
+    .badge-4  { background: rgba(192,132,252,.2);color: #c084fc; }
+    .badge-5  { background: rgba(251,146,60,.2); color: #fb923c; }
+    .badge-6  { background: rgba(34,211,238,.2); color: #22d3ee; }
+    .badge-7  { background: rgba(163,230,53,.2); color: #a3e635; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center; padding: 64px 20px;
+      color: var(--dim);
+    }
+    .empty-icon { font-size: 3.5rem; margin-bottom: 16px; }
+    .empty-text { font-size: 1rem; font-weight: 700; }
+
+    /* ── Loading skeleton ── */
+    .skeleton { border-radius: var(--radius); overflow: hidden; background: var(--card); }
+    .skel-shimmer {
+      height: 110px;
+      background: linear-gradient(90deg, var(--card) 0%, var(--card-hi) 50%, var(--card) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease-in-out infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ── Countdown ticker ── */
+    .countdown {
+      font-family: var(--font-head);
+      font-size: .85rem; letter-spacing: .1em;
+      color: var(--teal); margin-top: 8px;
+    }
+    .countdown.soon { color: var(--gold); }
+    .countdown.locked { color: var(--red); }
+
+    /* ── Stats strip ── */
+    .stats-strip {
+      display: flex; gap: 24px; flex-wrap: wrap;
+      padding: 20px 0 28px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      margin-bottom: 32px;
+    }
+    .stat-item { text-align: center; }
+    .stat-val {
+      font-family: var(--font-head);
+      font-size: 2.4rem; line-height: 1; color: var(--teal);
+    }
+    .stat-label { font-size: .72rem; font-weight: 800; color: var(--dim); letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .hero-title { font-size: 3rem; }
+      .fixtures-grid { grid-template-columns: 1fr; }
+      .matchday-number { font-size: 2rem; min-width: 44px; }
+    }
+  </style>
+</head>
+<body x-data="scheduleApp()" x-init="init()">
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">FANTASY SV</a>
+    <div class="nav-links">
+      <a href="/squad-builder" class="nav-link">My Squad</a>
+      <a href="/schedule" class="nav-link active">Schedule</a>
+      <a href="/leaderboard" class="nav-link">Leaderboard</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-eyebrow">2025 Season</div>
+  <h1 class="hero-title">MATCH<br><span>SCHEDULE</span></h1>
+  <p class="hero-sub">All fixtures, matchdays and results — live as the tournament unfolds.</p>
+</div>
+
+<!-- ── FILTER BAR ── -->
+<div class="filter-bar">
+  <span class="filter-label">Season</span>
+  <select class="season-select" x-model="selectedSeasonId" @change="onSeasonChange()">
+    <option value="">— Pick season —</option>
+    <template x-for="s in seasons" :key="s.id">
+      <option :value="s.id" x-text="s.name"></option>
+    </template>
+  </select>
+
+  <div class="filter-pills" x-show="selectedSeasonId">
+    <button class="pill pill-all" :class="filter==='all'?'active':''" @click="filter='all'">All</button>
+    <button class="pill pill-upcoming" :class="filter==='upcoming'?'active':''" @click="filter='upcoming'">Upcoming</button>
+    <button class="pill pill-live" :class="filter==='live'?'active':''" @click="filter='live'">Live</button>
+    <button class="pill pill-finished" :class="filter==='finished'?'active':''" @click="filter='finished'">Finished</button>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- Stats strip -->
+  <div class="stats-strip" x-show="selectedSeasonId && !loading">
+    <div class="stat-item">
+      <div class="stat-val" x-text="totalMatchdays"></div>
+      <div class="stat-label">Matchdays</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val" x-text="totalFixtures"></div>
+      <div class="stat-label">Fixtures</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val" x-text="finishedFixtures"></div>
+      <div class="stat-label">Played</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val" x-text="upcomingFixtures"></div>
+      <div class="stat-label">Upcoming</div>
+    </div>
+  </div>
+
+  <!-- Loading skeletons -->
+  <template x-if="loading">
+    <div style="display:flex;flex-direction:column;gap:32px;">
+      <template x-for="i in [1,2,3]" :key="i">
+        <div>
+          <div style="width:180px;height:20px;border-radius:6px;background:var(--card-hi);margin-bottom:14px;"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;">
+            <template x-for="j in [1,2]" :key="j">
+              <div class="skeleton"><div class="skel-shimmer"></div></div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+
+  <!-- No season selected -->
+  <div class="empty-state" x-show="!selectedSeasonId && !loading">
+    <div class="empty-icon">🏆</div>
+    <div class="empty-text">Select a season to view the schedule</div>
+  </div>
+
+  <!-- No results for filter -->
+  <div class="empty-state" x-show="selectedSeasonId && !loading && filteredMatchdays.length === 0">
+    <div class="empty-icon">📭</div>
+    <div class="empty-text">No matchdays match this filter</div>
+  </div>
+
+  <!-- Matchday sections -->
+  <template x-for="(md, mdIdx) in filteredMatchdays" :key="md.id">
+    <div class="matchday-section" :style="`animation-delay:${mdIdx * 60}ms`">
+
+      <!-- Matchday header -->
+      <div class="matchday-header">
+        <div class="matchday-number" x-text="String(mdIdx+1).padStart(2,'0')"></div>
+        <div class="matchday-meta">
+          <div class="matchday-name" x-text="md.name"></div>
+          <div class="matchday-detail">
+            <span class="md-status" :class="md.status" x-text="mdStatusLabel(md.status)"></span>
+            <span class="lock-line" :class="md.is_locked?'locked':''"
+                  x-show="md.lock_at_utc"
+                  x-text="md.is_locked
+                    ? '🔒 Locked'
+                    : '🔓 Locks ' + fmtRelative(md.lock_at_utc)">
+            </span>
+          </div>
+        </div>
+        <div class="md-divider"></div>
+      </div>
+
+      <!-- Fixtures grid -->
+      <div class="fixtures-grid" x-show="md.fixtures && md.fixtures.length > 0">
+        <template x-for="(f, fi) in md.fixtures" :key="f.id">
+          <div class="fixture-card" :class="fixtureClass(f)">
+            <div class="fixture-kickoff">
+              <span class="kickoff-dot" :class="fixtureClass(f)"></span>
+              <span x-text="fmtKickoff(f.kickoff_utc)"></span>
+              <span x-show="isLive(f)" style="margin-left:4px;color:var(--gold);font-weight:900;">● LIVE</span>
+            </div>
+            <div class="fixture-matchup">
+              <!-- Home -->
+              <div class="team-block">
+                <div class="team-badge" :class="badgeClass(f.home_name || f.home_team_id)">
+                  <span x-text="initials(f.home_name || '?')"></span>
+                </div>
+                <div class="team-name" x-text="f.home_name || 'TBD'"></div>
+              </div>
+              <!-- VS -->
+              <div class="vs-block">
+                <div class="vs-text" :class="f.finished?'finished':''">
+                  <span x-show="!f.finished">VS</span>
+                  <span x-show="f.finished" style="font-size:0.7rem;color:var(--dim);font-family:var(--font-body);font-weight:800;">FT</span>
+                </div>
+                <!-- countdown -->
+                <div class="countdown" :class="countdownClass(f.kickoff_utc)"
+                     x-show="!f.finished && !isLive(f)"
+                     x-text="countdown(f.kickoff_utc)">
+                </div>
+              </div>
+              <!-- Away -->
+              <div class="team-block">
+                <div class="team-badge" :class="badgeClass(f.away_name || f.away_team_id)">
+                  <span x-text="initials(f.away_name || '?')"></span>
+                </div>
+                <div class="team-name" :class="f.finished?'dim':''" x-text="f.away_name || 'TBD'"></div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- No fixtures yet -->
+      <div x-show="!md.fixtures || md.fixtures.length === 0"
+           style="color:var(--muted);font-size:.85rem;font-weight:700;padding:12px 0 4px;">
+        Fixtures not announced yet
+      </div>
+
+    </div>
+  </template>
+
+</div>
+
+<script>
+function scheduleApp() {
+  return {
+    seasons: [],
+    selectedSeasonId: '',
+    matchdays: [],          // raw from API, enriched with fixtures + team names
+    allTeams: {},           // id → name
+    filter: 'all',
+    loading: false,
+    _ticker: null,
+    _now: new Date(),
+
+    async init() {
+      // Tick every 30s for countdowns
+      this._ticker = setInterval(() => { this._now = new Date(); }, 30000);
+
+      try {
+        const res = await fetch('/admin/seasons', { headers: { Authorization: 'Bearer dummy-admin-token' } });
+        if (res.ok) {
+          const d = await res.json();
+          this.seasons = d.seasons ?? [];
+          // Auto-select first active season
+          const active = this.seasons.find(s => s.status === 'active') ?? this.seasons[0];
+          if (active) { this.selectedSeasonId = active.id; await this.onSeasonChange(); }
+        }
+      } catch { /* public page, fail silently */ }
+    },
+
+    async onSeasonChange() {
+      if (!this.selectedSeasonId) { this.matchdays = []; return; }
+      this.loading = true;
+      try {
+        // Load matchdays + teams in parallel
+        const [resM, resT] = await Promise.all([
+          fetch(`/admin/seasons/${this.selectedSeasonId}/matchdays`, { headers: { Authorization: 'Bearer dummy-admin-token' } }),
+          fetch(`/admin/seasons/${this.selectedSeasonId}/teams`,     { headers: { Authorization: 'Bearer dummy-admin-token' } }),
+        ]);
+
+        if (resT.ok) {
+          const d = await resT.json();
+          this.allTeams = {};
+          (d.teams ?? []).forEach(t => { this.allTeams[t.id] = t.name; });
+        }
+
+        if (!resM.ok) throw new Error();
+        const d = await resM.json();
+        const mds = d.matchdays ?? [];
+
+        // Load fixtures for each matchday
+        const enriched = await Promise.all(mds.map(async md => {
+          try {
+            const r = await fetch(`/admin/matchday/${md.id}/fixtures`, { headers: { Authorization: 'Bearer dummy-admin-token' } });
+            if (r.ok) {
+              const fd = await r.json();
+              md.fixtures = (fd.fixtures ?? []).map(f => ({
+                ...f,
+                home_name: this.allTeams[f.home_team_id] ?? null,
+                away_name: this.allTeams[f.away_team_id] ?? null,
+              }));
+            } else { md.fixtures = []; }
+          } catch { md.fixtures = []; }
+          return md;
+        }));
+
+        // Sort: in_progress first, then scheduled by lock_at, then closed
+        this.matchdays = enriched.sort((a, b) => {
+          const order = { in_progress: 0, scheduled: 1, closed: 2 };
+          const ao = order[a.status] ?? 1, bo = order[b.status] ?? 1;
+          if (ao !== bo) return ao - bo;
+          const at = a.lock_at_utc ? new Date(a.lock_at_utc) : new Date(0);
+          const bt = b.lock_at_utc ? new Date(b.lock_at_utc) : new Date(0);
+          return at - bt;
+        });
+      } catch { this.matchdays = []; }
+      finally { this.loading = false; }
+    },
+
+    // ── Computed ───────────────────────────────────────────────────────
+    get filteredMatchdays() {
+      if (this.filter === 'all') return this.matchdays;
+      if (this.filter === 'upcoming')  return this.matchdays.filter(m => m.status === 'scheduled');
+      if (this.filter === 'live')      return this.matchdays.filter(m => m.status === 'in_progress');
+      if (this.filter === 'finished')  return this.matchdays.filter(m => m.status === 'closed');
+      return this.matchdays;
+    },
+
+    get totalMatchdays()   { return this.matchdays.length; },
+    get totalFixtures()    { return this.matchdays.reduce((s,m) => s + (m.fixtures?.length ?? 0), 0); },
+    get finishedFixtures() { return this.matchdays.reduce((s,m) => s + (m.fixtures?.filter(f=>f.finished).length ?? 0), 0); },
+    get upcomingFixtures() { return this.matchdays.reduce((s,m) => s + (m.fixtures?.filter(f=>!f.finished).length ?? 0), 0); },
+
+    // ── Helpers ────────────────────────────────────────────────────────
+    mdStatusLabel(s) {
+      return { scheduled: 'UPCOMING', in_progress: '● LIVE', closed: 'FINISHED' }[s] ?? s.toUpperCase();
+    },
+
+    fixtureClass(f) {
+      if (f.finished) return 'finished';
+      if (this.isLive(f)) return 'live';
+      return '';
+    },
+
+    isLive(f) {
+      if (f.finished) return false;
+      const ko = new Date(f.kickoff_utc);
+      const now = this._now;
+      return ko <= now && now - ko < 2 * 60 * 60 * 1000; // within 2 hrs of kickoff
+    },
+
+    fmtKickoff(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' })
+             + ' · ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    },
+
+    fmtRelative(iso) {
+      if (!iso) return '';
+      const diff = new Date(iso) - new Date();
+      if (diff <= 0) return 'now';
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      if (h > 48) return `in ${Math.floor(h/24)}d`;
+      if (h > 0)  return `in ${h}h ${m}m`;
+      return `in ${m}m`;
+    },
+
+    countdown(iso) {
+      const diff = new Date(iso) - this._now;
+      if (diff <= 0) return '';
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      if (d > 0) return `${d}d ${h}h`;
+      if (h > 0) return `${h}h ${m}m`;
+      return `${m}m`;
+    },
+
+    countdownClass(iso) {
+      const diff = new Date(iso) - this._now;
+      if (diff < 0) return '';
+      if (diff < 60 * 60 * 1000) return 'soon';  // < 1hr
+      return '';
+    },
+
+    initials(name) {
+      return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
+    },
+
+    badgeClass(nameOrId) {
+      const str = String(nameOrId || 'X');
+      let hash = 0;
+      for (const c of str) hash = (hash * 31 + c.charCodeAt(0)) & 0xffffffff;
+      return 'badge-' + (Math.abs(hash) % 8);
+    },
+  };
+}
+</script>
+</body>
+</html>

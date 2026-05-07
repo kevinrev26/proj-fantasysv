@@ -1,1198 +1,2541 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" x-data="squadBuilder()" x-init="init()">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Squad Builder — Fantasy SV</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <style>
-    /* ── Tab bar always visible ── */
-    @media (min-width: 1024px) { .tab-bar { display: flex !important; } }
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <title>Squad Builder — Fantasy SV</title>
+        <link rel="stylesheet" href="style.css" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
+            rel="stylesheet"
+        />
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+        ></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+        <style>
+            /* ── Tab bar always visible ── */
+            @media (min-width: 1024px) {
+                .tab-bar {
+                    display: flex !important;
+                }
+            }
 
-    /* ── Pitch grid: FW top → GK bottom ── */
-    .pitch-grid {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: 100%;
-    }
-    .zone-fw { order: 1; }
-    .zone-mf { order: 2; }
-    .zone-df { order: 3; }
-    .zone-gk { order: 4; }
-    .pitch-zone { margin: 0; }
+            /* ── Pitch grid: FW top → GK bottom ── */
+            .pitch-grid {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                height: 100%;
+            }
+            .zone-fw {
+                order: 1;
+            }
+            .zone-mf {
+                order: 2;
+            }
+            .zone-df {
+                order: 3;
+            }
+            .zone-gk {
+                order: 4;
+            }
+            .pitch-zone {
+                margin: 0;
+            }
 
-    /* ── TAB BADGE – centred above text, no offset ── */
-    .tab-badge {
-      position: static !important;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 5px;
-      margin-left: 5px;
-      border-radius: 50px;
-      font-size: 0.65rem;
-      font-weight: 800;
-      background: var(--teal, #00d4aa);
-      color: #0d1b2e;
-      vertical-align: middle;
-    }
+            /* ── TAB BADGE – centred above text, no offset ── */
+            .tab-badge {
+                position: static !important;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 18px;
+                height: 18px;
+                padding: 0 5px;
+                margin-left: 5px;
+                border-radius: 50px;
+                font-size: 0.65rem;
+                font-weight: 800;
+                background: var(--teal, #00d4aa);
+                color: #0d1b2e;
+                vertical-align: middle;
+            }
 
-    /* ── Field wrapper – leaves room for bench below on mobile ── */
-    .field-wrapper {
-      position: relative;
-      width: 100%;
-      /* enough height for pitch without overlapping bench */
-      height: 58vw;
-      min-height: 270px;
-      max-height: 430px;
-      overflow: hidden;
-      background: linear-gradient(180deg, #0a2218 0%, #0d3d2a 100%);
-    }
-    @media (min-width: 768px) {
-      .field-wrapper { height: 52vw; max-height: 520px; }
-    }
+            /* ── Field wrapper – leaves room for bench below on mobile ── */
+            .field-wrapper {
+                position: relative;
+                width: 100%;
+                /* enough height for pitch without overlapping bench */
+                height: 58vw;
+                min-height: 270px;
+                max-height: 430px;
+                overflow: hidden;
+                background: linear-gradient(180deg, #0a2218 0%, #0d3d2a 100%);
+            }
+            @media (min-width: 768px) {
+                .field-wrapper {
+                    height: 52vw;
+                    max-height: 520px;
+                }
+            }
 
-    /* ── Bench section – always below the field, never overlapping ── */
-    .bench-section {
-      position: relative; /* NOT absolute/fixed */
-      z-index: 2;
-      background: linear-gradient(180deg, rgba(10,22,40,0.97) 0%, #101e32 100%);
-      padding: 10px 14px 12px;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
+            /* ── Bench section – always below the field, never overlapping ── */
+            .bench-section {
+                position: relative; /* NOT absolute/fixed */
+                z-index: 2;
+                background: linear-gradient(
+                    180deg,
+                    rgba(10, 22, 40, 0.97) 0%,
+                    #101e32 100%
+                );
+                padding: 10px 14px 12px;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            }
 
-    /* ── Swap highlight ── */
-    .jersey-card.swap-source { outline: 3px solid #f5c842; outline-offset: 2px; }
-    .bench-card.swap-source  { outline: 3px solid #f5c842; outline-offset: 2px; }
-    .jersey-card.swap-target { outline: 3px solid #00d4aa; outline-offset: 2px; cursor: pointer; }
-    .bench-card.swap-target  { outline: 3px solid #00d4aa; outline-offset: 2px; cursor: pointer; }
-    .jersey-slot.swap-eligible .jersey-card,
-    .bench-card.swap-eligible { opacity: 0.5; }
+            /* ── Swap highlight ── */
+            .jersey-card.swap-source {
+                outline: 3px solid #f5c842;
+                outline-offset: 2px;
+            }
+            .bench-card.swap-source {
+                outline: 3px solid #f5c842;
+                outline-offset: 2px;
+            }
+            .jersey-card.swap-target {
+                outline: 3px solid #00d4aa;
+                outline-offset: 2px;
+                cursor: pointer;
+            }
+            .bench-card.swap-target {
+                outline: 3px solid #00d4aa;
+                outline-offset: 2px;
+                cursor: pointer;
+            }
+            .jersey-slot.swap-eligible .jersey-card,
+            .bench-card.swap-eligible {
+                opacity: 0.5;
+            }
 
-    /* ── Team filter pills ── */
-    .filt-team-wrap {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-      align-items: center;
-    }
-    .filt-team-wrap::-webkit-scrollbar { display: none; }
-    .filt-pill.filt-team.active {
-      background: #c084fc;
-      border-color: #c084fc;
-      color: #0d1b2e;
-    }
+            /* ── Team filter pills ── */
+            .filt-team-wrap {
+                display: flex;
+                gap: 6px;
+                overflow-x: auto;
+                padding-bottom: 2px;
+                align-items: center;
+            }
+            .filt-team-wrap::-webkit-scrollbar {
+                display: none;
+            }
+            .filt-pill.filt-team.active {
+                background: #c084fc;
+                border-color: #c084fc;
+                color: #0d1b2e;
+            }
 
-    /* ── Lock banner ── */
-    .lock-banner {
-      background: linear-gradient(90deg, rgba(255,95,109,0.18), rgba(255,95,109,0.08));
-      border-bottom: 1px solid rgba(255,95,109,0.35);
-      padding: 10px 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      color: #ff9aa4;
-      font-size: 0.9rem;
-    }
+            /* ── Lock banner ── */
+            .lock-banner {
+                background: linear-gradient(
+                    90deg,
+                    rgba(255, 95, 109, 0.18),
+                    rgba(255, 95, 109, 0.08)
+                );
+                border-bottom: 1px solid rgba(255, 95, 109, 0.35);
+                padding: 10px 18px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 700;
+                color: #ff9aa4;
+                font-size: 0.9rem;
+            }
 
-    /* ── Squad remove button ── */
-    .squad-remove {
-      flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: none;
-      background: rgba(255, 80, 80, 0.15);
-      color: #ff5555;
-      font-size: 1rem;
-      line-height: 1;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s, transform 0.1s;
-      margin-left: 8px;
-      z-index: 10;
-      pointer-events: all;
-    }
-    .squad-remove:hover  { background: rgba(255, 80, 80, 0.4); transform: scale(1.15); }
-    .squad-remove:active { transform: scale(0.92); }
-  </style>
-</head>
-<body>
-
-<!-- ── NAVIGATION ── -->
-<nav class="main-nav">
-  <div class="nav-container">
-    <a href="/" class="nav-brand"><span class="nav-logo-icon">⚽</span> Fantasy SV</a>
-    <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="nav-links" id="nav-links">
-      <a href="squad-builder.html" class="nav-link">My Squad</a>
-      <a href="leaderboard.html" class="nav-link">Leaderboard</a>
-      <a href="profile.html" class="nav-link">Profile</a>
-      <button class="sign-out-btn" onclick="localStorage.removeItem('dummy_token');window.location.href='/register'">Sign Out</button>
-    </div>
-  </div>
-</nav>
-
-<!-- ── HEADER ── -->
-<header class="app-header">
-  <div class="header-inner">
-    <div class="header-logo">
-      <span class="logo-label" style="font-size:1.1rem;opacity:0.8;">Squad Builder</span>
-    </div>
-    <div class="header-right" style="display:flex;align-items:center;gap:12px;">
-      <div class="countdown-timer"
-           :class="{'warning': !isLocked && matchdayDeadline && (matchdayDeadline - currentTimestamp < 3600000), 'locked': isLocked}">
-        ⏱️ <span x-text="getCountdownText()"></span>
-      </div>
-      <div class="budget-pill" :class="remainingCredits < 0 ? 'over' : remainingCredits < 10 ? 'warn' : ''">
-        <span class="budget-pill-label">Budget</span>
-        <span class="budget-pill-value" x-text="remainingCredits.toFixed(1) + ' CR'"></span>
-      </div>
-    </div>
-  </div>
-</header>
-
-<!-- Lock banner -->
-<div class="lock-banner" x-show="isLocked" x-cloak>
-  <span style="font-size:1.3rem;">🔒</span>
-  <div>
-    <div>Matchday in progress — squad editing is locked.</div>
-    <div style="font-weight:400;opacity:0.7;font-size:0.8rem;">Your squad is locked in. Check back after the matchday closes.</div>
-  </div>
-</div>
-
-<!-- ── TABS ── -->
-<div class="tab-bar">
-  <button class="tab-btn" :class="activeTab==='field' && 'active'" @click="activeTab='field'">
-    <span class="tab-icon">🏟️</span> Pitch
-  </button>
-  <button class="tab-btn" :class="activeTab==='pool' && 'active'" @click="activeTab='pool'">
-    <span class="tab-icon">👥</span> Players
-    <span class="tab-badge" x-show="selectedPlayers.length > 0" x-text="selectedPlayers.length"></span>
-  </button>
-  <button class="tab-btn" :class="activeTab==='squad' && 'active'" @click="activeTab='squad'">
-    <span class="tab-icon">📋</span> Squad
-  </button>
-</div>
-
-<!-- ══════════ PITCH TAB ══════════ -->
-<div class="tab-content" x-show="activeTab==='field'">
-
-  <!-- Formation bar -->
-  <div class="formation-bar" style="padding:8px 12px;" :class="isLocked ? 'disabled' : ''">
-    <template x-for="f in formations" :key="f.id">
-      <button class="fmn-btn" :class="currentFormation.id===f.id && 'active'"
-              @click="changeFormation(f)" :disabled="isLocked" x-text="f.label"></button>
-    </template>
-  </div>
-
-  <!-- 3-D pitch -->
-  <div class="field-wrapper">
-    <canvas id="field-canvas"></canvas>
-    <div class="formation-overlay" style="pointer-events:none;">
-      <div class="pitch-grid" style="padding:4px 8px 8px;pointer-events:all;">
-
-        <!-- FW -->
-        <div class="pitch-zone zone-fw">
-          <template x-for="slot in getSlotsByPos('FW')" :key="slot.id">
-            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'"
-                 @click="handlePitchClick(slot)">
-              <template x-if="slot.player">
-                <div class="jersey-card"
-                     :class="jerseyCardClass(slot.player)"
-                     style="cursor:pointer;">
-                  <div class="jersey-shape">
-                    <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
-                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                      <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" x-text="slot.player.rating"></text>
-                    </svg>
-                  </div>
-                  <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
-                  <span class="jersey-pos" x-text="slot.player.pos"></span>
-                  <div class="remove-hint">✕</div>
-                  <div class="wildcard-toggle-btn" x-show="!isDeadlinePassed" @click.stop="toggleWildcard(slot.player.id)">
-                    <span x-show="wildcardPlayerId !== slot.player.id">☆</span>
-                    <span x-show="wildcardPlayerId === slot.player.id">★</span>
-                  </div>
+            /* ── Squad remove button ── */
+            .squad-remove {
+                flex-shrink: 0;
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                border: none;
+                background: rgba(255, 80, 80, 0.15);
+                color: #ff5555;
+                font-size: 1rem;
+                line-height: 1;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition:
+                    background 0.15s,
+                    transform 0.1s;
+                margin-left: 8px;
+                z-index: 10;
+                pointer-events: all;
+            }
+            .squad-remove:hover {
+                background: rgba(255, 80, 80, 0.4);
+                transform: scale(1.15);
+            }
+            .squad-remove:active {
+                transform: scale(0.92);
+            }
+        </style>
+    </head>
+    <body>
+        <!-- ── NAVIGATION ── -->
+        <nav class="main-nav">
+            <div class="nav-container">
+                <a href="/" class="nav-brand"
+                    ><span class="nav-logo-icon">⚽</span> Fantasy SV</a
+                >
+                <button
+                    class="nav-mobile-toggle"
+                    onclick="
+                        document
+                            .getElementById('nav-links')
+                            .classList.toggle('active')
+                    "
+                >
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="nav-links" id="nav-links">
+                    <a href="squad-builder.html" class="nav-link">My Squad</a>
+                    <a href="leaderboard.html" class="nav-link">Leaderboard</a>
+                    <a href="profile.html" class="nav-link">Profile</a>
+                    <button
+                        class="sign-out-btn"
+                        onclick="
+                            localStorage.removeItem('dummy_token');
+                            window.location.href = '/register';
+                        "
+                    >
+                        Sign Out
+                    </button>
                 </div>
-              </template>
-              <template x-if="!slot.player">
-                <div class="jersey-empty-slot">
-                  <div class="empty-jersey">
-                    <svg viewBox="0 0 60 55" class="jersey-svg jersey-empty-svg">
-                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4 3"/>
-                    </svg>
-                  </div>
-                  <span class="empty-pos-label" x-text="slot.pos"></span>
-                </div>
-              </template>
             </div>
-          </template>
+        </nav>
+
+        <!-- ── HEADER ── -->
+        <header class="app-header">
+            <div class="header-inner">
+                <div class="header-logo">
+                    <span
+                        class="logo-label"
+                        style="font-size: 1.1rem; opacity: 0.8"
+                        >Squad Builder</span
+                    >
+                </div>
+                <div
+                    class="header-right"
+                    style="display: flex; align-items: center; gap: 12px"
+                >
+                    <div
+                        class="countdown-timer"
+                        :class="{'warning': !isLocked && matchdayDeadline && (matchdayDeadline - currentTimestamp < 3600000), 'locked': isLocked}"
+                    >
+                        ⏱️ <span x-text="getCountdownText()"></span>
+                    </div>
+                    <div
+                        class="budget-pill"
+                        :class="remainingCredits < 0 ? 'over' : remainingCredits < 10 ? 'warn' : ''"
+                    >
+                        <span class="budget-pill-label">Budget</span>
+                        <span
+                            class="budget-pill-value"
+                            x-text="remainingCredits.toFixed(1) + ' CR'"
+                        ></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Lock banner -->
+        <div class="lock-banner" x-show="isLocked" x-cloak>
+            <span style="font-size: 1.3rem">🔒</span>
+            <div>
+                <div>Matchday in progress — squad editing is locked.</div>
+                <div style="font-weight: 400; opacity: 0.7; font-size: 0.8rem">
+                    Your squad is locked in. Check back after the matchday
+                    closes.
+                </div>
+            </div>
         </div>
 
-        <!-- MF -->
-        <div class="pitch-zone zone-mf">
-          <template x-for="slot in getSlotsByPos('MF')" :key="slot.id">
-            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'"
-                 @click="handlePitchClick(slot)">
-              <template x-if="slot.player">
-                <div class="jersey-card" :class="jerseyCardClass(slot.player)" style="cursor:pointer;">
-                  <div class="jersey-shape">
-                    <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
-                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                      <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" x-text="slot.player.rating"></text>
-                    </svg>
-                  </div>
-                  <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
-                  <span class="jersey-pos" x-text="slot.player.pos"></span>
-                  <div class="remove-hint">✕</div>
-                  <div class="wildcard-toggle-btn" x-show="!isDeadlinePassed" @click.stop="toggleWildcard(slot.player.id)">
-                    <span x-show="wildcardPlayerId !== slot.player.id">☆</span>
-                    <span x-show="wildcardPlayerId === slot.player.id">★</span>
-                  </div>
-                </div>
-              </template>
-              <template x-if="!slot.player">
-                <div class="jersey-empty-slot">
-                  <div class="empty-jersey">
-                    <svg viewBox="0 0 60 55" class="jersey-svg jersey-empty-svg">
-                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4 3"/>
-                    </svg>
-                  </div>
-                  <span class="empty-pos-label" x-text="slot.pos"></span>
-                </div>
-              </template>
-            </div>
-          </template>
+        <!-- ── TABS ── -->
+        <div class="tab-bar">
+            <button
+                class="tab-btn"
+                :class="activeTab==='field' && 'active'"
+                @click="activeTab='field'"
+            >
+                <span class="tab-icon">🏟️</span> Pitch
+            </button>
+            <button
+                class="tab-btn"
+                :class="activeTab==='pool' && 'active'"
+                @click="activeTab='pool'"
+            >
+                <span class="tab-icon">👥</span> Players
+                <span
+                    class="tab-badge"
+                    x-show="selectedPlayers.length > 0"
+                    x-text="selectedPlayers.length"
+                ></span>
+            </button>
+            <button
+                class="tab-btn"
+                :class="activeTab==='squad' && 'active'"
+                @click="activeTab='squad'"
+            >
+                <span class="tab-icon">📋</span> Squad
+            </button>
         </div>
 
-        <!-- DF -->
-        <div class="pitch-zone zone-df">
-          <template x-for="slot in getSlotsByPos('DF')" :key="slot.id">
-            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'"
-                 @click="handlePitchClick(slot)">
-              <template x-if="slot.player">
-                <div class="jersey-card" :class="jerseyCardClass(slot.player)" style="cursor:pointer;">
-                  <div class="jersey-shape">
-                    <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
-                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                      <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" x-text="slot.player.rating"></text>
-                    </svg>
-                  </div>
-                  <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
-                  <span class="jersey-pos" x-text="slot.player.pos"></span>
-                  <div class="remove-hint">✕</div>
-                  <div class="wildcard-toggle-btn" x-show="!isDeadlinePassed" @click.stop="toggleWildcard(slot.player.id)">
-                    <span x-show="wildcardPlayerId !== slot.player.id">☆</span>
-                    <span x-show="wildcardPlayerId === slot.player.id">★</span>
-                  </div>
-                </div>
-              </template>
-              <template x-if="!slot.player">
-                <div class="jersey-empty-slot">
-                  <div class="empty-jersey">
-                    <svg viewBox="0 0 60 55" class="jersey-svg jersey-empty-svg">
-                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4 3"/>
-                    </svg>
-                  </div>
-                  <span class="empty-pos-label" x-text="slot.pos"></span>
-                </div>
-              </template>
+        <!-- ══════════ PITCH TAB ══════════ -->
+        <div class="tab-content" x-show="activeTab==='field'">
+            <!-- Formation bar -->
+            <div
+                class="formation-bar"
+                style="padding: 8px 12px"
+                :class="isLocked ? 'disabled' : ''"
+            >
+                <template x-for="f in formations" :key="f.id">
+                    <button
+                        class="fmn-btn"
+                        :class="currentFormation.id===f.id && 'active'"
+                        @click="changeFormation(f)"
+                        :disabled="isLocked"
+                        x-text="f.label"
+                    ></button>
+                </template>
             </div>
-          </template>
+
+            <!-- 3-D pitch -->
+            <div class="field-wrapper">
+                <canvas id="field-canvas"></canvas>
+                <div class="formation-overlay" style="pointer-events: none">
+                    <div
+                        class="pitch-grid"
+                        style="padding: 4px 8px 8px; pointer-events: all"
+                    >
+                        <!-- FW -->
+                        <div class="pitch-zone zone-fw">
+                            <template
+                                x-for="slot in getSlotsByPos('FW')"
+                                :key="slot.id"
+                            >
+                                <div
+                                    class="jersey-slot"
+                                    :class="slot.player ? 'has-player' : 'empty'"
+                                    @click="handlePitchClick(slot)"
+                                >
+                                    <template x-if="slot.player">
+                                        <div
+                                            class="jersey-card"
+                                            :class="jerseyCardClass(slot.player)"
+                                            style="cursor: pointer"
+                                        >
+                                            <div class="jersey-shape">
+                                                <svg
+                                                    viewBox="0 0 60 55"
+                                                    class="jersey-svg"
+                                                    :class="'jersey-color-'+slot.player.pos.toLowerCase()"
+                                                >
+                                                    <path
+                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                                        fill="currentColor"
+                                                        stroke="rgba(255,255,255,0.3)"
+                                                        stroke-width="1"
+                                                    />
+                                                    <text
+                                                        x="30"
+                                                        y="40"
+                                                        text-anchor="middle"
+                                                        font-size="14"
+                                                        font-weight="800"
+                                                        font-family="Nunito"
+                                                        fill="white"
+                                                        x-text="slot.player.rating"
+                                                    ></text>
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="jersey-name"
+                                                x-text="slot.player.name.split(' ').pop()"
+                                            ></span>
+                                            <span
+                                                class="jersey-pos"
+                                                x-text="slot.player.pos"
+                                            ></span>
+                                            <div class="remove-hint">✕</div>
+                                            <div
+                                                class="wildcard-toggle-btn"
+                                                x-show="!isDeadlinePassed"
+                                                @click.stop="toggleWildcard(slot.player.id)"
+                                            >
+                                                <span
+                                                    x-show="wildcardPlayerId !== slot.player.id"
+                                                    >☆</span
+                                                >
+                                                <span
+                                                    x-show="wildcardPlayerId === slot.player.id"
+                                                    >★</span
+                                                >
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!slot.player">
+                                        <div class="jersey-empty-slot">
+                                            <div class="empty-jersey">
+                                                <svg
+                                                    viewBox="0 0 60 55"
+                                                    class="jersey-svg jersey-empty-svg"
+                                                >
+                                                    <path
+                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                                        fill="rgba(255,255,255,0.06)"
+                                                        stroke="rgba(255,255,255,0.2)"
+                                                        stroke-width="1.5"
+                                                        stroke-dasharray="4 3"
+                                                    />
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="empty-pos-label"
+                                                x-text="slot.pos"
+                                            ></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- MF -->
+                        <div class="pitch-zone zone-mf">
+                            <template
+                                x-for="slot in getSlotsByPos('MF')"
+                                :key="slot.id"
+                            >
+                                <div
+                                    class="jersey-slot"
+                                    :class="slot.player ? 'has-player' : 'empty'"
+                                    @click="handlePitchClick(slot)"
+                                >
+                                    <template x-if="slot.player">
+                                        <div
+                                            class="jersey-card"
+                                            :class="jerseyCardClass(slot.player)"
+                                            style="cursor: pointer"
+                                        >
+                                            <div class="jersey-shape">
+                                                <svg
+                                                    viewBox="0 0 60 55"
+                                                    class="jersey-svg"
+                                                    :class="'jersey-color-'+slot.player.pos.toLowerCase()"
+                                                >
+                                                    <path
+                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                                        fill="currentColor"
+                                                        stroke="rgba(255,255,255,0.3)"
+                                                        stroke-width="1"
+                                                    />
+                                                    <text
+                                                        x="30"
+                                                        y="40"
+                                                        text-anchor="middle"
+                                                        font-size="14"
+                                                        font-weight="800"
+                                                        font-family="Nunito"
+                                                        fill="white"
+                                                        x-text="slot.player.rating"
+                                                    ></text>
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="jersey-name"
+                                                x-text="slot.player.name.split(' ').pop()"
+                                            ></span>
+                                            <span
+                                                class="jersey-pos"
+                                                x-text="slot.player.pos"
+                                            ></span>
+                                            <div class="remove-hint">✕</div>
+                                            <div
+                                                class="wildcard-toggle-btn"
+                                                x-show="!isDeadlinePassed"
+                                                @click.stop="toggleWildcard(slot.player.id)"
+                                            >
+                                                <span
+                                                    x-show="wildcardPlayerId !== slot.player.id"
+                                                    >☆</span
+                                                >
+                                                <span
+                                                    x-show="wildcardPlayerId === slot.player.id"
+                                                    >★</span
+                                                >
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!slot.player">
+                                        <div class="jersey-empty-slot">
+                                            <div class="empty-jersey">
+                                                <svg
+                                                    viewBox="0 0 60 55"
+                                                    class="jersey-svg jersey-empty-svg"
+                                                >
+                                                    <path
+                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                                        fill="rgba(255,255,255,0.06)"
+                                                        stroke="rgba(255,255,255,0.2)"
+                                                        stroke-width="1.5"
+                                                        stroke-dasharray="4 3"
+                                                    />
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="empty-pos-label"
+                                                x-text="slot.pos"
+                                            ></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- DF -->
+                        <div class="pitch-zone zone-df">
+                            <template
+                                x-for="slot in getSlotsByPos('DF')"
+                                :key="slot.id"
+                            >
+                                <div
+                                    class="jersey-slot"
+                                    :class="slot.player ? 'has-player' : 'empty'"
+                                    @click="handlePitchClick(slot)"
+                                >
+                                    <template x-if="slot.player">
+                                        <div
+                                            class="jersey-card"
+                                            :class="jerseyCardClass(slot.player)"
+                                            style="cursor: pointer"
+                                        >
+                                            <div class="jersey-shape">
+                                                <svg
+                                                    viewBox="0 0 60 55"
+                                                    class="jersey-svg"
+                                                    :class="'jersey-color-'+slot.player.pos.toLowerCase()"
+                                                >
+                                                    <path
+                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                                        fill="currentColor"
+                                                        stroke="rgba(255,255,255,0.3)"
+                                                        stroke-width="1"
+                                                    />
+                                                    <text
+                                                        x="30"
+                                                        y="40"
+                                                        text-anchor="middle"
+                                                        font-size="14"
+                                                        font-weight="800"
+                                                        font-family="Nunito"
+                                                        fill="white"
+                                                        x-text="slot.player.rating"
+                                                    ></text>
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="jersey-name"
+                                                x-text="slot.player.name.split(' ').pop()"
+                                            ></span>
+                                            <span
+                                                class="jersey-pos"
+                                                x-text="slot.player.pos"
+                                            ></span>
+                                            <div class="remove-hint">✕</div>
+                                            <div
+                                                class="wildcard-toggle-btn"
+                                                x-show="!isDeadlinePassed"
+                                                @click.stop="toggleWildcard(slot.player.id)"
+                                            >
+                                                <span
+                                                    x-show="wildcardPlayerId !== slot.player.id"
+                                                    >☆</span
+                                                >
+                                                <span
+                                                    x-show="wildcardPlayerId === slot.player.id"
+                                                    >★</span
+                                                >
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!slot.player">
+                                        <div class="jersey-empty-slot">
+                                            <div class="empty-jersey">
+                                                <svg
+                                                    viewBox="0 0 60 55"
+                                                    class="jersey-svg jersey-empty-svg"
+                                                >
+                                                    <path
+                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                                        fill="rgba(255,255,255,0.06)"
+                                                        stroke="rgba(255,255,255,0.2)"
+                                                        stroke-width="1.5"
+                                                        stroke-dasharray="4 3"
+                                                    />
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="empty-pos-label"
+                                                x-text="slot.pos"
+                                            ></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- GK -->
+                        <div class="pitch-zone zone-gk">
+                            <template
+                                x-for="slot in getSlotsByPos('GK')"
+                                :key="slot.id"
+                            >
+                                <div
+                                    class="jersey-slot"
+                                    :class="slot.player ? 'has-player' : 'empty'"
+                                    @click="handlePitchClick(slot)"
+                                >
+                                    <template x-if="slot.player">
+                                        <div
+                                            class="jersey-card"
+                                            :class="jerseyCardClass(slot.player)"
+                                            style="cursor: pointer"
+                                        >
+                                            <div class="jersey-shape">
+                                                <svg
+                                                    viewBox="0 0 60 55"
+                                                    class="jersey-svg"
+                                                    :class="'jersey-color-'+slot.player.pos.toLowerCase()"
+                                                >
+                                                    <path
+                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                                        fill="currentColor"
+                                                        stroke="rgba(255,255,255,0.3)"
+                                                        stroke-width="1"
+                                                    />
+                                                    <text
+                                                        x="30"
+                                                        y="40"
+                                                        text-anchor="middle"
+                                                        font-size="14"
+                                                        font-weight="800"
+                                                        font-family="Nunito"
+                                                        fill="white"
+                                                        x-text="slot.player.rating"
+                                                    ></text>
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="jersey-name"
+                                                x-text="slot.player.name.split(' ').pop()"
+                                            ></span>
+                                            <span
+                                                class="jersey-pos"
+                                                x-text="slot.player.pos"
+                                            ></span>
+                                            <div class="remove-hint">✕</div>
+                                            <div
+                                                class="wildcard-toggle-btn"
+                                                x-show="!isDeadlinePassed"
+                                                @click.stop="toggleWildcard(slot.player.id)"
+                                            >
+                                                <span
+                                                    x-show="wildcardPlayerId !== slot.player.id"
+                                                    >☆</span
+                                                >
+                                                <span
+                                                    x-show="wildcardPlayerId === slot.player.id"
+                                                    >★</span
+                                                >
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!slot.player">
+                                        <div class="jersey-empty-slot">
+                                            <div class="empty-jersey">
+                                                <svg
+                                                    viewBox="0 0 60 55"
+                                                    class="jersey-svg jersey-empty-svg"
+                                                >
+                                                    <path
+                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                                        fill="rgba(255,255,255,0.06)"
+                                                        stroke="rgba(255,255,255,0.2)"
+                                                        stroke-width="1.5"
+                                                        stroke-dasharray="4 3"
+                                                    />
+                                                </svg>
+                                            </div>
+                                            <span
+                                                class="empty-pos-label"
+                                                x-text="slot.pos"
+                                            ></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /field-wrapper -->
+
+            <!-- Wildcard hints -->
+            <div
+                class="wildcard-locked-msg"
+                x-show="isDeadlinePassed && wildcardPlayerId"
+            >
+                ⏰ Matchday deadline passed – wildcard locked.
+            </div>
+            <div
+                class="wildcard-locked-msg"
+                x-show="!isDeadlinePassed && !wildcardPlayerId && starterCount >= 11"
+            >
+                ☆ Click ★ on any starter to set as Wildcard (double points).
+            </div>
+            <div
+                class="wildcard-locked-msg"
+                x-show="swapSource !== null"
+                style="color: #f5c842"
+            >
+                🔄 Click a bench player of the same position to swap, or click
+                same player to cancel.
+            </div>
+
+            <!-- ── BENCH (outside field-wrapper, never overlaps) ── -->
+            <div class="bench-section">
+                <h3 class="bench-title">Bench (max 4)</h3>
+                <div class="bench-row">
+                    <template x-for="(bench, i) in benchSlots" :key="i">
+                        <div
+                            class="bench-card"
+                            :class="benchCardClass(bench, i)"
+                            @click="handleBenchClick(bench, i)"
+                        >
+                            <template x-if="bench !== null">
+                                <div class="bench-player">
+                                    <svg
+                                        viewBox="0 0 60 55"
+                                        class="bench-jersey"
+                                        :class="'jersey-color-'+bench.pos.toLowerCase()"
+                                    >
+                                        <path
+                                            d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                            fill="currentColor"
+                                            stroke="rgba(255,255,255,0.3)"
+                                            stroke-width="1"
+                                        />
+                                        <text
+                                            x="30"
+                                            y="40"
+                                            text-anchor="middle"
+                                            font-size="14"
+                                            font-weight="800"
+                                            font-family="Nunito"
+                                            fill="white"
+                                            x-text="bench.rating"
+                                        ></text>
+                                    </svg>
+                                    <span
+                                        class="bench-name"
+                                        x-text="bench.name.split(' ').pop()"
+                                    ></span>
+                                    <span
+                                        class="bench-pos"
+                                        x-text="bench.pos"
+                                    ></span>
+                                </div>
+                            </template>
+                            <template x-if="bench === null">
+                                <div class="bench-empty">
+                                    <svg
+                                        viewBox="0 0 60 55"
+                                        class="bench-jersey bench-jersey-empty"
+                                    >
+                                        <path
+                                            d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                            fill="rgba(255,255,255,0.05)"
+                                            stroke="rgba(255,255,255,0.15)"
+                                            stroke-width="1.5"
+                                            stroke-dasharray="4 3"
+                                        />
+                                    </svg>
+                                    <span class="bench-pos-label"
+                                        >SUB <span x-text="i+1"></span
+                                    ></span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Budget ring & submit -->
+            <div class="budget-section">
+                <div
+                    class="budget-ring-container"
+                    :class="{'locked-overlay': isLocked}"
+                >
+                    <svg class="budget-donut" viewBox="0 0 160 160">
+                        <defs>
+                            <linearGradient
+                                id="ringGrad"
+                                x1="0%"
+                                y1="0%"
+                                x2="100%"
+                                y2="100%"
+                            >
+                                <stop offset="0%" stop-color="#00d4aa" />
+                                <stop offset="100%" stop-color="#00a8e8" />
+                            </linearGradient>
+                            <linearGradient
+                                id="ringOver"
+                                x1="0%"
+                                y1="0%"
+                                x2="100%"
+                                y2="100%"
+                            >
+                                <stop offset="0%" stop-color="#ff6b6b" />
+                                <stop offset="100%" stop-color="#ee0979" />
+                            </linearGradient>
+                        </defs>
+                        <circle
+                            cx="80"
+                            cy="80"
+                            r="66"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.08)"
+                            stroke-width="14"
+                        />
+                        <circle
+                            cx="80"
+                            cy="80"
+                            r="66"
+                            fill="none"
+                            :stroke="remainingCredits < 0 ? 'url(#ringOver)' : 'url(#ringGrad)'"
+                            stroke-width="14"
+                            stroke-linecap="round"
+                            :stroke-dashoffset="414.69 - (Math.min(totalCost,100)/100)*414.69"
+                            stroke-dasharray="414.69"
+                            transform="rotate(-90 80 80)"
+                        />
+                        <text
+                            x="80"
+                            y="70"
+                            text-anchor="middle"
+                            font-size="11"
+                            fill="rgba(255,255,255,0.5)"
+                            font-weight="600"
+                        >
+                            SPENT
+                        </text>
+                        <text
+                            x="80"
+                            y="92"
+                            text-anchor="middle"
+                            font-size="26"
+                            font-weight="800"
+                            fill="#fff"
+                            x-text="totalCost.toFixed(1)"
+                        ></text>
+                        <text
+                            x="80"
+                            y="110"
+                            text-anchor="middle"
+                            font-size="11"
+                            fill="rgba(255,255,255,0.4)"
+                        >
+                            of 100 CR
+                        </text>
+                    </svg>
+                </div>
+                <div class="budget-stats">
+                    <div class="bstat">
+                        <span
+                            class="bstat-val"
+                            x-text="selectedPlayers.length+'/15'"
+                        ></span
+                        ><span class="bstat-label">Players</span>
+                    </div>
+                    <div class="bstat-divider"></div>
+                    <div class="bstat">
+                        <span
+                            class="bstat-val"
+                            :class="remainingCredits<0?'over':''"
+                            x-text="remainingCredits.toFixed(1)"
+                        ></span
+                        ><span class="bstat-label">Remaining</span>
+                    </div>
+                    <div class="bstat-divider"></div>
+                    <div class="bstat">
+                        <span
+                            class="bstat-val"
+                            x-text="validationErrors.length===0?'✓':validationErrors.length"
+                        ></span
+                        ><span class="bstat-label">Issues</span>
+                    </div>
+                </div>
+                <button
+                    class="submit-btn"
+                    :class="canSubmit?'ready':'locked'"
+                    :disabled="!canSubmit"
+                    @click="submitSquad()"
+                >
+                    <span
+                        x-text="canSubmit?'🚀 Submit Squad':'🔒 Squad Incomplete'"
+                    ></span>
+                </button>
+            </div>
         </div>
+        <!-- /pitch tab -->
 
-        <!-- GK -->
-        <div class="pitch-zone zone-gk">
-          <template x-for="slot in getSlotsByPos('GK')" :key="slot.id">
-            <div class="jersey-slot" :class="slot.player ? 'has-player' : 'empty'"
-                 @click="handlePitchClick(slot)">
-              <template x-if="slot.player">
-                <div class="jersey-card" :class="jerseyCardClass(slot.player)" style="cursor:pointer;">
-                  <div class="jersey-shape">
-                    <svg viewBox="0 0 60 55" class="jersey-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
-                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                      <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" x-text="slot.player.rating"></text>
-                    </svg>
-                  </div>
-                  <span class="jersey-name" x-text="slot.player.name.split(' ').pop()"></span>
-                  <span class="jersey-pos" x-text="slot.player.pos"></span>
-                  <div class="remove-hint">✕</div>
-                  <div class="wildcard-toggle-btn" x-show="!isDeadlinePassed" @click.stop="toggleWildcard(slot.player.id)">
-                    <span x-show="wildcardPlayerId !== slot.player.id">☆</span>
-                    <span x-show="wildcardPlayerId === slot.player.id">★</span>
-                  </div>
+        <!-- ══════════ PLAYERS TAB ══════════ -->
+        <div class="tab-content" x-show="activeTab==='pool'">
+            <div class="pool-header">
+                <h2 class="pool-title">Pick Players</h2>
+                <p class="pool-sub">
+                    Tap to add to squad ·
+                    <span x-text="selectedPlayers.length"></span>/15 selected
+                </p>
+            </div>
+
+            <div class="filter-section">
+                <!-- Search -->
+                <input
+                    class="search-box"
+                    type="text"
+                    placeholder="🔍 Search player…"
+                    x-model="searchQuery"
+                />
+
+                <!-- Position + Tier row -->
+                <div class="filter-scroll">
+                    <template x-for="pos in ['ALL','GK','DF','MF','FW']">
+                        <button
+                            class="filt-pill"
+                            :class="filterPos===pos&&'active'"
+                            @click="filterPos=pos"
+                            x-text="pos"
+                        ></button>
+                    </template>
+                    <div class="filt-divider"></div>
+                    <template x-for="tier in ['ALL','A','B','C', 'D']">
+                        <button
+                            class="filt-pill filt-tier"
+                            :class="filterTier===tier&&'active'"
+                            @click="filterTier=tier"
+                            x-text="tier"
+                        ></button>
+                    </template>
                 </div>
-              </template>
-              <template x-if="!slot.player">
-                <div class="jersey-empty-slot">
-                  <div class="empty-jersey">
-                    <svg viewBox="0 0 60 55" class="jersey-svg jersey-empty-svg">
-                      <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4 3"/>
-                    </svg>
-                  </div>
-                  <span class="empty-pos-label" x-text="slot.pos"></span>
+
+                <!-- Team filter row -->
+                <div class="filt-team-wrap" x-show="teamList.length > 0">
+                    <button
+                        class="filt-pill filt-team"
+                        :class="filterTeam==='ALL'&&'active'"
+                        @click="filterTeam='ALL'"
+                    >
+                        All Teams
+                    </button>
+                    <template x-for="club in teamList" :key="club">
+                        <button
+                            class="filt-pill filt-team"
+                            :class="filterTeam===club&&'active'"
+                            @click="filterTeam=club"
+                            x-text="club"
+                        ></button>
+                    </template>
                 </div>
-              </template>
             </div>
-          </template>
-        </div>
 
-      </div>
-    </div>
-  </div><!-- /field-wrapper -->
-
-  <!-- Wildcard hints -->
-  <div class="wildcard-locked-msg" x-show="isDeadlinePassed && wildcardPlayerId">
-    ⏰ Matchday deadline passed – wildcard locked.
-  </div>
-  <div class="wildcard-locked-msg" x-show="!isDeadlinePassed && !wildcardPlayerId && starterCount >= 11">
-    ☆ Click ★ on any starter to set as Wildcard (double points).
-  </div>
-  <div class="wildcard-locked-msg" x-show="swapSource !== null" style="color:#f5c842;">
-    🔄 Click a bench player of the same position to swap, or click same player to cancel.
-  </div>
-
-  <!-- ── BENCH (outside field-wrapper, never overlaps) ── -->
-  <div class="bench-section">
-    <h3 class="bench-title">Bench (max 4)</h3>
-    <div class="bench-row">
-      <template x-for="(bench, i) in benchSlots" :key="i">
-        <div class="bench-card"
-             :class="benchCardClass(bench, i)"
-             @click="handleBenchClick(bench, i)">
-          <template x-if="bench !== null">
-            <div class="bench-player">
-              <svg viewBox="0 0 60 55" class="bench-jersey" :class="'jersey-color-'+bench.pos.toLowerCase()">
-                <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-                <text x="30" y="40" text-anchor="middle" font-size="14" font-weight="800" font-family="Nunito" fill="white" x-text="bench.rating"></text>
-              </svg>
-              <span class="bench-name" x-text="bench.name.split(' ').pop()"></span>
-              <span class="bench-pos" x-text="bench.pos"></span>
-            </div>
-          </template>
-          <template x-if="bench === null">
-            <div class="bench-empty">
-              <svg viewBox="0 0 60 55" class="bench-jersey bench-jersey-empty">
-                <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-dasharray="4 3"/>
-              </svg>
-              <span class="bench-pos-label">SUB <span x-text="i+1"></span></span>
-            </div>
-          </template>
-        </div>
-      </template>
-    </div>
-  </div>
-
-  <!-- Budget ring & submit -->
-  <div class="budget-section">
-    <div class="budget-ring-container" :class="{'locked-overlay': isLocked}">
-      <svg class="budget-donut" viewBox="0 0 160 160">
-        <defs>
-          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#00d4aa"/>
-            <stop offset="100%" stop-color="#00a8e8"/>
-          </linearGradient>
-          <linearGradient id="ringOver" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#ff6b6b"/>
-            <stop offset="100%" stop-color="#ee0979"/>
-          </linearGradient>
-        </defs>
-        <circle cx="80" cy="80" r="66" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14"/>
-        <circle cx="80" cy="80" r="66" fill="none"
-          :stroke="remainingCredits < 0 ? 'url(#ringOver)' : 'url(#ringGrad)'"
-          stroke-width="14" stroke-linecap="round"
-          :stroke-dashoffset="414.69 - (Math.min(totalCost,100)/100)*414.69"
-          stroke-dasharray="414.69" transform="rotate(-90 80 80)"/>
-        <text x="80" y="70" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.5)" font-weight="600">SPENT</text>
-        <text x="80" y="92" text-anchor="middle" font-size="26" font-weight="800" fill="#fff" x-text="totalCost.toFixed(1)"></text>
-        <text x="80" y="110" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.4)">of 100 CR</text>
-      </svg>
-    </div>
-    <div class="budget-stats">
-      <div class="bstat"><span class="bstat-val" x-text="selectedPlayers.length+'/15'"></span><span class="bstat-label">Players</span></div>
-      <div class="bstat-divider"></div>
-      <div class="bstat"><span class="bstat-val" :class="remainingCredits<0?'over':''" x-text="remainingCredits.toFixed(1)"></span><span class="bstat-label">Remaining</span></div>
-      <div class="bstat-divider"></div>
-      <div class="bstat"><span class="bstat-val" x-text="validationErrors.length===0?'✓':validationErrors.length"></span><span class="bstat-label">Issues</span></div>
-    </div>
-    <button class="submit-btn" :class="canSubmit?'ready':'locked'" :disabled="!canSubmit" @click="submitSquad()">
-      <span x-text="canSubmit?'🚀 Submit Squad':'🔒 Squad Incomplete'"></span>
-    </button>
-  </div>
-</div><!-- /pitch tab -->
-
-<!-- ══════════ PLAYERS TAB ══════════ -->
-<div class="tab-content" x-show="activeTab==='pool'">
-  <div class="pool-header">
-    <h2 class="pool-title">Pick Players</h2>
-    <p class="pool-sub">Tap to add to squad · <span x-text="selectedPlayers.length"></span>/15 selected</p>
-  </div>
-
-  <div class="filter-section">
-    <!-- Search -->
-    <input class="search-box" type="text" placeholder="🔍 Search player…" x-model="searchQuery"/>
-
-    <!-- Position + Tier row -->
-    <div class="filter-scroll">
-      <template x-for="pos in ['ALL','GK','DF','MF','FW']">
-        <button class="filt-pill" :class="filterPos===pos&&'active'" @click="filterPos=pos" x-text="pos"></button>
-      </template>
-      <div class="filt-divider"></div>
-      <template x-for="tier in ['ALL','ELITE','PRO','RISING']">
-        <button class="filt-pill filt-tier" :class="filterTier===tier&&'active'" @click="filterTier=tier" x-text="tier"></button>
-      </template>
-    </div>
-
-    <!-- Team filter row -->
-    <div class="filt-team-wrap" x-show="teamList.length > 0">
-      <button class="filt-pill filt-team" :class="filterTeam==='ALL'&&'active'" @click="filterTeam='ALL'">All Teams</button>
-      <template x-for="club in teamList" :key="club">
-        <button class="filt-pill filt-team" :class="filterTeam===club&&'active'" @click="filterTeam=club" x-text="club"></button>
-      </template>
-    </div>
-  </div>
-
-  <div class="player-list">
-    <template x-for="p in filteredPlayers" :key="p.id">
-      <div class="player-row"
-           :class="{
+            <div class="player-list">
+                <template x-for="p in filteredPlayers" :key="p.id">
+                    <div
+                        class="player-row"
+                        :class="{
              selected: isSelected(p.id),
              disabled: (!isSelected(p.id) && !canAddPlayer(p)) || (isLocked)
            }"
-           @click="!isLocked && togglePlayer(p)">
-        <div class="row-jersey-wrap">
-          <svg viewBox="0 0 60 55" class="row-jersey" :class="'jersey-color-'+p.pos.toLowerCase()">
-            <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-            <text x="30" y="40" text-anchor="middle" font-size="13" font-weight="800" fill="white" x-text="p.rating"></text>
-          </svg>
+                        @click="!isLocked && togglePlayer(p)"
+                    >
+                        <div class="row-jersey-wrap">
+                            <svg
+                                viewBox="0 0 60 55"
+                                class="row-jersey"
+                                :class="'jersey-color-'+p.pos.toLowerCase()"
+                            >
+                                <path
+                                    d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                    fill="currentColor"
+                                    stroke="rgba(255,255,255,0.25)"
+                                    stroke-width="1"
+                                />
+                                <text
+                                    x="30"
+                                    y="40"
+                                    text-anchor="middle"
+                                    font-size="13"
+                                    font-weight="800"
+                                    fill="white"
+                                    x-text="p.rating"
+                                ></text>
+                            </svg>
+                        </div>
+                        <div class="row-info">
+                            <div class="row-name" x-text="p.name"></div>
+                            <div class="row-meta">
+                                <span class="row-club" x-text="p.club"></span>
+                                <span
+                                    class="row-tier-badge"
+                                    :class="'tb-'+p.tier.toLowerCase()"
+                                    x-text="p.tier"
+                                ></span>
+                            </div>
+                        </div>
+                        <div class="row-right">
+                            <span
+                                class="row-pos"
+                                :class="'pos-badge-'+p.pos.toLowerCase()"
+                                x-text="p.pos"
+                            ></span>
+                            <span class="row-cost" x-text="p.cost+' CR'"></span>
+                            <span class="row-check" x-show="isSelected(p.id)"
+                                >✓</span
+                            >
+                            <span class="row-add" x-show="!isSelected(p.id)"
+                                >+</span
+                            >
+                        </div>
+                    </div>
+                </template>
+                <div class="empty-pool" x-show="filteredPlayers.length===0">
+                    <span style="font-size: 2.5rem">🤷</span>
+                    <p>No players found</p>
+                </div>
+            </div>
         </div>
-        <div class="row-info">
-          <div class="row-name" x-text="p.name"></div>
-          <div class="row-meta">
-            <span class="row-club" x-text="p.club"></span>
-            <span class="row-tier-badge" :class="'tb-'+p.tier.toLowerCase()" x-text="p.tier"></span>
-          </div>
+
+        <!-- ══════════ SQUAD TAB ══════════ -->
+        <div class="tab-content" x-show="activeTab==='squad'">
+            <div class="pool-header">
+                <h2 class="pool-title">My Squad</h2>
+                <p
+                    class="pool-sub"
+                    x-text="selectedPlayers.length+' of 15 players selected'"
+                ></p>
+            </div>
+            <div class="comp-card">
+                <h3 class="comp-card-title">Formation Rules</h3>
+                <template x-for="rule in compositionRules" :key="rule.pos">
+                    <div class="comp-bar-row">
+                        <span class="comp-label"
+                            ><span
+                                class="comp-pos-dot"
+                                :class="'dot-'+rule.pos.toLowerCase()"
+                            ></span
+                            ><span x-text="rule.pos"></span
+                        ></span>
+                        <div class="comp-track">
+                            <div
+                                class="comp-fill"
+                                :class="countInSquad(rule.pos)>=rule.min?'fill-ok':'fill-warn'"
+                                :style="'width:'+Math.min(countInSquad(rule.pos)/rule.max*100,100)+'%'"
+                            ></div>
+                        </div>
+                        <span
+                            class="comp-nums"
+                            :class="countInSquad(rule.pos)>=rule.min?'nums-ok':'nums-warn'"
+                            ><span x-text="countInSquad(rule.pos)"></span>/<span
+                                x-text="rule.max"
+                            ></span
+                        ></span>
+                        <span
+                            class="comp-req"
+                            :class="countInSquad(rule.pos)>=rule.min?'req-ok':'req-warn'"
+                            >min <span x-text="rule.min"></span
+                        ></span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Starters -->
+            <template x-for="pos in ['GK','DF','MF','FW']" :key="pos">
+                <div class="squad-group" x-show="startersByPos(pos).length > 0">
+                    <div class="squad-group-header">
+                        <span
+                            class="squad-group-dot"
+                            :class="'dot-'+pos.toLowerCase()"
+                        ></span>
+                        <span
+                            class="squad-group-label"
+                            x-text="posLabel(pos)"
+                        ></span>
+                        <span
+                            class="squad-group-count"
+                            x-text="startersByPos(pos).length"
+                        ></span>
+                    </div>
+                    <template x-for="p in startersByPos(pos)" :key="p.id">
+                        <div class="squad-row">
+                            <svg
+                                viewBox="0 0 60 55"
+                                class="squad-jersey"
+                                :class="'jersey-color-'+p.pos.toLowerCase()"
+                            >
+                                <path
+                                    d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                    fill="currentColor"
+                                    stroke="rgba(255,255,255,0.25)"
+                                    stroke-width="1"
+                                />
+                                <text
+                                    x="30"
+                                    y="40"
+                                    text-anchor="middle"
+                                    font-size="13"
+                                    font-weight="800"
+                                    fill="white"
+                                    x-text="p.rating"
+                                ></text>
+                            </svg>
+                            <div class="squad-info">
+                                <span class="squad-name" x-text="p.name"></span>
+                                <span class="squad-club" x-text="p.club"></span>
+                            </div>
+                            <span
+                                class="squad-cost"
+                                x-text="p.cost+' CR'"
+                            ></span>
+                            <span
+                                x-show="wildcardPlayerId===p.id"
+                                style="color: gold; margin-right: 8px"
+                                >★</span
+                            >
+                            <button
+                                class="squad-remove"
+                                @click.stop="removePlayer(p)"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <!-- Bench -->
+            <div class="squad-group" x-show="benchPlayers.length > 0">
+                <div class="squad-group-header">
+                    <span
+                        class="squad-group-dot"
+                        style="background: #888"
+                    ></span>
+                    <span class="squad-group-label">Bench</span>
+                    <span
+                        class="squad-group-count"
+                        x-text="benchPlayers.length"
+                    ></span>
+                </div>
+                <template x-for="p in benchPlayers" :key="p.id">
+                    <div class="squad-row">
+                        <svg
+                            viewBox="0 0 60 55"
+                            class="squad-jersey"
+                            :class="'jersey-color-'+p.pos.toLowerCase()"
+                        >
+                            <path
+                                d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
+                                fill="currentColor"
+                                stroke="rgba(255,255,255,0.25)"
+                                stroke-width="1"
+                            />
+                            <text
+                                x="30"
+                                y="40"
+                                text-anchor="middle"
+                                font-size="13"
+                                font-weight="800"
+                                fill="white"
+                                x-text="p.rating"
+                            ></text>
+                        </svg>
+                        <div class="squad-info">
+                            <span class="squad-name" x-text="p.name"></span>
+                            <span class="squad-club" x-text="p.club"></span>
+                            <span
+                                style="
+                                    font-size: 0.7rem;
+                                    color: #888;
+                                    margin-left: 6px;
+                                "
+                                >BENCH</span
+                            >
+                        </div>
+                        <span class="squad-cost" x-text="p.cost+' CR'"></span>
+                        <button
+                            class="squad-remove"
+                            @click.stop="removePlayer(p)"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <div class="squad-submit-wrap">
+                <button
+                    class="submit-btn"
+                    :class="canSubmit?'ready':'locked'"
+                    :disabled="!canSubmit"
+                    @click="submitSquad()"
+                >
+                    <span
+                        x-text="canSubmit?'🚀 Submit Squad':'🔒 Squad Incomplete'"
+                    ></span>
+                </button>
+            </div>
         </div>
-        <div class="row-right">
-          <span class="row-pos" :class="'pos-badge-'+p.pos.toLowerCase()" x-text="p.pos"></span>
-          <span class="row-cost" x-text="p.cost+' CR'"></span>
-          <span class="row-check" x-show="isSelected(p.id)">✓</span>
-          <span class="row-add" x-show="!isSelected(p.id)">+</span>
+
+        <!-- Modals & Toast -->
+        <div
+            class="modal-bg"
+            x-show="showSuccess"
+            @click.self="showSuccess=false"
+        >
+            <div class="modal-card">
+                <div class="modal-emoji">🏆</div>
+                <h2 class="modal-title">Squad Submitted!</h2>
+                <p class="modal-body">
+                    Your squad is locked in for the upcoming matchday.
+                </p>
+                <button class="modal-btn" @click="showSuccess=false">
+                    Awesome! 🎉
+                </button>
+            </div>
         </div>
-      </div>
-    </template>
-    <div class="empty-pool" x-show="filteredPlayers.length===0">
-      <span style="font-size:2.5rem">🤷</span><p>No players found</p>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════ SQUAD TAB ══════════ -->
-<div class="tab-content" x-show="activeTab==='squad'">
-  <div class="pool-header">
-    <h2 class="pool-title">My Squad</h2>
-    <p class="pool-sub" x-text="selectedPlayers.length+' of 15 players selected'"></p>
-  </div>
-  <div class="comp-card">
-    <h3 class="comp-card-title">Formation Rules</h3>
-    <template x-for="rule in compositionRules" :key="rule.pos">
-      <div class="comp-bar-row">
-        <span class="comp-label"><span class="comp-pos-dot" :class="'dot-'+rule.pos.toLowerCase()"></span><span x-text="rule.pos"></span></span>
-        <div class="comp-track"><div class="comp-fill" :class="countInSquad(rule.pos)>=rule.min?'fill-ok':'fill-warn'" :style="'width:'+Math.min(countInSquad(rule.pos)/rule.max*100,100)+'%'"></div></div>
-        <span class="comp-nums" :class="countInSquad(rule.pos)>=rule.min?'nums-ok':'nums-warn'"><span x-text="countInSquad(rule.pos)"></span>/<span x-text="rule.max"></span></span>
-        <span class="comp-req" :class="countInSquad(rule.pos)>=rule.min?'req-ok':'req-warn'">min <span x-text="rule.min"></span></span>
-      </div>
-    </template>
-  </div>
-
-  <!-- Starters -->
-  <template x-for="pos in ['GK','DF','MF','FW']" :key="pos">
-    <div class="squad-group" x-show="startersByPos(pos).length > 0">
-      <div class="squad-group-header">
-        <span class="squad-group-dot" :class="'dot-'+pos.toLowerCase()"></span>
-        <span class="squad-group-label" x-text="posLabel(pos)"></span>
-        <span class="squad-group-count" x-text="startersByPos(pos).length"></span>
-      </div>
-      <template x-for="p in startersByPos(pos)" :key="p.id">
-        <div class="squad-row">
-          <svg viewBox="0 0 60 55" class="squad-jersey" :class="'jersey-color-'+p.pos.toLowerCase()">
-            <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-            <text x="30" y="40" text-anchor="middle" font-size="13" font-weight="800" fill="white" x-text="p.rating"></text>
-          </svg>
-          <div class="squad-info">
-            <span class="squad-name" x-text="p.name"></span>
-            <span class="squad-club" x-text="p.club"></span>
-          </div>
-          <span class="squad-cost" x-text="p.cost+' CR'"></span>
-          <span x-show="wildcardPlayerId===p.id" style="color:gold;margin-right:8px;">★</span>
-          <button class="squad-remove" @click.stop="removePlayer(p)">✕</button>
-        </div>
-      </template>
-    </div>
-  </template>
-
-  <!-- Bench -->
-  <div class="squad-group" x-show="benchPlayers.length > 0">
-    <div class="squad-group-header">
-      <span class="squad-group-dot" style="background:#888"></span>
-      <span class="squad-group-label">Bench</span>
-      <span class="squad-group-count" x-text="benchPlayers.length"></span>
-    </div>
-    <template x-for="p in benchPlayers" :key="p.id">
-      <div class="squad-row">
-        <svg viewBox="0 0 60 55" class="squad-jersey" :class="'jersey-color-'+p.pos.toLowerCase()">
-          <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
-          <text x="30" y="40" text-anchor="middle" font-size="13" font-weight="800" fill="white" x-text="p.rating"></text>
-        </svg>
-        <div class="squad-info">
-          <span class="squad-name" x-text="p.name"></span>
-          <span class="squad-club" x-text="p.club"></span>
-          <span style="font-size:0.7rem;color:#888;margin-left:6px;">BENCH</span>
-        </div>
-        <span class="squad-cost" x-text="p.cost+' CR'"></span>
-        <button class="squad-remove" @click.stop="removePlayer(p)">✕</button>
-      </div>
-    </template>
-  </div>
-
-  <div class="squad-submit-wrap">
-    <button class="submit-btn" :class="canSubmit?'ready':'locked'" :disabled="!canSubmit" @click="submitSquad()">
-      <span x-text="canSubmit?'🚀 Submit Squad':'🔒 Squad Incomplete'"></span>
-    </button>
-  </div>
-</div>
-
-<!-- Modals & Toast -->
-<div class="modal-bg" x-show="showSuccess" @click.self="showSuccess=false">
-  <div class="modal-card">
-    <div class="modal-emoji">🏆</div>
-    <h2 class="modal-title">Squad Submitted!</h2>
-    <p class="modal-body">Your squad is locked in for the upcoming matchday.</p>
-    <button class="modal-btn" @click="showSuccess=false">Awesome! 🎉</button>
-  </div>
-</div>
-<div class="toast-wrap" id="toast-wrap"></div>
-
-<script>
-// ─── THREE.JS FIELD ──────────────────────────────────────────────────────────
-function initField() {
-  const canvas = document.getElementById('field-canvas');
-  if (!canvas || !window.THREE) return;
-  const parent = canvas.parentElement;
-  const W = parent.clientWidth, H = parent.clientHeight;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setSize(W, H);
-  renderer.shadowMap.enabled = true;
-
-  const scene = new THREE.Scene();
-  scene.background = null;
-  scene.fog = new THREE.FogExp2(0x0a1628, 0.018);
-
-  const camera = new THREE.PerspectiveCamera(52, W/H, 0.1, 100);
-  camera.position.set(0, 11, 16);
-  camera.lookAt(0, 0, 0);
-
-  // Lighting
-  scene.add(new THREE.AmbientLight(0x224466, 1.5));
-  const sun = new THREE.DirectionalLight(0xfff5e0, 2.2);
-  sun.position.set(6, 14, 5); sun.castShadow = true; scene.add(sun);
-  const fill = new THREE.DirectionalLight(0x88aaff, 0.9);
-  fill.position.set(-5, 8, -4); scene.add(fill);
-
-  // Ground base
-  const basePlate = new THREE.Mesh(
-    new THREE.BoxGeometry(24, 0.4, 32),
-    new THREE.MeshStandardMaterial({ color: 0x1a2a3a, roughness: 0.7 })
-  );
-  basePlate.position.set(0, -0.2, 0); basePlate.receiveShadow = true; scene.add(basePlate);
-
-  // Pitch surface
-  const pitchMat = new THREE.MeshStandardMaterial({ color: 0x2d8a4e, roughness: 0.8 });
-  const pitchPlane = new THREE.Mesh(new THREE.PlaneGeometry(22, 30), pitchMat);
-  pitchPlane.rotation.x = -Math.PI/2; pitchPlane.position.y = 0.05;
-  pitchPlane.receiveShadow = true; scene.add(pitchPlane);
-
-  // Alternating dark stripes (6 bands, no cross)
-  for (let i = 0; i < 6; i++) {
-    const stripe = new THREE.Mesh(
-      new THREE.PlaneGeometry(22, 30/6 * 0.9),
-      new THREE.MeshStandardMaterial({ color: 0x267a44, transparent: true, opacity: 0.55 })
-    );
-    stripe.rotation.x = -Math.PI/2;
-    stripe.position.set(0, 0.06, -15 + (30/6) * i + (30/12));
-    scene.add(stripe);
-  }
-
-  // White line helper
-  const lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x4466aa, emissiveIntensity: 0.15 });
-  const addLine = (x, y, z, w, d) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.04, d), lineMat);
-    m.position.set(x, y, z); scene.add(m);
-  };
-
-  const py = 0.09; // line y position
-
-  // Outer boundary
-  addLine(0,   py, 0,  22, 0.12);   // NOT the halfway vertical — just keep horizontal lines
-  addLine(-11, py, 0, 0.12, 30);    // left sideline
-  addLine( 11, py, 0, 0.12, 30);    // right sideline
-  addLine(0,   py, -15, 22, 0.12);  // top goal line
-  addLine(0,   py,  15, 22, 0.12);  // bottom goal line
-
-  // Halfway line only (horizontal, no vertical centre line)
-  addLine(0, py, 0, 22, 0.12);
-
-  // Centre circle
-  const pts = [];
-  for (let i = 0; i <= 64; i++) {
-    const a = (i / 64) * Math.PI * 2;
-    pts.push(new THREE.Vector3(Math.cos(a) * 3.2, py + 0.01, Math.sin(a) * 3.2));
-  }
-  const circleGeo = new THREE.BufferGeometry().setFromPoints(pts);
-  scene.add(new THREE.LineLoop(circleGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 })));
-
-  // Centre spot
-  const spot = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.05, 12), lineMat);
-  spot.position.set(0, py, 0); scene.add(spot);
-
-  // Penalty boxes (both ends)
-  // Top penalty box (z = -15 end)
-  const pbW = 13.4, pbD = 5.5;
-  addLine(0, py, -15 + pbD/2, pbW, 0.12);          // front line of top box
-  addLine(-pbW/2, py, -15 + pbD/2, 0.12, pbD);     // left side
-  addLine( pbW/2, py, -15 + pbD/2, 0.12, pbD);     // right side
-
-  // Bottom penalty box (z = +15 end)
-  addLine(0, py, 15 - pbD/2, pbW, 0.12);
-  addLine(-pbW/2, py, 15 - pbD/2, 0.12, pbD);
-  addLine( pbW/2, py, 15 - pbD/2, 0.12, pbD);
-
-  // Goal areas (6-yard boxes)
-  const gbW = 6.4, gbD = 2.0;
-  addLine(0, py, -15 + gbD/2, gbW, 0.12);
-  addLine(-gbW/2, py, -15 + gbD/2, 0.12, gbD);
-  addLine( gbW/2, py, -15 + gbD/2, 0.12, gbD);
-  addLine(0, py, 15 - gbD/2, gbW, 0.12);
-  addLine(-gbW/2, py, 15 - gbD/2, 0.12, gbD);
-  addLine( gbW/2, py, 15 - gbD/2, 0.12, gbD);
-
-  // Simple crowd blobs
-  const crowdMat = new THREE.MeshStandardMaterial({ color: 0x2a3f5e });
-  for (let i = -11; i <= 11; i += 2) {
-    [-13, 13].forEach(x => {
-      const s = new THREE.Mesh(new THREE.SphereGeometry(0.55, 6, 6), crowdMat);
-      s.position.set(x, 0.3, i * 1.7); scene.add(s);
-    });
-  }
-
-  window.addEventListener('resize', () => {
-    const nw = parent.clientWidth, nh = parent.clientHeight;
-    renderer.setSize(nw, nh); camera.aspect = nw/nh; camera.updateProjectionMatrix();
-  });
-
-  let t = 0;
-  (function animate() {
-    requestAnimationFrame(animate);
-    t += 0.004;
-    camera.position.x = Math.sin(t * 0.2) * 1.0;
-    camera.position.y = 9.5 + Math.sin(t * 0.15) * 0.25;
-    camera.lookAt(0, 0, 0);
-    renderer.render(scene, camera);
-  })();
-}
-
-// ─── ALPINE COMPONENT ─────────────────────────────────────────────────────────
-function squadBuilder() {
-  return {
-    activeTab: 'field',
-    showSuccess: false,
-
-    // Filters
-    filterPos: 'ALL',
-    filterTier: 'ALL',
-    filterTeam: 'ALL',
-    searchQuery: '',
-
-    // Squad state
-    // selectedPlayers[0..10] = starters, [11..14] = bench
-    selectedPlayers: [],
-
-    // Swap state: { player, isOnBench, benchIndex }
-    swapSource: null,
-
-    currentFormation: null,
-    matchdayId: 1,
-    wildcardPlayerId: null,
-    matchdayDeadline: null,
-    serverLocked: false,
-    currentTimestamp: Date.now(),
-    adminUnlocked: false,
-
-    formations: [
-      { id:'4-4-2', label:'4-4-2', df:4, mf:4, fw:2 },
-      { id:'4-3-3', label:'4-3-3', df:4, mf:3, fw:3 },
-      { id:'3-5-2', label:'3-5-2', df:3, mf:5, fw:2 },
-      { id:'4-5-1', label:'4-5-1', df:4, mf:5, fw:1 },
-      { id:'5-3-2', label:'5-3-2', df:5, mf:3, fw:2 },
-      { id:'3-4-3', label:'3-4-3', df:3, mf:4, fw:3 },
-    ],
-
-    compositionRules: [
-      { pos:'GK', min:1, max:1 },
-      { pos:'DF', min:3, max:5 },
-      { pos:'MF', min:2, max:5 },
-      { pos:'FW', min:1, max:3 },
-    ],
-
-    players: [
-      { id:1,  name:'Thibaut Courtois',        pos:'GK', tier:'ELITE',  club:'Real Madrid',       rating:91, cost:12.5, active:true },
-      { id:2,  name:'Alisson Becker',           pos:'GK', tier:'ELITE',  club:'Liverpool',         rating:90, cost:11.5, active:true },
-      { id:3,  name:'David Raya',               pos:'GK', tier:'PRO',    club:'Arsenal',           rating:85, cost:8.0,  active:true },
-      { id:4,  name:'Mike Maignan',             pos:'GK', tier:'PRO',    club:'AC Milan',          rating:87, cost:9.0,  active:true },
-      { id:5,  name:'Gregor Kobel',             pos:'GK', tier:'PRO',    club:'Dortmund',          rating:83, cost:7.0,  active:true },
-      { id:6,  name:'Giorgi Mamardashvili',     pos:'GK', tier:'RISING', club:'Valencia',          rating:80, cost:5.5,  active:true },
-      { id:7,  name:'Virgil van Dijk',          pos:'DF', tier:'ELITE',  club:'Liverpool',         rating:90, cost:11.0, active:true },
-      { id:8,  name:'William Saliba',           pos:'DF', tier:'ELITE',  club:'Arsenal',           rating:88, cost:10.0, active:true },
-      { id:9,  name:'Rúben Dias',               pos:'DF', tier:'ELITE',  club:'Man City',          rating:89, cost:10.5, active:true },
-      { id:10, name:'Trent Alexander-Arnold',   pos:'DF', tier:'ELITE',  club:'Real Madrid',       rating:87, cost:10.0, active:true },
-      { id:11, name:'Theo Hernandez',           pos:'DF', tier:'PRO',    club:'AC Milan',          rating:85, cost:8.5,  active:true },
-      { id:12, name:'Alejandro Grimaldo',       pos:'DF', tier:'PRO',    club:'Bayer Leverkusen',  rating:84, cost:8.0,  active:true },
-      { id:13, name:'Ezri Konsa',               pos:'DF', tier:'PRO',    club:'Aston Villa',       rating:82, cost:6.5,  active:true },
-      { id:14, name:'Micky van de Ven',         pos:'DF', tier:'PRO',    club:'Tottenham',         rating:83, cost:7.0,  active:true },
-      { id:15, name:'Castello Lukeba',          pos:'DF', tier:'RISING', club:'RB Leipzig',        rating:79, cost:5.0,  active:true },
-      { id:16, name:'Leny Yoro',                pos:'DF', tier:'RISING', club:'Man United',        rating:78, cost:4.5,  active:true },
-      { id:17, name:'Kevin De Bruyne',          pos:'MF', tier:'ELITE',  club:'Man City',          rating:91, cost:12.0, active:true },
-      { id:18, name:'Pedri',                    pos:'MF', tier:'ELITE',  club:'Barcelona',         rating:88, cost:10.0, active:true },
-      { id:19, name:'Jude Bellingham',          pos:'MF', tier:'ELITE',  club:'Real Madrid',       rating:91, cost:13.0, active:true },
-      { id:20, name:'Martin Ødegaard',          pos:'MF', tier:'ELITE',  club:'Arsenal',           rating:88, cost:10.5, active:true },
-      { id:21, name:'Florian Wirtz',            pos:'MF', tier:'ELITE',  club:'Bayer Leverkusen',  rating:89, cost:11.0, active:true },
-      { id:22, name:'Granit Xhaka',             pos:'MF', tier:'PRO',    club:'Bayer Leverkusen',  rating:84, cost:7.5,  active:true },
-      { id:23, name:'Alexis Mac Allister',      pos:'MF', tier:'PRO',    club:'Liverpool',         rating:84, cost:7.5,  active:true },
-      { id:24, name:'Sandro Tonali',            pos:'MF', tier:'PRO',    club:'Newcastle',         rating:83, cost:6.5,  active:true },
-      { id:25, name:'Manu Koné',                pos:'MF', tier:'RISING', club:'AS Monaco',         rating:80, cost:5.0,  active:true },
-      { id:26, name:'Warren Zaïre-Emery',       pos:'MF', tier:'RISING', club:'PSG',               rating:79, cost:4.5,  active:true },
-      { id:27, name:'Erling Haaland',           pos:'FW', tier:'ELITE',  club:'Man City',          rating:93, cost:14.0, active:true },
-      { id:28, name:'Kylian Mbappé',            pos:'FW', tier:'ELITE',  club:'Real Madrid',       rating:92, cost:14.0, active:true },
-      { id:29, name:'Harry Kane',               pos:'FW', tier:'ELITE',  club:'Bayern Munich',     rating:91, cost:12.5, active:true },
-      { id:30, name:'Vinicius Jr.',             pos:'FW', tier:'ELITE',  club:'Real Madrid',       rating:92, cost:13.5, active:true },
-      { id:31, name:'Lamine Yamal',             pos:'FW', tier:'ELITE',  club:'Barcelona',         rating:87, cost:11.0, active:true },
-      { id:32, name:'Bukayo Saka',              pos:'FW', tier:'ELITE',  club:'Arsenal',           rating:88, cost:11.5, active:true },
-      { id:33, name:'Rafael Leão',              pos:'FW', tier:'PRO',    club:'AC Milan',          rating:86, cost:9.5,  active:true },
-      { id:34, name:'Leroy Sané',               pos:'FW', tier:'PRO',    club:'Bayern Munich',     rating:85, cost:8.5,  active:true },
-      { id:35, name:'Kaoru Mitoma',             pos:'FW', tier:'PRO',    club:'Brighton',          rating:83, cost:7.0,  active:true },
-      { id:36, name:'Evan Ferguson',            pos:'FW', tier:'RISING', club:'Brighton',          rating:79, cost:5.0,  active:true },
-      { id:37, name:'Mathys Tel',               pos:'FW', tier:'RISING', club:'Bayern Munich',     rating:78, cost:4.5,  active:true },
-    ],
-
-    // ── INIT ──────────────────────────────────────────────────────────────────
-    async init() {
-      this.currentFormation = this.formations[0];
-      this.startCountdownTimer();
-
-      const token = localStorage.getItem('dummy_token') || 'dummy-token-user-1';
-
-      // Onboarding guard
-      try {
-        const meResp = await fetch('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
-        if (meResp.ok) {
-          const me = await meResp.json();
-          if (!me.is_active) { window.location.href = '/activate'; return; }
-          if (!me.onboarding_complete) { window.location.href = '/onboarding'; return; }
-        }
-      } catch (e) { /* offline — continue */ }
-
-      // Fetch players from API
-      try {
-        const r = await fetch('/squad/players', { headers: { Authorization: `Bearer ${token}` } });
-        if (r.ok) {
-          const d = await r.json();
-          if (d.players && d.players.length > 0) this.players = d.players;
-        }
-      } catch (e) { console.warn('Players API failed, using hardcoded list'); }
-
-      // Fetch current squad
-      try {
-        const r = await fetch('/squad/', { headers: { Authorization: `Bearer ${token}` } });
-        if (r.ok) {
-          const d = await r.json();
-          this.matchdayDeadline = d.matchday_deadline ? new Date(d.matchday_deadline) : null;
-          this.serverLocked = !!d.is_locked;
-          if (d.squad && d.squad.length > 0) {
-            // Rebuild selectedPlayers in starter/bench order from API
-            const starters = d.squad.filter(s => s.slot === 'starter');
-            const bench    = d.squad.filter(s => s.slot === 'bench');
-            const resolve  = s => this.players.find(p => p.id === s.player_id);
-            this.selectedPlayers = [
-              ...starters.map(resolve),
-              ...bench.map(resolve),
-            ].filter(Boolean);
-            const wc = d.squad.find(s => s.is_x2_joker);
-            if (wc) this.wildcardPlayerId = wc.player_id;
-            if (d.free_transfers_remaining !== undefined)
-              setTimeout(() => this.toast(`Free transfers left: ${d.free_transfers_remaining}`), 1000);
-          }
-        }
-      } catch (e) { console.warn('Squad API failed'); }
-
-      this.$nextTick(() => initField());
-    },
-
-    // ── COMPUTED ──────────────────────────────────────────────────────────────
-    get starters()      { return this.selectedPlayers.slice(0, 11); },
-    get benchPlayers()  { return this.selectedPlayers.slice(11, 15); },
-    get starterCount()  { return this.starters.length; },
-
-    // Bench always has 4 slots; null = empty slot
-    get benchSlots() {
-      const b = this.benchPlayers;
-      return [b[0]??null, b[1]??null, b[2]??null, b[3]??null];
-    },
-
-    startersByPos(pos) { return this.starters.filter(p => p.pos === pos); },
-
-    get activePlayers() { return this.players.filter(p => p.active !== false); },
-
-    // Sorted unique club list from active players
-    get teamList() {
-      return [...new Set(this.activePlayers.map(p => p.club))].sort();
-    },
-
-    get filteredPlayers() {
-      const q = this.searchQuery.toLowerCase();
-      return this.activePlayers.filter(p => {
-        if (this.filterPos  !== 'ALL' && p.pos  !== this.filterPos)  return false;
-        if (this.filterTier !== 'ALL' && p.tier !== this.filterTier) return false;
-        if (this.filterTeam !== 'ALL' && p.club !== this.filterTeam) return false;
-        if (q && !p.name.toLowerCase().includes(q) && !p.club.toLowerCase().includes(q)) return false;
-        return true;
-      });
-    },
-
-    get isLocked() {
-      if (this.serverLocked) return true;
-      if (!this.matchdayDeadline) return false;
-      return this.currentTimestamp > this.matchdayDeadline;
-    },
-    get isDeadlinePassed() { return this.isLocked; },
-    get lockMessage() { return this.isLocked ? '🔒 Matchday Locked - No changes allowed' : ''; },
-
-    get totalCost()       { return this.selectedPlayers.reduce((s, p) => s + p.cost, 0); },
-    get remainingCredits(){ return parseFloat((100 - this.totalCost).toFixed(1)); },
-
-    isSelected(id) { return this.selectedPlayers.some(p => p.id === id); },
-    countInSquad(pos) { return this.selectedPlayers.filter(p => p.pos === pos).length; },
-
-    get squadFull() { return this.selectedPlayers.length >= 15; },
-
-    // Can this player still be added?
-    canAddPlayer(player) {
-      if (this.squadFull) return false;
-      if (this.totalCost + player.cost > 100) return false;
-      const rule = this.compositionRules.find(r => r.pos === player.pos);
-      if (rule && this.countInSquad(player.pos) >= rule.max) return false;
-      // Check starter slots (formation limit)
-      const starterLimit = { GK:1, DF:this.currentFormation.df, MF:this.currentFormation.mf, FW:this.currentFormation.fw }[player.pos] ?? 0;
-      const benchLimit   = 4;
-      const starterCount = this.starters.filter(p => p.pos === player.pos).length;
-      const totalCount   = this.countInSquad(player.pos);
-      // Allow into bench if starters for this position are full but bench has room
-      const benchCount   = this.benchPlayers.length;
-      if (starterCount < starterLimit) return true; // can go as starter
-      if (benchCount < benchLimit && totalCount < rule.max) return true; // bench slot available
-      return false;
-    },
-
-    // ── PITCH SLOT HELPERS ───────────────────────────────────────────────────
-    getSlotsByPos(pos) {
-      const f = this.currentFormation;
-      const count = pos === 'GK' ? 1 : pos === 'DF' ? f.df : pos === 'MF' ? f.mf : f.fw;
-      const filled = this.starters.filter(p => p.pos === pos);
-      return Array.from({ length: count }, (_, i) => ({
-        id: `${pos}-${i}`,
-        pos,
-        player: filled[i] || null,
-      }));
-    },
-
-    jerseyCardClass(player) {
-      const tierCls = 'tier-' + player.tier.toLowerCase();
-      const wcCls   = this.wildcardPlayerId === player.id ? ' wildcard-active' : '';
-      const swSrc   = this.swapSource?.player?.id === player.id ? ' swap-source' : '';
-      const swTgt   = this.swapSource && this.swapSource.player.id !== player.id &&
-                      this.swapSource.player.pos === player.pos &&
-                      !this.swapSource.isOnBench ? ' swap-target' : '';
-      return tierCls + wcCls + swSrc + swTgt;
-    },
-
-    benchCardClass(bench, i) {
-      let cls = bench ? 'filled' : '';
-      if (this.swapSource) {
-        if (!this.swapSource.isOnBench && bench && bench.pos === this.swapSource.player.pos) {
-          cls += ' swap-target';
-        } else if (this.swapSource.isOnBench && this.swapSource.benchIndex === i) {
-          cls += ' swap-source';
-        } else if (this.swapSource.isOnBench && bench && bench.pos === this.swapSource.player.pos) {
-          cls += ' swap-target';
-        }
-      }
-      return cls;
-    },
-
-    // ── CLICK HANDLERS ───────────────────────────────────────────────────────
-
-    // Clicking a pitch jersey slot:
-    //   • If in swap mode → try to complete swap (only if same position)
-    //   • If player in slot → enter swap mode (source = starter)
-    //   • If empty slot → nothing (players added via Players tab)
-    handlePitchClick(slot) {
-      if (this.isLocked) { this.toast(this.lockMessage); return; }
-
-      if (this.swapSource) {
-        // Cancel if same player
-        if (slot.player && slot.player.id === this.swapSource.player.id) {
-          this.swapSource = null; return;
-        }
-        if (slot.player && slot.player.pos !== this.swapSource.player.pos) {
-          this.toast(`Can only swap ${this.swapSource.player.pos} with ${this.swapSource.player.pos}`);
-          this.swapSource = null; return;
-        }
-        if (slot.player) {
-          this.doSwap(this.swapSource, { player: slot.player, isOnBench: false });
-        } else {
-          this.swapSource = null;
-        }
-        return;
-      }
-
-      if (slot.player) {
-        // Enter swap mode — tap again to cancel, or tap a valid target
-        this.swapSource = { player: slot.player, isOnBench: false };
-        this.toast(`Swap ${slot.player.name}? Tap a bench ${slot.player.pos} to swap.`);
-      }
-    },
-
-    // Clicking a bench card:
-    handleBenchClick(bench, benchIndex) {
-      if (this.isLocked) { this.toast(this.lockMessage); return; }
-
-      if (!bench) return; // empty bench slot — ignore
-
-      if (this.swapSource) {
-        // Cancel if tapping the same player
-        if (bench.id === this.swapSource.player.id) { this.swapSource = null; return; }
-
-        // Position check
-        if (bench.pos !== this.swapSource.player.pos) {
-          this.toast(`Can only swap ${this.swapSource.player.pos} with ${this.swapSource.player.pos}`);
-          this.swapSource = null; return;
-        }
-        this.doSwap(this.swapSource, { player: bench, isOnBench: true, benchIndex });
-        return;
-      }
-
-      // Start swap from bench player
-      this.swapSource = { player: bench, isOnBench: true, benchIndex };
-      this.toast(`Swap ${bench.name}? Tap a starter ${bench.pos} to swap.`);
-    },
-
-    // Perform the actual swap
-    doSwap(src, tgt) {
-      const arr = [...this.selectedPlayers];
-      const srcIdx = arr.findIndex(p => p.id === src.player.id);
-      const tgtIdx = arr.findIndex(p => p.id === tgt.player.id);
-      if (srcIdx === -1 || tgtIdx === -1) { this.swapSource = null; return; }
-      [arr[srcIdx], arr[tgtIdx]] = [arr[tgtIdx], arr[srcIdx]];
-      this.selectedPlayers = arr;
-      this.swapSource = null;
-      this.toast(`↔ Swapped ${src.player.name.split(' ').pop()} ↔ ${tgt.player.name.split(' ').pop()}`);
-      this.saveToLocalStorage();
-    },
-
-    // ── ADD / REMOVE ─────────────────────────────────────────────────────────
-    togglePlayer(player) {
-      if (this.isLocked) { this.toast(this.lockMessage); return; }
-      this.isSelected(player.id) ? this.removePlayer(player) : this.addPlayer(player);
-    },
-
-    addPlayer(player) {
-      if (this.isSelected(player.id)) return;
-      if (this.totalCost + player.cost > 100) { this.toast('Not enough budget!'); return; }
-      const rule = this.compositionRules.find(r => r.pos === player.pos);
-      if (rule && this.countInSquad(player.pos) >= rule.max) {
-        this.toast(`Max ${rule.max} ${player.pos} players allowed`); return;
-      }
-
-      const starterLimit = { GK:1, DF:this.currentFormation.df, MF:this.currentFormation.mf, FW:this.currentFormation.fw }[player.pos] ?? 0;
-      const starterCountForPos = this.starters.filter(p => p.pos === player.pos).length;
-      const benchCount = this.benchPlayers.length;
-
-      if (starterCountForPos < starterLimit) {
-        // Add as starter — insert before bench players
-        const insertAt = Math.min(this.starters.length, 11); // always keep starters first 11
-        const arr = [...this.selectedPlayers];
-        arr.splice(insertAt, 0, player);
-        this.selectedPlayers = arr;
-      } else if (benchCount < 4 && this.countInSquad(player.pos) < rule.max) {
-        // Add as bench
-        this.selectedPlayers = [...this.selectedPlayers, player];
-      } else {
-        this.toast(`No available slot for ${player.pos}`); return;
-      }
-
-      this.saveToLocalStorage();
-    },
-
-    removePlayer(player) {
-      if (this.isLocked) { this.toast(this.lockMessage); return; }
-      if (this.swapSource?.player?.id === player.id) this.swapSource = null;
-      this.selectedPlayers = this.selectedPlayers.filter(p => p.id !== player.id);
-      if (this.wildcardPlayerId === player.id) this.wildcardPlayerId = null;
-      this.saveToLocalStorage();
-    },
-
-    // ── FORMATION ─────────────────────────────────────────────────────────────
-    changeFormation(f) {
-      if (this.isLocked) { this.toast(this.lockMessage); return; }
-      this.currentFormation = f;
-      this.validateAndTrimSquad();
-    },
-
-    validateAndTrimSquad() {
-      const limits = { GK:1, DF:this.currentFormation.df, MF:this.currentFormation.mf, FW:this.currentFormation.fw };
-      const newStarters = [];
-      const newBench    = [];
-      for (const pos of ['GK','DF','MF','FW']) {
-        const posPlayers = this.starters.filter(p => p.pos === pos);
-        const allowed = limits[pos];
-        if (posPlayers.length > allowed) {
-          this.toast(`Removed ${posPlayers.length - allowed} extra ${pos}(s) due to formation change.`);
-          newStarters.push(...posPlayers.slice(0, allowed));
-          // extras go to bench if room
-          posPlayers.slice(allowed).forEach(p => { if (newBench.length < 4) newBench.push(p); });
-        } else {
-          newStarters.push(...posPlayers);
-        }
-      }
-      // Keep existing bench players (minus any moved there above)
-      const existingBenchIds = new Set([...newBench.map(p => p.id)]);
-      this.benchPlayers.forEach(p => { if (!existingBenchIds.has(p.id) && newBench.length < 4) newBench.push(p); });
-      this.selectedPlayers = [...newStarters, ...newBench];
-      this.saveToLocalStorage();
-    },
-
-    // ── WILDCARD ──────────────────────────────────────────────────────────────
-    toggleWildcard(playerId) {
-      if (this.isLocked) { this.toast(this.lockMessage); return; }
-      const isStarter = this.starters.some(p => p.id === playerId);
-      if (!isStarter) { this.toast('Only starters can be set as wildcard!'); return; }
-      if (this.wildcardPlayerId === playerId) {
-        this.wildcardPlayerId = null; this.toast('Wildcard removed.');
-      } else {
-        this.wildcardPlayerId = playerId;
-        this.toast(`★ Wildcard: ${this.selectedPlayers.find(p=>p.id===playerId)?.name}`);
-      }
-      this.saveToLocalStorage();
-    },
-
-    // ── PERSISTENCE ───────────────────────────────────────────────────────────
-    saveToLocalStorage() {
-      localStorage.setItem(`squad_md${this.matchdayId}`, JSON.stringify({
-        selectedPlayers: this.selectedPlayers,
-        formationId: this.currentFormation.id,
-        wildcardPlayerId: this.wildcardPlayerId,
-      }));
-    },
-
-    // ── SUBMIT ────────────────────────────────────────────────────────────────
-    get validationErrors() {
-      const e = [];
-      if (this.selectedPlayers.length < 15) e.push(`Need ${15 - this.selectedPlayers.length} more players`);
-      if (this.remainingCredits < 0) e.push(`Over budget by ${-this.remainingCredits} CR`);
-      if (this.countInSquad('GK') !== 1) e.push('Exactly 1 GK required');
-      if (this.countInSquad('DF') < 3)   e.push('At least 3 defenders needed');
-      if (this.countInSquad('MF') < 2)   e.push('At least 2 midfielders needed');
-      if (this.countInSquad('FW') < 1)   e.push('At least 1 forward needed');
-      if (this.isLocked) e.push('🔒 Matchday is locked');
-      return e;
-    },
-    get canSubmit() { return this.validationErrors.length === 0; },
-    posLabel(p) { return { GK:'Goalkeepers', DF:'Defenders', MF:'Midfielders', FW:'Forwards' }[p]; },
-
-    async submitSquad() {
-      if (this.isLocked) { this.toast(this.lockMessage); return; }
-      if (!this.canSubmit) return;
-      const payload = {
-        players: this.selectedPlayers.map((p, i) => ({
-          player_id: p.id,
-          slot: i < 11 ? 'starter' : 'bench',
-          formation_position: p.pos,
-          is_x2_joker: this.wildcardPlayerId === p.id,
-        })),
-        formation_id: this.currentFormation.id,
-      };
-      try {
-        const token = localStorage.getItem('dummy_token') || 'dummy-token-user-1';
-        const resp  = await fetch('/squad/', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(payload),
-        });
-        const data = await resp.json();
-        if (resp.ok) {
-          this.showSuccess = true;
-          if (data.penalty_incurred)
-            setTimeout(() => this.toast(`Penalty: ${data.penalty_incurred} pts`), 2000);
-        } else {
-          this.toast('Error: ' + (data.detail || 'Unknown error'));
-        }
-      } catch (e) {
-        console.warn('API unavailable, mocking success');
-        this.showSuccess = true;
-      }
-    },
-
-    // ── TIMER ─────────────────────────────────────────────────────────────────
-    startCountdownTimer() {
-      setInterval(() => { this.currentTimestamp = Date.now(); }, 1000);
-    },
-    getCountdownText() {
-      if (!this.matchdayDeadline) return 'No deadline set';
-      const diff = this.matchdayDeadline - this.currentTimestamp;
-      if (diff <= 0) return '⏰ LOCKED';
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      if (d > 0) return `${d}d ${h}h ${m}m`;
-      if (h > 0) return `${h}h ${m}m ${s}s`;
-      return `${m}m ${s}s`;
-    },
-
-    // ── TOAST ─────────────────────────────────────────────────────────────────
-    toast(msg) {
-      const el = document.createElement('div');
-      el.className = 'toast-item';
-      el.textContent = msg;
-      document.getElementById('toast-wrap').appendChild(el);
-      setTimeout(() => el.classList.add('show'), 10);
-      setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 2700);
-    },
-  };
-}
-</script>
-</body>
+        <div class="toast-wrap" id="toast-wrap"></div>
+
+        <script>
+            // ─── THREE.JS FIELD ──────────────────────────────────────────────────────────
+            function initField() {
+                const canvas = document.getElementById("field-canvas");
+                if (!canvas || !window.THREE) return;
+                const parent = canvas.parentElement;
+                const W = parent.clientWidth,
+                    H = parent.clientHeight;
+                const renderer = new THREE.WebGLRenderer({
+                    canvas,
+                    antialias: true,
+                    alpha: true,
+                });
+                renderer.setSize(W, H);
+                renderer.shadowMap.enabled = true;
+
+                const scene = new THREE.Scene();
+                scene.background = null;
+                scene.fog = new THREE.FogExp2(0x0a1628, 0.018);
+
+                const camera = new THREE.PerspectiveCamera(52, W / H, 0.1, 100);
+                camera.position.set(0, 11, 16);
+                camera.lookAt(0, 0, 0);
+
+                // Lighting
+                scene.add(new THREE.AmbientLight(0x224466, 1.5));
+                const sun = new THREE.DirectionalLight(0xfff5e0, 2.2);
+                sun.position.set(6, 14, 5);
+                sun.castShadow = true;
+                scene.add(sun);
+                const fill = new THREE.DirectionalLight(0x88aaff, 0.9);
+                fill.position.set(-5, 8, -4);
+                scene.add(fill);
+
+                // Ground base
+                const basePlate = new THREE.Mesh(
+                    new THREE.BoxGeometry(24, 0.4, 32),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x1a2a3a,
+                        roughness: 0.7,
+                    }),
+                );
+                basePlate.position.set(0, -0.2, 0);
+                basePlate.receiveShadow = true;
+                scene.add(basePlate);
+
+                // Pitch surface
+                const pitchMat = new THREE.MeshStandardMaterial({
+                    color: 0x2d8a4e,
+                    roughness: 0.8,
+                });
+                const pitchPlane = new THREE.Mesh(
+                    new THREE.PlaneGeometry(22, 30),
+                    pitchMat,
+                );
+                pitchPlane.rotation.x = -Math.PI / 2;
+                pitchPlane.position.y = 0.05;
+                pitchPlane.receiveShadow = true;
+                scene.add(pitchPlane);
+
+                // Alternating dark stripes (6 bands, no cross)
+                for (let i = 0; i < 6; i++) {
+                    const stripe = new THREE.Mesh(
+                        new THREE.PlaneGeometry(22, (30 / 6) * 0.9),
+                        new THREE.MeshStandardMaterial({
+                            color: 0x267a44,
+                            transparent: true,
+                            opacity: 0.55,
+                        }),
+                    );
+                    stripe.rotation.x = -Math.PI / 2;
+                    stripe.position.set(0, 0.06, -15 + (30 / 6) * i + 30 / 12);
+                    scene.add(stripe);
+                }
+
+                // White line helper
+                const lineMat = new THREE.MeshStandardMaterial({
+                    color: 0xffffff,
+                    emissive: 0x4466aa,
+                    emissiveIntensity: 0.15,
+                });
+                const addLine = (x, y, z, w, d) => {
+                    const m = new THREE.Mesh(
+                        new THREE.BoxGeometry(w, 0.04, d),
+                        lineMat,
+                    );
+                    m.position.set(x, y, z);
+                    scene.add(m);
+                };
+
+                const py = 0.09; // line y position
+
+                // Outer boundary
+                addLine(0, py, 0, 22, 0.12); // NOT the halfway vertical — just keep horizontal lines
+                addLine(-11, py, 0, 0.12, 30); // left sideline
+                addLine(11, py, 0, 0.12, 30); // right sideline
+                addLine(0, py, -15, 22, 0.12); // top goal line
+                addLine(0, py, 15, 22, 0.12); // bottom goal line
+
+                // Halfway line only (horizontal, no vertical centre line)
+                addLine(0, py, 0, 22, 0.12);
+
+                // Centre circle
+                const pts = [];
+                for (let i = 0; i <= 64; i++) {
+                    const a = (i / 64) * Math.PI * 2;
+                    pts.push(
+                        new THREE.Vector3(
+                            Math.cos(a) * 3.2,
+                            py + 0.01,
+                            Math.sin(a) * 3.2,
+                        ),
+                    );
+                }
+                const circleGeo = new THREE.BufferGeometry().setFromPoints(pts);
+                scene.add(
+                    new THREE.LineLoop(
+                        circleGeo,
+                        new THREE.LineBasicMaterial({
+                            color: 0xffffff,
+                            transparent: true,
+                            opacity: 0.85,
+                        }),
+                    ),
+                );
+
+                // Centre spot
+                const spot = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.15, 0.15, 0.05, 12),
+                    lineMat,
+                );
+                spot.position.set(0, py, 0);
+                scene.add(spot);
+
+                // Penalty boxes (both ends)
+                // Top penalty box (z = -15 end)
+                const pbW = 13.4,
+                    pbD = 5.5;
+                addLine(0, py, -15 + pbD / 2, pbW, 0.12); // front line of top box
+                addLine(-pbW / 2, py, -15 + pbD / 2, 0.12, pbD); // left side
+                addLine(pbW / 2, py, -15 + pbD / 2, 0.12, pbD); // right side
+
+                // Bottom penalty box (z = +15 end)
+                addLine(0, py, 15 - pbD / 2, pbW, 0.12);
+                addLine(-pbW / 2, py, 15 - pbD / 2, 0.12, pbD);
+                addLine(pbW / 2, py, 15 - pbD / 2, 0.12, pbD);
+
+                // Goal areas (6-yard boxes)
+                const gbW = 6.4,
+                    gbD = 2.0;
+                addLine(0, py, -15 + gbD / 2, gbW, 0.12);
+                addLine(-gbW / 2, py, -15 + gbD / 2, 0.12, gbD);
+                addLine(gbW / 2, py, -15 + gbD / 2, 0.12, gbD);
+                addLine(0, py, 15 - gbD / 2, gbW, 0.12);
+                addLine(-gbW / 2, py, 15 - gbD / 2, 0.12, gbD);
+                addLine(gbW / 2, py, 15 - gbD / 2, 0.12, gbD);
+
+                // Simple crowd blobs
+                const crowdMat = new THREE.MeshStandardMaterial({
+                    color: 0x2a3f5e,
+                });
+                for (let i = -11; i <= 11; i += 2) {
+                    [-13, 13].forEach((x) => {
+                        const s = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.55, 6, 6),
+                            crowdMat,
+                        );
+                        s.position.set(x, 0.3, i * 1.7);
+                        scene.add(s);
+                    });
+                }
+
+                window.addEventListener("resize", () => {
+                    const nw = parent.clientWidth,
+                        nh = parent.clientHeight;
+                    renderer.setSize(nw, nh);
+                    camera.aspect = nw / nh;
+                    camera.updateProjectionMatrix();
+                });
+
+                let t = 0;
+                (function animate() {
+                    requestAnimationFrame(animate);
+                    t += 0.004;
+                    camera.position.x = Math.sin(t * 0.2) * 1.0;
+                    camera.position.y = 9.5 + Math.sin(t * 0.15) * 0.25;
+                    camera.lookAt(0, 0, 0);
+                    renderer.render(scene, camera);
+                })();
+            }
+
+            // ─── ALPINE COMPONENT ─────────────────────────────────────────────────────────
+            function squadBuilder() {
+                return {
+                    activeTab: "field",
+                    showSuccess: false,
+
+                    // Filters
+                    filterPos: "ALL",
+                    filterTier: "ALL",
+                    filterTeam: "ALL",
+                    searchQuery: "",
+
+                    // Squad state
+                    // selectedPlayers[0..10] = starters, [11..14] = bench
+                    selectedPlayers: [],
+
+                    // Swap state: { player, isOnBench, benchIndex }
+                    swapSource: null,
+
+                    currentFormation: null,
+                    matchdayId: 1,
+                    wildcardPlayerId: null,
+                    matchdayDeadline: null,
+                    serverLocked: false,
+                    currentTimestamp: Date.now(),
+                    adminUnlocked: false,
+
+                    formations: [
+                        { id: "4-4-2", label: "4-4-2", df: 4, mf: 4, fw: 2 },
+                        { id: "4-3-3", label: "4-3-3", df: 4, mf: 3, fw: 3 },
+                        { id: "3-5-2", label: "3-5-2", df: 3, mf: 5, fw: 2 },
+                        { id: "4-5-1", label: "4-5-1", df: 4, mf: 5, fw: 1 },
+                        { id: "5-3-2", label: "5-3-2", df: 5, mf: 3, fw: 2 },
+                        { id: "3-4-3", label: "3-4-3", df: 3, mf: 4, fw: 3 },
+                    ],
+
+                    compositionRules: [
+                        { pos: "GK", min: 1, max: 1 },
+                        { pos: "DF", min: 3, max: 5 },
+                        { pos: "MF", min: 2, max: 5 },
+                        { pos: "FW", min: 1, max: 3 },
+                    ],
+
+                    players: [
+                        {
+                            id: 1,
+                            name: "Thibaut Courtois",
+                            pos: "GK",
+                            tier: "ELITE",
+                            club: "Real Madrid",
+                            rating: 91,
+                            cost: 12.5,
+                            active: true,
+                        },
+                        {
+                            id: 2,
+                            name: "Alisson Becker",
+                            pos: "GK",
+                            tier: "ELITE",
+                            club: "Liverpool",
+                            rating: 90,
+                            cost: 11.5,
+                            active: true,
+                        },
+                        {
+                            id: 3,
+                            name: "David Raya",
+                            pos: "GK",
+                            tier: "PRO",
+                            club: "Arsenal",
+                            rating: 85,
+                            cost: 8.0,
+                            active: true,
+                        },
+                        {
+                            id: 4,
+                            name: "Mike Maignan",
+                            pos: "GK",
+                            tier: "PRO",
+                            club: "AC Milan",
+                            rating: 87,
+                            cost: 9.0,
+                            active: true,
+                        },
+                        {
+                            id: 5,
+                            name: "Gregor Kobel",
+                            pos: "GK",
+                            tier: "PRO",
+                            club: "Dortmund",
+                            rating: 83,
+                            cost: 7.0,
+                            active: true,
+                        },
+                        {
+                            id: 6,
+                            name: "Giorgi Mamardashvili",
+                            pos: "GK",
+                            tier: "RISING",
+                            club: "Valencia",
+                            rating: 80,
+                            cost: 5.5,
+                            active: true,
+                        },
+                        {
+                            id: 7,
+                            name: "Virgil van Dijk",
+                            pos: "DF",
+                            tier: "ELITE",
+                            club: "Liverpool",
+                            rating: 90,
+                            cost: 11.0,
+                            active: true,
+                        },
+                        {
+                            id: 8,
+                            name: "William Saliba",
+                            pos: "DF",
+                            tier: "ELITE",
+                            club: "Arsenal",
+                            rating: 88,
+                            cost: 10.0,
+                            active: true,
+                        },
+                        {
+                            id: 9,
+                            name: "Rúben Dias",
+                            pos: "DF",
+                            tier: "ELITE",
+                            club: "Man City",
+                            rating: 89,
+                            cost: 10.5,
+                            active: true,
+                        },
+                        {
+                            id: 10,
+                            name: "Trent Alexander-Arnold",
+                            pos: "DF",
+                            tier: "ELITE",
+                            club: "Real Madrid",
+                            rating: 87,
+                            cost: 10.0,
+                            active: true,
+                        },
+                        {
+                            id: 11,
+                            name: "Theo Hernandez",
+                            pos: "DF",
+                            tier: "PRO",
+                            club: "AC Milan",
+                            rating: 85,
+                            cost: 8.5,
+                            active: true,
+                        },
+                        {
+                            id: 12,
+                            name: "Alejandro Grimaldo",
+                            pos: "DF",
+                            tier: "PRO",
+                            club: "Bayer Leverkusen",
+                            rating: 84,
+                            cost: 8.0,
+                            active: true,
+                        },
+                        {
+                            id: 13,
+                            name: "Ezri Konsa",
+                            pos: "DF",
+                            tier: "PRO",
+                            club: "Aston Villa",
+                            rating: 82,
+                            cost: 6.5,
+                            active: true,
+                        },
+                        {
+                            id: 14,
+                            name: "Micky van de Ven",
+                            pos: "DF",
+                            tier: "PRO",
+                            club: "Tottenham",
+                            rating: 83,
+                            cost: 7.0,
+                            active: true,
+                        },
+                        {
+                            id: 15,
+                            name: "Castello Lukeba",
+                            pos: "DF",
+                            tier: "RISING",
+                            club: "RB Leipzig",
+                            rating: 79,
+                            cost: 5.0,
+                            active: true,
+                        },
+                        {
+                            id: 16,
+                            name: "Leny Yoro",
+                            pos: "DF",
+                            tier: "RISING",
+                            club: "Man United",
+                            rating: 78,
+                            cost: 4.5,
+                            active: true,
+                        },
+                        {
+                            id: 17,
+                            name: "Kevin De Bruyne",
+                            pos: "MF",
+                            tier: "ELITE",
+                            club: "Man City",
+                            rating: 91,
+                            cost: 12.0,
+                            active: true,
+                        },
+                        {
+                            id: 18,
+                            name: "Pedri",
+                            pos: "MF",
+                            tier: "ELITE",
+                            club: "Barcelona",
+                            rating: 88,
+                            cost: 10.0,
+                            active: true,
+                        },
+                        {
+                            id: 19,
+                            name: "Jude Bellingham",
+                            pos: "MF",
+                            tier: "ELITE",
+                            club: "Real Madrid",
+                            rating: 91,
+                            cost: 13.0,
+                            active: true,
+                        },
+                        {
+                            id: 20,
+                            name: "Martin Ødegaard",
+                            pos: "MF",
+                            tier: "ELITE",
+                            club: "Arsenal",
+                            rating: 88,
+                            cost: 10.5,
+                            active: true,
+                        },
+                        {
+                            id: 21,
+                            name: "Florian Wirtz",
+                            pos: "MF",
+                            tier: "ELITE",
+                            club: "Bayer Leverkusen",
+                            rating: 89,
+                            cost: 11.0,
+                            active: true,
+                        },
+                        {
+                            id: 22,
+                            name: "Granit Xhaka",
+                            pos: "MF",
+                            tier: "PRO",
+                            club: "Bayer Leverkusen",
+                            rating: 84,
+                            cost: 7.5,
+                            active: true,
+                        },
+                        {
+                            id: 23,
+                            name: "Alexis Mac Allister",
+                            pos: "MF",
+                            tier: "PRO",
+                            club: "Liverpool",
+                            rating: 84,
+                            cost: 7.5,
+                            active: true,
+                        },
+                        {
+                            id: 24,
+                            name: "Sandro Tonali",
+                            pos: "MF",
+                            tier: "PRO",
+                            club: "Newcastle",
+                            rating: 83,
+                            cost: 6.5,
+                            active: true,
+                        },
+                        {
+                            id: 25,
+                            name: "Manu Koné",
+                            pos: "MF",
+                            tier: "RISING",
+                            club: "AS Monaco",
+                            rating: 80,
+                            cost: 5.0,
+                            active: true,
+                        },
+                        {
+                            id: 26,
+                            name: "Warren Zaïre-Emery",
+                            pos: "MF",
+                            tier: "RISING",
+                            club: "PSG",
+                            rating: 79,
+                            cost: 4.5,
+                            active: true,
+                        },
+                        {
+                            id: 27,
+                            name: "Erling Haaland",
+                            pos: "FW",
+                            tier: "ELITE",
+                            club: "Man City",
+                            rating: 93,
+                            cost: 14.0,
+                            active: true,
+                        },
+                        {
+                            id: 28,
+                            name: "Kylian Mbappé",
+                            pos: "FW",
+                            tier: "ELITE",
+                            club: "Real Madrid",
+                            rating: 92,
+                            cost: 14.0,
+                            active: true,
+                        },
+                        {
+                            id: 29,
+                            name: "Harry Kane",
+                            pos: "FW",
+                            tier: "ELITE",
+                            club: "Bayern Munich",
+                            rating: 91,
+                            cost: 12.5,
+                            active: true,
+                        },
+                        {
+                            id: 30,
+                            name: "Vinicius Jr.",
+                            pos: "FW",
+                            tier: "ELITE",
+                            club: "Real Madrid",
+                            rating: 92,
+                            cost: 13.5,
+                            active: true,
+                        },
+                        {
+                            id: 31,
+                            name: "Lamine Yamal",
+                            pos: "FW",
+                            tier: "ELITE",
+                            club: "Barcelona",
+                            rating: 87,
+                            cost: 11.0,
+                            active: true,
+                        },
+                        {
+                            id: 32,
+                            name: "Bukayo Saka",
+                            pos: "FW",
+                            tier: "ELITE",
+                            club: "Arsenal",
+                            rating: 88,
+                            cost: 11.5,
+                            active: true,
+                        },
+                        {
+                            id: 33,
+                            name: "Rafael Leão",
+                            pos: "FW",
+                            tier: "PRO",
+                            club: "AC Milan",
+                            rating: 86,
+                            cost: 9.5,
+                            active: true,
+                        },
+                        {
+                            id: 34,
+                            name: "Leroy Sané",
+                            pos: "FW",
+                            tier: "PRO",
+                            club: "Bayern Munich",
+                            rating: 85,
+                            cost: 8.5,
+                            active: true,
+                        },
+                        {
+                            id: 35,
+                            name: "Kaoru Mitoma",
+                            pos: "FW",
+                            tier: "PRO",
+                            club: "Brighton",
+                            rating: 83,
+                            cost: 7.0,
+                            active: true,
+                        },
+                        {
+                            id: 36,
+                            name: "Evan Ferguson",
+                            pos: "FW",
+                            tier: "RISING",
+                            club: "Brighton",
+                            rating: 79,
+                            cost: 5.0,
+                            active: true,
+                        },
+                        {
+                            id: 37,
+                            name: "Mathys Tel",
+                            pos: "FW",
+                            tier: "RISING",
+                            club: "Bayern Munich",
+                            rating: 78,
+                            cost: 4.5,
+                            active: true,
+                        },
+                    ],
+
+                    // ── INIT ──────────────────────────────────────────────────────────────────
+                    async init() {
+                        this.currentFormation = this.formations[0];
+                        this.startCountdownTimer();
+
+                        const token =
+                            localStorage.getItem("dummy_token") ||
+                            "dummy-token-user-1";
+
+                        // Onboarding guard
+                        try {
+                            const meResp = await fetch("/auth/me", {
+                                headers: { Authorization: `Bearer ${token}` },
+                            });
+                            if (meResp.ok) {
+                                const me = await meResp.json();
+                                if (!me.is_active) {
+                                    window.location.href = "/activate";
+                                    return;
+                                }
+                                if (!me.onboarding_complete) {
+                                    window.location.href = "/onboarding";
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            /* offline — continue */
+                        }
+
+                        // Fetch players from API
+                        try {
+                            const r = await fetch("/squad/players", {
+                                headers: { Authorization: `Bearer ${token}` },
+                            });
+                            if (r.ok) {
+                                const d = await r.json();
+                                if (d.players && d.players.length > 0)
+                                    this.players = d.players;
+                            }
+                        } catch (e) {
+                            console.warn(
+                                "Players API failed, using hardcoded list",
+                            );
+                        }
+
+                        // Fetch current squad
+                        try {
+                            const r = await fetch("/squad/", {
+                                headers: { Authorization: `Bearer ${token}` },
+                            });
+                            if (r.ok) {
+                                const d = await r.json();
+                                this.matchdayDeadline = d.matchday_deadline
+                                    ? new Date(d.matchday_deadline)
+                                    : null;
+                                this.serverLocked = !!d.is_locked;
+                                if (d.squad && d.squad.length > 0) {
+                                    // Rebuild selectedPlayers in starter/bench order from API
+                                    const starters = d.squad.filter(
+                                        (s) => s.slot === "starter",
+                                    );
+                                    const bench = d.squad.filter(
+                                        (s) => s.slot === "bench",
+                                    );
+                                    const resolve = (s) =>
+                                        this.players.find(
+                                            (p) => p.id === s.player_id,
+                                        );
+                                    this.selectedPlayers = [
+                                        ...starters.map(resolve),
+                                        ...bench.map(resolve),
+                                    ].filter(Boolean);
+                                    const wc = d.squad.find(
+                                        (s) => s.is_x2_joker,
+                                    );
+                                    if (wc)
+                                        this.wildcardPlayerId = wc.player_id;
+                                    if (
+                                        d.free_transfers_remaining !== undefined
+                                    )
+                                        setTimeout(
+                                            () =>
+                                                this.toast(
+                                                    `Free transfers left: ${d.free_transfers_remaining}`,
+                                                ),
+                                            1000,
+                                        );
+                                }
+                            }
+                        } catch (e) {
+                            console.warn("Squad API failed");
+                        }
+
+                        this.$nextTick(() => initField());
+                    },
+
+                    // ── COMPUTED ──────────────────────────────────────────────────────────────
+                    get starters() {
+                        return this.selectedPlayers.slice(0, 11);
+                    },
+                    get benchPlayers() {
+                        return this.selectedPlayers.slice(11, 15);
+                    },
+                    get starterCount() {
+                        return this.starters.length;
+                    },
+
+                    // Bench always has 4 slots; null = empty slot
+                    get benchSlots() {
+                        const b = this.benchPlayers;
+                        return [
+                            b[0] ?? null,
+                            b[1] ?? null,
+                            b[2] ?? null,
+                            b[3] ?? null,
+                        ];
+                    },
+
+                    startersByPos(pos) {
+                        return this.starters.filter((p) => p.pos === pos);
+                    },
+
+                    get activePlayers() {
+                        return this.players.filter((p) => p.active !== false);
+                    },
+
+                    // Sorted unique club list from active players
+                    get teamList() {
+                        return [
+                            ...new Set(this.activePlayers.map((p) => p.club)),
+                        ].sort();
+                    },
+
+                    get filteredPlayers() {
+                        const q = this.searchQuery.toLowerCase();
+                        return this.activePlayers.filter((p) => {
+                            if (
+                                this.filterPos !== "ALL" &&
+                                p.pos !== this.filterPos
+                            )
+                                return false;
+                            if (
+                                this.filterTier !== "ALL" &&
+                                p.tier !== this.filterTier
+                            )
+                                return false;
+                            if (
+                                this.filterTeam !== "ALL" &&
+                                p.club !== this.filterTeam
+                            )
+                                return false;
+                            if (
+                                q &&
+                                !p.name.toLowerCase().includes(q) &&
+                                !p.club.toLowerCase().includes(q)
+                            )
+                                return false;
+                            return true;
+                        });
+                    },
+
+                    get isLocked() {
+                        if (this.serverLocked) return true;
+                        if (!this.matchdayDeadline) return false;
+                        return this.currentTimestamp > this.matchdayDeadline;
+                    },
+                    get isDeadlinePassed() {
+                        return this.isLocked;
+                    },
+                    get lockMessage() {
+                        return this.isLocked
+                            ? "🔒 Matchday Locked - No changes allowed"
+                            : "";
+                    },
+
+                    get totalCost() {
+                        return this.selectedPlayers.reduce(
+                            (s, p) => s + p.cost,
+                            0,
+                        );
+                    },
+                    get remainingCredits() {
+                        return parseFloat((100 - this.totalCost).toFixed(1));
+                    },
+
+                    isSelected(id) {
+                        return this.selectedPlayers.some((p) => p.id === id);
+                    },
+                    countInSquad(pos) {
+                        return this.selectedPlayers.filter((p) => p.pos === pos)
+                            .length;
+                    },
+
+                    get squadFull() {
+                        return this.selectedPlayers.length >= 15;
+                    },
+
+                    // Can this player still be added?
+                    canAddPlayer(player) {
+                        if (this.squadFull) return false;
+                        if (this.totalCost + player.cost > 100) return false;
+                        const rule = this.compositionRules.find(
+                            (r) => r.pos === player.pos,
+                        );
+                        if (rule && this.countInSquad(player.pos) >= rule.max)
+                            return false;
+                        // Check starter slots (formation limit)
+                        const starterLimit =
+                            {
+                                GK: 1,
+                                DF: this.currentFormation.df,
+                                MF: this.currentFormation.mf,
+                                FW: this.currentFormation.fw,
+                            }[player.pos] ?? 0;
+                        const benchLimit = 4;
+                        const starterCount = this.starters.filter(
+                            (p) => p.pos === player.pos,
+                        ).length;
+                        const totalCount = this.countInSquad(player.pos);
+                        // Allow into bench if starters for this position are full but bench has room
+                        const benchCount = this.benchPlayers.length;
+                        if (starterCount < starterLimit) return true; // can go as starter
+                        if (benchCount < benchLimit && totalCount < rule.max)
+                            return true; // bench slot available
+                        return false;
+                    },
+
+                    // ── PITCH SLOT HELPERS ───────────────────────────────────────────────────
+                    getSlotsByPos(pos) {
+                        const f = this.currentFormation;
+                        const count =
+                            pos === "GK"
+                                ? 1
+                                : pos === "DF"
+                                  ? f.df
+                                  : pos === "MF"
+                                    ? f.mf
+                                    : f.fw;
+                        const filled = this.starters.filter(
+                            (p) => p.pos === pos,
+                        );
+                        return Array.from({ length: count }, (_, i) => ({
+                            id: `${pos}-${i}`,
+                            pos,
+                            player: filled[i] || null,
+                        }));
+                    },
+
+                    jerseyCardClass(player) {
+                        const tierCls = "tier-" + player.tier.toLowerCase();
+                        const wcCls =
+                            this.wildcardPlayerId === player.id
+                                ? " wildcard-active"
+                                : "";
+                        const swSrc =
+                            this.swapSource?.player?.id === player.id
+                                ? " swap-source"
+                                : "";
+                        const swTgt =
+                            this.swapSource &&
+                            this.swapSource.player.id !== player.id &&
+                            this.swapSource.player.pos === player.pos &&
+                            !this.swapSource.isOnBench
+                                ? " swap-target"
+                                : "";
+                        return tierCls + wcCls + swSrc + swTgt;
+                    },
+
+                    benchCardClass(bench, i) {
+                        let cls = bench ? "filled" : "";
+                        if (this.swapSource) {
+                            if (
+                                !this.swapSource.isOnBench &&
+                                bench &&
+                                bench.pos === this.swapSource.player.pos
+                            ) {
+                                cls += " swap-target";
+                            } else if (
+                                this.swapSource.isOnBench &&
+                                this.swapSource.benchIndex === i
+                            ) {
+                                cls += " swap-source";
+                            } else if (
+                                this.swapSource.isOnBench &&
+                                bench &&
+                                bench.pos === this.swapSource.player.pos
+                            ) {
+                                cls += " swap-target";
+                            }
+                        }
+                        return cls;
+                    },
+
+                    // ── CLICK HANDLERS ───────────────────────────────────────────────────────
+
+                    // Clicking a pitch jersey slot:
+                    //   • If in swap mode → try to complete swap (only if same position)
+                    //   • If player in slot → enter swap mode (source = starter)
+                    //   • If empty slot → nothing (players added via Players tab)
+                    handlePitchClick(slot) {
+                        if (this.isLocked) {
+                            this.toast(this.lockMessage);
+                            return;
+                        }
+
+                        if (this.swapSource) {
+                            // Cancel if same player
+                            if (
+                                slot.player &&
+                                slot.player.id === this.swapSource.player.id
+                            ) {
+                                this.swapSource = null;
+                                return;
+                            }
+                            if (
+                                slot.player &&
+                                slot.player.pos !== this.swapSource.player.pos
+                            ) {
+                                this.toast(
+                                    `Can only swap ${this.swapSource.player.pos} with ${this.swapSource.player.pos}`,
+                                );
+                                this.swapSource = null;
+                                return;
+                            }
+                            if (slot.player) {
+                                this.doSwap(this.swapSource, {
+                                    player: slot.player,
+                                    isOnBench: false,
+                                });
+                            } else {
+                                this.swapSource = null;
+                            }
+                            return;
+                        }
+
+                        if (slot.player) {
+                            // Enter swap mode — tap again to cancel, or tap a valid target
+                            this.swapSource = {
+                                player: slot.player,
+                                isOnBench: false,
+                            };
+                            this.toast(
+                                `Swap ${slot.player.name}? Tap a bench ${slot.player.pos} to swap.`,
+                            );
+                        }
+                    },
+
+                    // Clicking a bench card:
+                    handleBenchClick(bench, benchIndex) {
+                        if (this.isLocked) {
+                            this.toast(this.lockMessage);
+                            return;
+                        }
+
+                        if (!bench) return; // empty bench slot — ignore
+
+                        if (this.swapSource) {
+                            // Cancel if tapping the same player
+                            if (bench.id === this.swapSource.player.id) {
+                                this.swapSource = null;
+                                return;
+                            }
+
+                            // Position check
+                            if (bench.pos !== this.swapSource.player.pos) {
+                                this.toast(
+                                    `Can only swap ${this.swapSource.player.pos} with ${this.swapSource.player.pos}`,
+                                );
+                                this.swapSource = null;
+                                return;
+                            }
+                            this.doSwap(this.swapSource, {
+                                player: bench,
+                                isOnBench: true,
+                                benchIndex,
+                            });
+                            return;
+                        }
+
+                        // Start swap from bench player
+                        this.swapSource = {
+                            player: bench,
+                            isOnBench: true,
+                            benchIndex,
+                        };
+                        this.toast(
+                            `Swap ${bench.name}? Tap a starter ${bench.pos} to swap.`,
+                        );
+                    },
+
+                    // Perform the actual swap
+                    doSwap(src, tgt) {
+                        const arr = [...this.selectedPlayers];
+                        const srcIdx = arr.findIndex(
+                            (p) => p.id === src.player.id,
+                        );
+                        const tgtIdx = arr.findIndex(
+                            (p) => p.id === tgt.player.id,
+                        );
+                        if (srcIdx === -1 || tgtIdx === -1) {
+                            this.swapSource = null;
+                            return;
+                        }
+                        [arr[srcIdx], arr[tgtIdx]] = [arr[tgtIdx], arr[srcIdx]];
+                        this.selectedPlayers = arr;
+                        this.swapSource = null;
+                        this.toast(
+                            `↔ Swapped ${src.player.name.split(" ").pop()} ↔ ${tgt.player.name.split(" ").pop()}`,
+                        );
+                        this.saveToLocalStorage();
+                    },
+
+                    // ── ADD / REMOVE ─────────────────────────────────────────────────────────
+                    togglePlayer(player) {
+                        if (this.isLocked) {
+                            this.toast(this.lockMessage);
+                            return;
+                        }
+                        this.isSelected(player.id)
+                            ? this.removePlayer(player)
+                            : this.addPlayer(player);
+                    },
+
+                    addPlayer(player) {
+                        if (this.isSelected(player.id)) return;
+                        if (this.totalCost + player.cost > 100) {
+                            this.toast("Not enough budget!");
+                            return;
+                        }
+                        const rule = this.compositionRules.find(
+                            (r) => r.pos === player.pos,
+                        );
+                        if (rule && this.countInSquad(player.pos) >= rule.max) {
+                            this.toast(
+                                `Max ${rule.max} ${player.pos} players allowed`,
+                            );
+                            return;
+                        }
+
+                        const starterLimit =
+                            {
+                                GK: 1,
+                                DF: this.currentFormation.df,
+                                MF: this.currentFormation.mf,
+                                FW: this.currentFormation.fw,
+                            }[player.pos] ?? 0;
+                        const starterCountForPos = this.starters.filter(
+                            (p) => p.pos === player.pos,
+                        ).length;
+                        const benchCount = this.benchPlayers.length;
+
+                        if (starterCountForPos < starterLimit) {
+                            // Add as starter — insert before bench players
+                            const insertAt = Math.min(this.starters.length, 11); // always keep starters first 11
+                            const arr = [...this.selectedPlayers];
+                            arr.splice(insertAt, 0, player);
+                            this.selectedPlayers = arr;
+                        } else if (
+                            benchCount < 4 &&
+                            this.countInSquad(player.pos) < rule.max
+                        ) {
+                            // Add as bench
+                            this.selectedPlayers = [
+                                ...this.selectedPlayers,
+                                player,
+                            ];
+                        } else {
+                            this.toast(`No available slot for ${player.pos}`);
+                            return;
+                        }
+
+                        this.saveToLocalStorage();
+                    },
+
+                    removePlayer(player) {
+                        if (this.isLocked) {
+                            this.toast(this.lockMessage);
+                            return;
+                        }
+                        if (this.swapSource?.player?.id === player.id)
+                            this.swapSource = null;
+                        this.selectedPlayers = this.selectedPlayers.filter(
+                            (p) => p.id !== player.id,
+                        );
+                        if (this.wildcardPlayerId === player.id)
+                            this.wildcardPlayerId = null;
+                        this.saveToLocalStorage();
+                    },
+
+                    // ── FORMATION ─────────────────────────────────────────────────────────────
+                    changeFormation(f) {
+                        if (this.isLocked) {
+                            this.toast(this.lockMessage);
+                            return;
+                        }
+                        this.currentFormation = f;
+                        this.validateAndTrimSquad();
+                    },
+
+                    validateAndTrimSquad() {
+                        const limits = {
+                            GK: 1,
+                            DF: this.currentFormation.df,
+                            MF: this.currentFormation.mf,
+                            FW: this.currentFormation.fw,
+                        };
+                        const newStarters = [];
+                        const newBench = [];
+                        for (const pos of ["GK", "DF", "MF", "FW"]) {
+                            const posPlayers = this.starters.filter(
+                                (p) => p.pos === pos,
+                            );
+                            const allowed = limits[pos];
+                            if (posPlayers.length > allowed) {
+                                this.toast(
+                                    `Removed ${posPlayers.length - allowed} extra ${pos}(s) due to formation change.`,
+                                );
+                                newStarters.push(
+                                    ...posPlayers.slice(0, allowed),
+                                );
+                                // extras go to bench if room
+                                posPlayers.slice(allowed).forEach((p) => {
+                                    if (newBench.length < 4) newBench.push(p);
+                                });
+                            } else {
+                                newStarters.push(...posPlayers);
+                            }
+                        }
+                        // Keep existing bench players (minus any moved there above)
+                        const existingBenchIds = new Set([
+                            ...newBench.map((p) => p.id),
+                        ]);
+                        this.benchPlayers.forEach((p) => {
+                            if (
+                                !existingBenchIds.has(p.id) &&
+                                newBench.length < 4
+                            )
+                                newBench.push(p);
+                        });
+                        this.selectedPlayers = [...newStarters, ...newBench];
+                        this.saveToLocalStorage();
+                    },
+
+                    // ── WILDCARD ──────────────────────────────────────────────────────────────
+                    toggleWildcard(playerId) {
+                        if (this.isLocked) {
+                            this.toast(this.lockMessage);
+                            return;
+                        }
+                        const isStarter = this.starters.some(
+                            (p) => p.id === playerId,
+                        );
+                        if (!isStarter) {
+                            this.toast("Only starters can be set as wildcard!");
+                            return;
+                        }
+                        if (this.wildcardPlayerId === playerId) {
+                            this.wildcardPlayerId = null;
+                            this.toast("Wildcard removed.");
+                        } else {
+                            this.wildcardPlayerId = playerId;
+                            this.toast(
+                                `★ Wildcard: ${this.selectedPlayers.find((p) => p.id === playerId)?.name}`,
+                            );
+                        }
+                        this.saveToLocalStorage();
+                    },
+
+                    // ── PERSISTENCE ───────────────────────────────────────────────────────────
+                    saveToLocalStorage() {
+                        localStorage.setItem(
+                            `squad_md${this.matchdayId}`,
+                            JSON.stringify({
+                                selectedPlayers: this.selectedPlayers,
+                                formationId: this.currentFormation.id,
+                                wildcardPlayerId: this.wildcardPlayerId,
+                            }),
+                        );
+                    },
+
+                    // ── SUBMIT ────────────────────────────────────────────────────────────────
+                    get validationErrors() {
+                        const e = [];
+                        if (this.selectedPlayers.length < 15)
+                            e.push(
+                                `Need ${15 - this.selectedPlayers.length} more players`,
+                            );
+                        if (this.remainingCredits < 0)
+                            e.push(
+                                `Over budget by ${-this.remainingCredits} CR`,
+                            );
+                        if (this.countInSquad("GK") !== 1)
+                            e.push("Exactly 1 GK required");
+                        if (this.countInSquad("DF") < 3)
+                            e.push("At least 3 defenders needed");
+                        if (this.countInSquad("MF") < 2)
+                            e.push("At least 2 midfielders needed");
+                        if (this.countInSquad("FW") < 1)
+                            e.push("At least 1 forward needed");
+                        if (this.isLocked) e.push("🔒 Matchday is locked");
+                        return e;
+                    },
+                    get canSubmit() {
+                        return this.validationErrors.length === 0;
+                    },
+                    posLabel(p) {
+                        return {
+                            GK: "Goalkeepers",
+                            DF: "Defenders",
+                            MF: "Midfielders",
+                            FW: "Forwards",
+                        }[p];
+                    },
+
+                    async submitSquad() {
+                        if (this.isLocked) {
+                            this.toast(this.lockMessage);
+                            return;
+                        }
+                        if (!this.canSubmit) return;
+                        const payload = {
+                            players: this.selectedPlayers.map((p, i) => ({
+                                player_id: p.id,
+                                slot: i < 11 ? "starter" : "bench",
+                                formation_position: p.pos,
+                                is_x2_joker: this.wildcardPlayerId === p.id,
+                            })),
+                            formation_id: this.currentFormation.id,
+                        };
+                        try {
+                            const token =
+                                localStorage.getItem("dummy_token") ||
+                                "dummy-token-user-1";
+                            const resp = await fetch("/squad/", {
+                                method: "PUT",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    Authorization: `Bearer ${token}`,
+                                },
+                                body: JSON.stringify(payload),
+                            });
+                            const data = await resp.json();
+                            if (resp.ok) {
+                                this.showSuccess = true;
+                                if (data.penalty_incurred)
+                                    setTimeout(
+                                        () =>
+                                            this.toast(
+                                                `Penalty: ${data.penalty_incurred} pts`,
+                                            ),
+                                        2000,
+                                    );
+                            } else {
+                                this.toast(
+                                    "Error: " +
+                                        (data.detail || "Unknown error"),
+                                );
+                            }
+                        } catch (e) {
+                            console.warn("API unavailable, mocking success");
+                            this.showSuccess = true;
+                        }
+                    },
+
+                    // ── TIMER ─────────────────────────────────────────────────────────────────
+                    startCountdownTimer() {
+                        setInterval(() => {
+                            this.currentTimestamp = Date.now();
+                        }, 1000);
+                    },
+                    getCountdownText() {
+                        if (!this.matchdayDeadline) return "No deadline set";
+                        const diff =
+                            this.matchdayDeadline - this.currentTimestamp;
+                        if (diff <= 0) return "⏰ LOCKED";
+                        const d = Math.floor(diff / 86400000);
+                        const h = Math.floor((diff % 86400000) / 3600000);
+                        const m = Math.floor((diff % 3600000) / 60000);
+                        const s = Math.floor((diff % 60000) / 1000);
+                        if (d > 0) return `${d}d ${h}h ${m}m`;
+                        if (h > 0) return `${h}h ${m}m ${s}s`;
+                        return `${m}m ${s}s`;
+                    },
+
+                    // ── TOAST ─────────────────────────────────────────────────────────────────
+                    toast(msg) {
+                        const el = document.createElement("div");
+                        el.className = "toast-item";
+                        el.textContent = msg;
+                        document.getElementById("toast-wrap").appendChild(el);
+                        setTimeout(() => el.classList.add("show"), 10);
+                        setTimeout(() => {
+                            el.classList.remove("show");
+                            setTimeout(() => el.remove(), 300);
+                        }, 2700);
+                    },
+                };
+            }
+        </script>
+    </body>
 </html>
