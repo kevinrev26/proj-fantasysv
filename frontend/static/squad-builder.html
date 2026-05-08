@@ -1461,7 +1461,7 @@
                     compositionRules: [
                         { pos: "GK", min: 1, max: 1 },
                         { pos: "DF", min: 3, max: 5 },
-                        { pos: "MF", min: 2, max: 5 },
+                        { pos: "MF", min: 2, max: 6 },
                         { pos: "FW", min: 1, max: 3 },
                     ],
 
@@ -2060,8 +2060,7 @@
                         // Allow into bench if starters for this position are full but bench has room
                         const benchCount = this.benchPlayers.length;
                         if (starterCount < starterLimit) return true; // can go as starter
-                        if (benchCount < benchLimit && totalCount < rule.max)
-                            return true; // bench slot available
+                        if (benchCount < benchLimit) return true;
                         return false;
                     },
 

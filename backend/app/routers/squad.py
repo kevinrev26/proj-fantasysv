@@ -32,8 +32,8 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from ..database import get_db
 from .. import models
+from ..database import get_db
 from ..services.lock_guard import assert_matchday_unlocked
 
 router = APIRouter(prefix="/squad", tags=["squad"])
@@ -42,6 +42,7 @@ router = APIRouter(prefix="/squad", tags=["squad"])
 # ---------------------------------------------------------------------------
 # Auth helpers (kept identical to original)
 # ---------------------------------------------------------------------------
+
 
 def get_current_user_id(request: Request) -> int:
     auth_header = request.headers.get("Authorization")
@@ -58,6 +59,7 @@ def get_current_user_id(request: Request) -> int:
 # ---------------------------------------------------------------------------
 # Schemas
 # ---------------------------------------------------------------------------
+
 
 class PlayerSlot(BaseModel):
     player_id: int
@@ -85,6 +87,7 @@ class BenchSwapRequest(BaseModel):
 # DB helpers
 # ---------------------------------------------------------------------------
 
+
 def _active_season(db: Session) -> models.Season:
     season = (
         db.query(models.Season)
@@ -104,12 +107,14 @@ def _upcoming_matchday(db: Session, season_id: int) -> Optional[models.Matchday]
             models.Matchday.season_id == season_id,
             models.Matchday.status != models.MatchdayStatus.closed,
         )
-        .order_by(models.Matchday.id.asc())
+        .order_by(models.Matchday.lock_at_utc.asc())
         .first()
     )
 
 
-def _last_closed_matchday(db: Session, season_id: int, before_id: int) -> Optional[models.Matchday]:
+def _last_closed_matchday(
+    db: Session, season_id: int, before_id: int
+) -> Optional[models.Matchday]:
     return (
         db.query(models.Matchday)
         .filter(
@@ -122,7 +127,9 @@ def _last_closed_matchday(db: Session, season_id: int, before_id: int) -> Option
     )
 
 
-def _fantasy_team(db: Session, user_id: int, season_id: int) -> Optional[models.FantasyTeam]:
+def _fantasy_team(
+    db: Session, user_id: int, season_id: int
+) -> Optional[models.FantasyTeam]:
     return (
         db.query(models.FantasyTeam)
         .filter(
@@ -146,6 +153,7 @@ def _get_config_int(db: Session, key: str, default: int) -> int:
 # ---------------------------------------------------------------------------
 # Inter-matchday free-transfer carry-over logic
 # ---------------------------------------------------------------------------
+
 
 def _compute_available_free_transfers(
     db: Session,
@@ -218,6 +226,7 @@ def _get_config_str(db: Session, key: str, default: str) -> str:
 # ---------------------------------------------------------------------------
 # READ endpoints (no lock guard needed)
 # ---------------------------------------------------------------------------
+
 
 @router.get("/players")
 def get_all_players(db: Session = Depends(get_db)):
@@ -296,9 +305,11 @@ def get_squad(request: Request, db: Session = Depends(get_db)):
 @router.get("/leaderboard")
 def get_leaderboard(request: Request, db: Session = Depends(get_db)):
     user_id = get_current_user_id(request)
-    season = db.query(models.Season).filter(
-        models.Season.status == models.SeasonStatus.active
-    ).first()
+    season = (
+        db.query(models.Season)
+        .filter(models.Season.status == models.SeasonStatus.active)
+        .first()
+    )
     if not season:
         return {"leaderboard": []}
 
@@ -354,6 +365,7 @@ def get_leaderboard(request: Request, db: Session = Depends(get_db)):
 # ---------------------------------------------------------------------------
 # WRITE endpoints – lock guard applied
 # ---------------------------------------------------------------------------
+
 
 @router.put("/")
 def update_squad(
@@ -446,9 +458,11 @@ def update_squad(
     if not is_initialization and (added_ids or removed_ids):
         list_rem = list(removed_ids)
         list_add = list(added_ids)
-        paid_left = max(0, len(list_rem) - _compute_available_free_transfers(
-            db, team, matchday, base_allowance
-        ))
+        paid_left = max(
+            0,
+            len(list_rem)
+            - _compute_available_free_transfers(db, team, matchday, base_allowance),
+        )
 
         for i in range(max(len(list_rem), len(list_add))):
             r_id = list_rem[i] if i < len(list_rem) else None
@@ -551,7 +565,9 @@ def bench_swap(
     if starter_fp.slot != models.FantasySlot.starter:
         raise HTTPException(status_code=400, detail="First player must be a starter")
     if bench_fp.slot != models.FantasySlot.bench:
-        raise HTTPException(status_code=400, detail="Second player must be on the bench")
+        raise HTTPException(
+            status_code=400, detail="Second player must be on the bench"
+        )
 
     starter_fp.slot = models.FantasySlot.bench
     bench_fp.slot = models.FantasySlot.starter
