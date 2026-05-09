@@ -498,6 +498,88 @@ def init_matchday_lock(matchday_id: int, db: Session = Depends(get_db)):
     }
 
 
+class FixtureUpdate(BaseModel):
+    home_team_id: Optional[int] = None
+    away_team_id: Optional[int] = None
+    kickoff_utc: Optional[datetime] = None
+    finished: Optional[bool] = None
+
+
+@router.patch("/fixtures/{fixture_id}", status_code=200)
+def update_fixture(fixture_id: int, payload: FixtureUpdate, db: Session = Depends(get_db)):
+    """Update individual fixture fields and recalculate the matchday lock time."""
+    from ..services.matchday_lock_service import initialize_matchday_lock
+    from datetime import timezone
+
+    fixture = db.query(models.Fixture).filter(models.Fixture.id == fixture_id).first()
+    if not fixture:
+        raise HTTPException(status_code=404, detail="Fixture not found")
+
+    if payload.home_team_id is not None:
+        if not db.query(models.Team).filter(models.Team.id == payload.home_team_id).first():
+            raise HTTPException(status_code=400, detail=f"Home team {payload.home_team_id} not found")
+        fixture.home_team_id = payload.home_team_id
+
+    if payload.away_team_id is not None:
+        if not db.query(models.Team).filter(models.Team.id == payload.away_team_id).first():
+            raise HTTPException(status_code=400, detail=f"Away team {payload.away_team_id} not found")
+        fixture.away_team_id = payload.away_team_id
+
+    if fixture.home_team_id == fixture.away_team_id:
+        raise HTTPException(status_code=400, detail="Home and away team cannot be the same")
+
+    if payload.kickoff_utc is not None:
+        kickoff = payload.kickoff_utc
+        if kickoff.tzinfo is None:
+            kickoff = kickoff.replace(tzinfo=timezone.utc)
+        fixture.kickoff_utc = kickoff
+
+    if payload.finished is not None:
+        fixture.finished = payload.finished
+
+    db.commit()
+    db.refresh(fixture)
+
+    # Recalculate matchday lock
+    matchday = db.query(models.Matchday).filter(models.Matchday.id == fixture.matchday_id).first()
+    db.expire(matchday)
+    lock_at = initialize_matchday_lock(matchday, db)
+
+    return {
+        "id": fixture.id,
+        "matchday_id": fixture.matchday_id,
+        "home_team_id": fixture.home_team_id,
+        "away_team_id": fixture.away_team_id,
+        "kickoff_utc": fixture.kickoff_utc.isoformat(),
+        "finished": fixture.finished,
+        "lock_at_utc": lock_at.isoformat() if lock_at else None,
+    }
+
+
+@router.delete("/fixtures/{fixture_id}", status_code=200)
+def delete_fixture(fixture_id: int, db: Session = Depends(get_db)):
+    """Delete a single fixture and recalculate the matchday lock time."""
+    from ..services.matchday_lock_service import initialize_matchday_lock
+
+    fixture = db.query(models.Fixture).filter(models.Fixture.id == fixture_id).first()
+    if not fixture:
+        raise HTTPException(status_code=404, detail="Fixture not found")
+
+    matchday_id = fixture.matchday_id
+    db.delete(fixture)
+    db.commit()
+
+    matchday = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
+    db.expire(matchday)
+    lock_at = initialize_matchday_lock(matchday, db) if matchday.fixtures else None
+
+    return {
+        "deleted": fixture_id,
+        "matchday_id": matchday_id,
+        "lock_at_utc": lock_at.isoformat() if lock_at else None,
+    }
+
+
 @router.get("/seasons/{season_id}/teams")
 def get_teams_for_season(season_id: int, db: Session = Depends(get_db)):
     """Return all teams belonging to any league in a season (for fixture dropdowns)."""
