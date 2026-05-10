@@ -580,6 +580,39 @@ def delete_fixture(fixture_id: int, db: Session = Depends(get_db)):
     }
 
 
+@router.get("/export/players")
+def export_players(season_id: Optional[int] = None, db: Session = Depends(get_db)):
+    """
+    Return player_id, name, and team_name for all active players.
+    Optionally filter by season_id to restrict to teams in that season's leagues.
+    """
+    query = (
+        db.query(models.Player, models.Team)
+        .join(models.Team, models.Player.team_id == models.Team.id)
+        .filter(models.Player.is_active == True)
+    )
+
+    if season_id is not None:
+        query = (
+            query
+            .join(models.League, models.Team.league_id == models.League.id)
+            .filter(models.League.season_id == season_id)
+        )
+
+    rows = query.order_by(models.Team.name, models.Player.name).all()
+
+    return {
+        "players": [
+            {
+                "player_id": player.id,
+                "name": player.name,
+                "team_name": team.name,
+            }
+            for player, team in rows
+        ]
+    }
+
+
 @router.get("/seasons/{season_id}/teams")
 def get_teams_for_season(season_id: int, db: Session = Depends(get_db)):
     """Return all teams belonging to any league in a season (for fixture dropdowns)."""

@@ -270,6 +270,7 @@
         <div class="nav-item" data-target="players-sec">🏃 Players (Create)</div>
         <div class="nav-item" data-target="players-update-sec">⚙️ Players (Update)</div>
         <div class="nav-item" data-target="phases-sec">🏆 Tournament Phases</div>
+        <div class="nav-item" data-target="export-sec">📤 Export Players</div>
     </aside>
 
     <main class="main-content">
@@ -409,6 +410,60 @@
             </div>
         </section>
 
+        <!-- EXPORT PLAYERS -->
+        <section id="export-sec" class="section">
+            <div class="card">
+                <h2>Export Players</h2>
+                <div class="instructions">
+                    Downloads a CSV file with columns: <code>player_id, name, team_name</code>.<br>
+                    Optionally filter by season to limit results to teams in that season's leagues.
+                </div>
+
+                <div class="form-group" style="display:flex;gap:1.5rem;align-items:flex-end;flex-wrap:wrap;">
+                    <div>
+                        <label for="export-season">Filter by Season (optional)</label>
+                        <select id="export-season" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:200px;outline:none;">
+                            <option value="">— All seasons —</option>
+                        </select>
+                    </div>
+                    <button id="export-btn" onclick="exportPlayers()" style="margin-bottom:0;">
+                        ⬇️ Download CSV
+                    </button>
+                </div>
+
+                <!-- Preview table -->
+                <div id="export-preview" style="display:none;margin-top:1.5rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                        <span id="export-count" style="color:var(--text-muted);font-size:0.9rem;"></span>
+                        <button onclick="triggerCsvDownload()" style="padding:0.5rem 1.2rem;font-size:0.85rem;">
+                            ⬇️ Save CSV
+                        </button>
+                    </div>
+                    <div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
+                        <table id="export-table" style="
+                            width:100%;border-collapse:collapse;font-size:0.88rem;">
+                            <thead>
+                                <tr style="background:var(--surface-color-light);">
+                                    <th style="padding:0.7rem 1rem;text-align:left;color:var(--text-muted);font-weight:600;">player_id</th>
+                                    <th style="padding:0.7rem 1rem;text-align:left;color:var(--text-muted);font-weight:600;">name</th>
+                                    <th style="padding:0.7rem 1rem;text-align:left;color:var(--text-muted);font-weight:600;">team_name</th>
+                                </tr>
+                            </thead>
+                            <tbody id="export-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="export-error" style="display:none;margin-top:1rem;
+                    background:rgba(255,51,102,0.08);border-left:4px solid var(--danger-color);
+                    padding:0.8rem 1.2rem;border-radius:0 8px 8px 0;color:var(--danger-color);font-size:0.9rem;">
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <script>
@@ -509,6 +564,115 @@
             log(textareaId, "Process finished.");
             btn.disabled = false;
         }
+        // ── Export Players ────────────────────────────────────────────────
+        let _exportRows = [];   // cached rows for re-download without re-fetch
+
+        async function loadSeasonsForExport() {
+            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            try {
+                const res = await fetch('http://localhost:8000/admin/seasons', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const sel = document.getElementById('export-season');
+                (data.seasons || []).forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    sel.appendChild(opt);
+                });
+            } catch (_) { /* non-critical */ }
+        }
+
+        async function exportPlayers() {
+            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            const seasonId = document.getElementById('export-season').value;
+            const btn = document.getElementById('export-btn');
+            const errEl = document.getElementById('export-error');
+            const previewEl = document.getElementById('export-preview');
+
+            errEl.style.display = 'none';
+            previewEl.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = '⏳ Fetching…';
+
+            try {
+                const base = 'http://localhost:8000';
+                const url = seasonId
+                    ? `${base}/admin/export/players?season_id=${seasonId}`
+                    : `${base}/admin/export/players`;
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `HTTP ${res.status}`);
+                }
+
+                const data = await res.json();
+                _exportRows = data.players || [];
+
+                // Populate preview table
+                const tbody = document.getElementById('export-tbody');
+                tbody.innerHTML = '';
+                _exportRows.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                    tr.innerHTML = `
+                        <td style="padding:0.6rem 1rem;color:var(--text-muted);">${p.player_id}</td>
+                        <td style="padding:0.6rem 1rem;font-weight:500;">${escHtml(p.name)}</td>
+                        <td style="padding:0.6rem 1rem;color:var(--secondary-color);">${escHtml(p.team_name)}</td>`;
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('export-count').textContent =
+                    `${_exportRows.length} player${_exportRows.length !== 1 ? 's' : ''} found`;
+                previewEl.style.display = 'block';
+
+                triggerCsvDownload();
+            } catch (e) {
+                errEl.textContent = `Error: ${e.message}`;
+                errEl.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '⬇️ Download CSV';
+            }
+        }
+
+        function triggerCsvDownload() {
+            if (!_exportRows.length) return;
+            const header = 'player_id,name,team_name\n';
+            const rows = _exportRows.map(p =>
+                `${p.player_id},${csvEsc(p.name)},${csvEsc(p.team_name)}`
+            ).join('\n');
+            const blob = new Blob([header + rows], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'players_export.csv';
+            a.click();
+        }
+
+        function csvEsc(val) {
+            const s = String(val ?? '');
+            return s.includes(',') || s.includes('"') || s.includes('\n')
+                ? `"${s.replace(/"/g, '""')}"` : s;
+        }
+
+        function escHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Load seasons when the Export tab is first activated
+        document.querySelector('[data-target="export-sec"]').addEventListener('click', () => {
+            if (document.getElementById('export-season').options.length === 1) {
+                loadSeasonsForExport();
+            }
+        });
     </script>
 </body>
 
