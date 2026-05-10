@@ -264,7 +264,8 @@
     <aside class="sidebar">
         <div class="logo">⚽ Fantasy Admin</div>
         <div class="nav-item active" data-target="seasons-sec">🌍 Seasons</div>
-        <div class="nav-item" data-target="matchdays-sec">⏱️ Matchdays</div>
+        <div class="nav-item" data-target="matchday-crud-sec">📅 Matchdays</div>
+        <div class="nav-item" data-target="matchdays-sec">⏱️ Matchday Import</div>
         <div class="nav-item" data-target="leagues-sec">🏆 Leagues</div>
         <div class="nav-item" data-target="teams-sec">🛡️ Teams</div>
         <div class="nav-item" data-target="players-sec">🏃 Players (Create)</div>
@@ -303,7 +304,66 @@
             </div>
         </section>
 
-        <!-- MATCHDAYS -->
+        <!-- MATCHDAY CRUD MANAGER -->
+        <section id="matchday-crud-sec" class="section">
+            <div class="card">
+                <h2>📅 Matchday Manager</h2>
+                <div class="instructions">Create, edit, change status, or delete matchdays per season.</div>
+
+                <!-- Season selector -->
+                <div class="form-group" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1rem;">
+                    <div>
+                        <label for="md-crud-season">Season</label>
+                        <select id="md-crud-season" onchange="mdLoadMatchdays()" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:200px;outline:none;">
+                            <option value="">— select season —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Create form -->
+                <details style="margin-bottom:1.2rem;">
+                    <summary style="cursor:pointer;font-weight:700;color:var(--secondary-color);padding:6px 0;">➕ Create new matchday</summary>
+                    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                        <div>
+                            <label for="md-new-name">Name</label>
+                            <input id="md-new-name" type="text" placeholder="e.g. Matchday 3"
+                                style="background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;font-size:0.9rem;width:200px;outline:none;">
+                        </div>
+                        <div>
+                            <label for="md-new-deadline">Lock at (UTC, optional)</label>
+                            <input id="md-new-deadline" type="datetime-local"
+                                style="background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;font-size:0.9rem;outline:none;">
+                        </div>
+                        <button onclick="mdCreate()" style="margin-bottom:0;">Create</button>
+                    </div>
+                </details>
+
+                <!-- Matchdays table -->
+                <div id="md-table-wrap" style="display:none;overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                        <thead>
+                            <tr style="background:var(--surface-color-light);">
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">ID</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">Name</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">Status</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">Lock at (UTC)</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);">Locked</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);">Fixtures</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="md-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="md-empty" style="display:none;color:var(--text-muted);padding:1rem 0;font-size:0.9rem;">No matchdays found for this season.</div>
+                <div id="md-error" style="display:none;margin-top:1rem;background:rgba(255,51,102,0.08);border-left:4px solid var(--danger-color);padding:.8rem 1.2rem;border-radius:0 8px 8px 0;color:var(--danger-color);font-size:0.9rem;"></div>
+            </div>
+        </section>
+
+        <!-- MATCHDAYS IMPORT -->
         <section id="matchdays-sec" class="section">
             <div class="card">
                 <h2>Import Matchdays</h2>
@@ -666,6 +726,238 @@
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
+
+        // ── Matchday CRUD ─────────────────────────────────────────────────────
+        let _mdData = [];
+
+        async function mdLoadSeasons() {
+            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            try {
+                const res = await fetch('http://localhost:8000/admin/seasons', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const sel = document.getElementById('md-crud-season');
+                sel.innerHTML = '<option value="">— select season —</option>';
+                (data.seasons || []).forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.id; o.textContent = s.name;
+                    sel.appendChild(o);
+                });
+            } catch (_) {}
+        }
+
+        async function mdLoadMatchdays() {
+            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            const seasonId = document.getElementById('md-crud-season').value;
+            const errEl = document.getElementById('md-error');
+            const tableWrap = document.getElementById('md-table-wrap');
+            const emptyEl = document.getElementById('md-empty');
+            errEl.style.display = 'none';
+            tableWrap.style.display = 'none';
+            emptyEl.style.display = 'none';
+            if (!seasonId) return;
+
+            try {
+                const res = await fetch(`http://localhost:8000/admin/seasons/${seasonId}/matchdays`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                _mdData = data.matchdays || [];
+                mdRenderTable();
+            } catch (e) {
+                errEl.textContent = `Error loading matchdays: ${e.message}`;
+                errEl.style.display = 'block';
+            }
+        }
+
+        const STATUS_OPTIONS = ['scheduled', 'in_progress', 'closed'];
+        const STATUS_COLORS  = { scheduled:'#5096ff', in_progress:'#ffc800', closed:'#00c864' };
+
+        function mdRenderTable() {
+            const tbody = document.getElementById('md-tbody');
+            const tableWrap = document.getElementById('md-table-wrap');
+            const emptyEl = document.getElementById('md-empty');
+            tbody.innerHTML = '';
+            if (!_mdData.length) { emptyEl.style.display = 'block'; return; }
+            tableWrap.style.display = 'block';
+
+            _mdData.forEach(md => {
+                const tr = document.createElement('tr');
+                tr.id = `md-row-${md.id}`;
+                tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                tr.innerHTML = mdRowHtml(md);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function mdRowHtml(md) {
+            const statusColor = STATUS_COLORS[md.status] || '#888';
+            const lockIcon = md.is_locked ? '🔒' : '🔓';
+            const lockTime = md.lock_at_utc ? new Date(md.lock_at_utc).toLocaleString() : '—';
+            return `
+                <td style="padding:.6rem 1rem;color:var(--text-muted);">${md.id}</td>
+                <td style="padding:.6rem 1rem;font-weight:600;">${escHtml(md.name)}</td>
+                <td style="padding:.6rem 1rem;">
+                    <select onchange="mdChangeStatus(${md.id}, this.value)"
+                        style="background:var(--bg-color);border:1px solid ${statusColor};color:${statusColor};
+                               padding:3px 8px;border-radius:6px;font-size:0.82rem;font-weight:700;cursor:pointer;">
+                        ${STATUS_OPTIONS.map(s => `<option value="${s}" ${md.status===s?'selected':''}>${s}</option>`).join('')}
+                    </select>
+                </td>
+                <td style="padding:.6rem 1rem;font-size:0.82rem;color:var(--text-muted);">${lockTime}</td>
+                <td style="padding:.6rem 1rem;text-align:center;">${lockIcon}</td>
+                <td style="padding:.6rem 1rem;text-align:center;color:var(--text-muted);">${md.fixture_count}</td>
+                <td style="padding:.6rem 1rem;text-align:center;display:flex;gap:6px;justify-content:center;">
+                    <button onclick="mdStartEdit(${md.id})"
+                        style="background:rgba(255,200,80,.12);color:#ffc850;border:none;border-radius:6px;
+                               padding:4px 10px;cursor:pointer;font-size:0.82rem;">✏️ Edit</button>
+                    <button onclick="mdDelete(${md.id})"
+                        style="background:rgba(255,80,80,.12);color:#ff5050;border:none;border-radius:6px;
+                               padding:4px 10px;cursor:pointer;font-size:0.82rem;">✕</button>
+                </td>`;
+        }
+
+        function mdStartEdit(id) {
+            const md = _mdData.find(m => m.id === id);
+            if (!md) return;
+            const lockVal = md.lock_at_utc
+                ? md.lock_at_utc.replace(/Z$/, '').replace(/:\d{2}(\.\d+)?$/, '').slice(0, 16)
+                : '';
+            const tr = document.getElementById(`md-row-${id}`);
+            tr.innerHTML = `
+                <td style="padding:.5rem .8rem;color:var(--text-muted);">${id}</td>
+                <td style="padding:.5rem .8rem;">
+                    <input id="md-edit-name-${id}" value="${escHtml(md.name)}"
+                        style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
+                               color:var(--text-color);padding:4px 8px;border-radius:6px;font-size:.88rem;width:130px;">
+                </td>
+                <td style="padding:.5rem .8rem;">
+                    <select id="md-edit-status-${id}"
+                        style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
+                               color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.82rem;">
+                        ${STATUS_OPTIONS.map(s => `<option value="${s}" ${md.status===s?'selected':''}>${s}</option>`).join('')}
+                    </select>
+                </td>
+                <td style="padding:.5rem .8rem;">
+                    <input id="md-edit-lock-${id}" type="datetime-local" value="${lockVal}"
+                        style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
+                               color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.8rem;">
+                </td>
+                <td style="padding:.5rem .8rem;text-align:center;">
+                    <input id="md-edit-islocked-${id}" type="checkbox" ${md.is_locked?'checked':''}>
+                </td>
+                <td></td>
+                <td style="padding:.5rem .8rem;display:flex;gap:6px;justify-content:center;">
+                    <button onclick="mdSaveEdit(${id})"
+                        style="background:var(--secondary-color);color:#0d1b2e;border:none;border-radius:6px;
+                               padding:4px 12px;cursor:pointer;font-size:.82rem;font-weight:700;">💾</button>
+                    <button onclick="mdCancelEdit(${id})"
+                        style="background:rgba(255,255,255,.07);color:var(--text-muted);border:none;border-radius:6px;
+                               padding:4px 10px;cursor:pointer;font-size:.82rem;">✕</button>
+                </td>`;
+        }
+
+        function mdCancelEdit(id) {
+            const md = _mdData.find(m => m.id === id);
+            const tr = document.getElementById(`md-row-${id}`);
+            if (md && tr) tr.innerHTML = mdRowHtml(md);
+        }
+
+        async function mdSaveEdit(id) {
+            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            const name     = document.getElementById(`md-edit-name-${id}`)?.value?.trim();
+            const status   = document.getElementById(`md-edit-status-${id}`)?.value;
+            const lockRaw  = document.getElementById(`md-edit-lock-${id}`)?.value;
+            const isLocked = document.getElementById(`md-edit-islocked-${id}`)?.checked;
+            if (!name) return alert('Name is required');
+            try {
+                const body = { name, status, is_locked: isLocked };
+                if (lockRaw) body.deadline_utc = lockRaw.includes('Z') ? lockRaw : lockRaw + ':00Z';
+                const res = await fetch(`http://localhost:8000/admin/matchday/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify(body),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                const updated = await res.json();
+                const idx = _mdData.findIndex(m => m.id === id);
+                if (idx !== -1) _mdData[idx] = { ..._mdData[idx], ...updated };
+                mdCancelEdit(id);
+            } catch (e) {
+                alert(`Save failed: ${e.message}`);
+            }
+        }
+
+        async function mdChangeStatus(id, newStatus) {
+            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            try {
+                const res = await fetch(`http://localhost:8000/admin/matchday/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ status: newStatus }),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                const updated = await res.json();
+                const idx = _mdData.findIndex(m => m.id === id);
+                if (idx !== -1) _mdData[idx] = { ..._mdData[idx], ...updated };
+                // re-render just that row
+                const tr = document.getElementById(`md-row-${id}`);
+                if (tr) tr.innerHTML = mdRowHtml(_mdData[idx]);
+            } catch (e) {
+                alert(`Status update failed: ${e.message}`);
+                mdLoadMatchdays(); // revert UI
+            }
+        }
+
+        async function mdDelete(id) {
+            if (!confirm(`Delete matchday #${id}? This also removes all its fixtures and scores.`)) return;
+            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            try {
+                const res = await fetch(`http://localhost:8000/admin/matchday/${id}`, {
+                    method: 'DELETE',
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                _mdData = _mdData.filter(m => m.id !== id);
+                mdRenderTable();
+            } catch (e) {
+                alert(`Delete failed: ${e.message}`);
+            }
+        }
+
+        async function mdCreate() {
+            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            const seasonId = document.getElementById('md-crud-season').value;
+            const name = document.getElementById('md-new-name').value.trim();
+            const deadline = document.getElementById('md-new-deadline').value;
+            if (!seasonId) return alert('Select a season first');
+            if (!name)     return alert('Name is required');
+            try {
+                const body = { name };
+                if (deadline) body.deadline_utc = deadline.includes('Z') ? deadline : deadline + ':00Z';
+                const res = await fetch(`http://localhost:8000/admin/seasons/${seasonId}/matchdays`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify(body),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                document.getElementById('md-new-name').value = '';
+                document.getElementById('md-new-deadline').value = '';
+                await mdLoadMatchdays();
+            } catch (e) {
+                alert(`Create failed: ${e.message}`);
+            }
+        }
+
+        // Load seasons for matchday CRUD when tab activates
+        document.querySelector('[data-target="matchday-crud-sec"]').addEventListener('click', () => {
+            if (document.getElementById('md-crud-season').options.length === 1) {
+                mdLoadSeasons();
+            }
+        });
 
         // Load seasons when the Export tab is first activated
         document.querySelector('[data-target="export-sec"]').addEventListener('click', () => {

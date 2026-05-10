@@ -35,6 +35,7 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..database import get_db
 from ..services.lock_guard import assert_matchday_unlocked
+from ..services.matchday_lock_service import process_matchday_lock
 
 router = APIRouter(prefix="/squad", tags=["squad"])
 
@@ -255,6 +256,12 @@ def get_squad(request: Request, db: Session = Depends(get_db)):
     team = _fantasy_team(db, user_id, season.id)
     matchday = _upcoming_matchday(db, season.id)
 
+    # Evaluate and flip the lock for the entire matchday if the deadline has passed.
+    # This is idempotent and covers all fixtures — the lock time is derived from the
+    # earliest kickoff across ALL fixtures in the matchday (see matchday_lock_service).
+    if matchday:
+        process_matchday_lock(matchday, db)
+
     base_allowance = _get_config_int(db, "free_transfers_per_matchday", 1)
 
     free_remaining = base_allowance
@@ -300,6 +307,168 @@ def get_squad(request: Request, db: Session = Depends(get_db)):
             else None
         ),
     }
+
+
+@router.get("/points")
+def get_squad_points(request: Request, db: Session = Depends(get_db)):
+    """
+    Return fantasy points for the current user's squad for the most recent
+    matchday that has scoring data (closed or in-progress).
+    Includes both per-matchday points and cumulative total.
+    """
+    user_id = get_current_user_id(request)
+    season = _active_season(db)
+    team = _fantasy_team(db, user_id, season.id)
+
+    if not team:
+        return {"matchday": None, "players": [], "team_total": 0, "cumulative": 0}
+
+    # Find the most recent matchday with any player scores
+    scored_matchday = (
+        db.query(models.Matchday)
+        .join(models.PlayerScore, models.PlayerScore.matchday_id == models.Matchday.id)
+        .filter(models.Matchday.season_id == season.id)
+        .order_by(models.Matchday.id.desc())
+        .first()
+    )
+
+    if not scored_matchday:
+        return {"matchday": None, "players": [], "team_total": 0, "cumulative": 0}
+
+    # Get all player scores for this matchday indexed by player_id
+    scores_by_player = {
+        ps.player_id: ps
+        for ps in db.query(models.PlayerScore).filter(
+            models.PlayerScore.matchday_id == scored_matchday.id
+        ).all()
+    }
+
+    # Build per-player rows for the user's squad
+    rows = []
+    for fp in team.fantasy_players:
+        p = fp.player
+        ps = scores_by_player.get(p.id)
+        base = ps.base_points if ps else 0
+        bonus = ps.bonus_points if ps else 0
+        final = ps.final_points if ps else 0
+        if fp.is_x2_joker and ps:
+            final = final * 2  # wildcard doubling shown in UI
+        rows.append({
+            "player_id": p.id,
+            "name": p.name,
+            "pos": p.position.value,
+            "club": p.team.name if p.team else "",
+            "slot": fp.slot.value,
+            "is_x2_joker": fp.is_x2_joker,
+            "minutes_played": ps.minutes_played if ps else 0,
+            "goals": ps.goals if ps else 0,
+            "assists": ps.assists if ps else 0,
+            "yellow_card": ps.yellow_card if ps else 0,
+            "red_card": ps.red_card if ps else 0,
+            "clean_sheet": (ps.goals_conceded == 0 and ps.minutes_played >= 60) if ps else False,
+            "base_points": base,
+            "bonus_points": bonus,
+            "final_points": final,
+        })
+
+    # Team totals
+    team_score = (
+        db.query(models.TeamScore)
+        .filter(
+            models.TeamScore.fantasy_team_id == team.id,
+            models.TeamScore.matchday_id == scored_matchday.id,
+        )
+        .first()
+    )
+
+    return {
+        "matchday": {
+            "id": scored_matchday.id,
+            "name": scored_matchday.name,
+            "status": scored_matchday.status.value,
+        },
+        "players": rows,
+        "team_total": team_score.points_this_matchday if team_score else 0,
+        "cumulative": team_score.cumulative_points if team_score else 0,
+    }
+
+
+@router.get("/points/all-matchdays")
+def get_points_all_matchdays(request: Request, db: Session = Depends(get_db)):
+    """
+    Return per-matchday fantasy points for the current user's squad,
+    across every matchday that has scoring data. Used for the history view.
+    """
+    user_id = get_current_user_id(request)
+    season = _active_season(db)
+    team = _fantasy_team(db, user_id, season.id)
+
+    if not team:
+        return {"matchdays": []}
+
+    # All matchdays with player scores for this season, ordered oldest first
+    scored_matchdays = (
+        db.query(models.Matchday)
+        .join(models.PlayerScore, models.PlayerScore.matchday_id == models.Matchday.id)
+        .filter(models.Matchday.season_id == season.id)
+        .order_by(models.Matchday.id.asc())
+        .distinct()
+        .all()
+    )
+
+    result = []
+    for md in scored_matchdays:
+        scores_by_player = {
+            ps.player_id: ps
+            for ps in db.query(models.PlayerScore)
+            .filter(models.PlayerScore.matchday_id == md.id)
+            .all()
+        }
+
+        rows = []
+        for fp in team.fantasy_players:
+            p = fp.player
+            ps = scores_by_player.get(p.id)
+            final = (ps.final_points * (2 if fp.is_x2_joker else 1)) if ps else 0
+            rows.append({
+                "player_id": p.id,
+                "name": p.name,
+                "pos": p.position.value,
+                "club": p.team.name if p.team else "",
+                "slot": fp.slot.value,
+                "is_x2_joker": fp.is_x2_joker,
+                "minutes_played": ps.minutes_played if ps else 0,
+                "goals": ps.goals if ps else 0,
+                "assists": ps.assists if ps else 0,
+                "yellow_card": ps.yellow_card if ps else 0,
+                "red_card": ps.red_card if ps else 0,
+                "clean_sheet": bool(ps and ps.goals_conceded == 0 and ps.minutes_played >= 60),
+                "base_points": ps.base_points if ps else 0,
+                "bonus_points": ps.bonus_points if ps else 0,
+                "final_points": final,
+            })
+
+        team_score = (
+            db.query(models.TeamScore)
+            .filter(
+                models.TeamScore.fantasy_team_id == team.id,
+                models.TeamScore.matchday_id == md.id,
+            )
+            .first()
+        )
+
+        result.append({
+            "matchday": {
+                "id": md.id,
+                "name": md.name,
+                "status": md.status.value,
+            },
+            "players": rows,
+            "team_total": team_score.points_this_matchday if team_score else 0,
+            "cumulative": team_score.cumulative_points if team_score else 0,
+        })
+
+    return {"matchdays": result}
 
 
 @router.get("/leaderboard")
