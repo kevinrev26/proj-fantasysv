@@ -2,7 +2,7 @@ from typing import List
 
 import sentry_sdk
 import structlog
-from celery import Celery, shared_task
+from celery import Celery
 from celery.signals import setup_logging as celery_setup_logging
 from sentry_sdk.integrations.celery import CeleryIntegration
 
@@ -41,10 +41,22 @@ if settings.SENTRY_DSN:
         profiles_sample_rate=1.0,
     )
 
+
+# Ensure the broker URL explicitly uses the redis:// scheme so kombu never
+# falls back to pyamqp when the Redis transport has a transient hiccup.
+def _redis_url(url: str) -> str:
+    """Guarantee the URL starts with redis:// (not amqp or anything else)."""
+    if not url.startswith("redis://") and not url.startswith("rediss://"):
+        raise RuntimeError(
+            f"REDIS_URL must start with redis:// or rediss://, got: {url!r}"
+        )
+    return url
+
+
 celery_app = Celery(
     "worker",
-    broker=settings.REDIS_URL,
-    backend=settings.REDIS_URL,
+    broker=_redis_url(settings.REDIS_URL),
+    backend=_redis_url(settings.REDIS_URL),
     include=["app.worker"],
 )
 
@@ -102,7 +114,7 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
 
         # 4. Compute base + bonus using existing pure function
         raw = calculate_player_points(
-            position=fp.player.position,
+            position=fp.player.position.value,
             minutes_played=player_stats.minutes_played,
             goals=player_stats.goals,
             assists=player_stats.assists,
@@ -151,7 +163,7 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
     db_session.commit()
 
 
-@shared_task(
+@celery_app.task(
     name="recalculate_matchday_scores",
     bind=True,
     autoretry_for=(Exception,),
@@ -214,8 +226,9 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                     continue  # player didn't play, no points
 
                 # Get raw points from real player's stats
+                # fp.player.position is a PlayerPosition enum — scoring expects a str
                 raw = calculate_player_points(
-                    position=fp.player.position,
+                    position=fp.player.position.value,
                     minutes_played=ps.minutes_played,
                     goals=ps.goals,
                     assists=ps.assists,

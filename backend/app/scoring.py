@@ -5,8 +5,9 @@ GOAL_POINTS: Dict[str, int] = {
     "FW": 6,
     "MF": 8,
     "DF": 10,
-    "GK": 15,      # not required by spec, kept for potential completeness
+    "GK": 15,  # not required by spec, kept for potential completeness
 }
+
 
 def calculate_player_points(
     position: str,
@@ -18,7 +19,7 @@ def calculate_player_points(
     red_cards: int,
     own_goals: int,
     penalties_missed: int,
-    penalties_saved: int
+    penalties_saved: int,
 ) -> Dict[str, int]:
     """
     Pure function to calculate fantasy points based on the official scoring table.
@@ -29,14 +30,15 @@ def calculate_player_points(
     if minutes_played <= 0:
         return {"base_points": 0, "bonus_points": 0, "final_points": 0}
 
+    position = position.value if hasattr(position, "value") else position
     position = position.upper()
     base_points = 0
     bonus_points = 0
 
     # 1. Minutes played
-    base_points += 1                     # 1+ min
+    base_points += 1  # 1+ min
     if minutes_played >= 60:
-        base_points += 2                 # additional 2 pts (total 3 for ≥60 min)
+        base_points += 2  # additional 2 pts (total 3 for ≥60 min)
 
     # 2. Goals (per position multiplier)
     goal_multiplier = GOAL_POINTS.get(position, 0)
@@ -54,9 +56,9 @@ def calculate_player_points(
 
     # 5. Goals conceded penalties
     if position == "GK":
-        base_points -= goals_conceded          # -1 per goal conceded
+        base_points -= goals_conceded  # -1 per goal conceded
     elif position == "DF" and goals_conceded >= 2:
-        base_points -= 1                       # -1 if 2+ goals conceded (once)
+        base_points -= 1  # -1 if 2+ goals conceded (once)
 
     # 6. Penalties saved (GK only)
     if position == "GK":
@@ -83,8 +85,9 @@ def calculate_player_points(
     return {
         "base_points": base_points,
         "bonus_points": bonus_points,
-        "final_points": final_points
+        "final_points": final_points,
     }
+
 
 def apply_wildcard_multiplier(
     player_score: Dict[str, int], is_wildcard: bool
