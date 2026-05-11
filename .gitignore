@@ -14,3 +14,4 @@ __pycache__/
 nosetests.xml
 coverage.xml
 htmlcov
+.aider*
