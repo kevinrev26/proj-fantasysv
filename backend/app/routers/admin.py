@@ -432,6 +432,125 @@ def list_users(db: Session = Depends(get_db)):
     ]
 
 
+@router.get("/users/{user_id}", status_code=200)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    """Get a single user by ID."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role.value,
+        "is_active": user.is_active,
+        "onboarding_complete": user.onboarding_complete,
+    }
+
+
+@router.post("/users", status_code=201)
+def create_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
+    """Create a new user."""
+    # Check if user already exists
+    existing_user = db.query(models.User).filter(
+        (models.User.username == payload.username) | 
+        (models.User.email == payload.email)
+    ).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username or email already exists")
+    
+    # Create user with hashed password
+    from ..security import get_password_hash
+    hashed_password = get_password_hash(payload.password)
+    
+    user = models.User(
+        username=payload.username,
+        email=payload.email,
+        password_hash=hashed_password,
+        role=models.UserRole.user,  # Default to user role
+        is_active=True
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role.value,
+        "is_active": user.is_active,
+        "onboarding_complete": user.onboarding_complete,
+    }
+
+
+@router.put("/users/{user_id}", status_code=200)
+def update_user(user_id: int, payload: schemas.UserCreate, db: Session = Depends(get_db)):
+    """Update user details."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if username or email is already taken by another user
+    existing_user = db.query(models.User).filter(
+        (models.User.id != user_id) &
+        ((models.User.username == payload.username) | 
+         (models.User.email == payload.email))
+    ).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username or email already exists")
+    
+    user.username = payload.username
+    user.email = payload.email
+    if payload.password:
+        from ..security import get_password_hash
+        user.password_hash = get_password_hash(payload.password)
+    
+    db.commit()
+    db.refresh(user)
+    
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role.value,
+        "is_active": user.is_active,
+        "onboarding_complete": user.onboarding_complete,
+    }
+
+
+@router.delete("/users/{user_id}", status_code=200)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    """Delete a user."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    db.delete(user)
+    db.commit()
+    
+    return {"deleted": user_id}
+
+
+@router.post("/users/{user_id}/reset-password", status_code=200)
+def reset_user_password(user_id: int, db: Session = Depends(get_db)):
+    """Reset user password (placeholder)."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # In a real implementation, this would:
+    # 1. Generate a new temporary password
+    # 2. Send it to the user's email
+    # 3. Store the temporary password hash
+    # For now, we'll just return a placeholder response
+    
+    return {
+        "message": "Password reset initiated. A temporary password will be sent to the user's email.",
+        "user_id": user_id
+    }
+
+
 @router.patch("/users/{user_id}/activate", status_code=200)
 def set_user_active(user_id: int, payload: UserActivateRequest, db: Session = Depends(get_db)):
     """Manually activate or deactivate a user account."""

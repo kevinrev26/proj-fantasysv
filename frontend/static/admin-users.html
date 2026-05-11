@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Usuarios</title>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --light: #f9fafb;
+            --dark: #1f2937;
+            --border: #e5e7eb;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-links a:hover {
+            background-color: var(--border);
+        }
+        
+        .nav-links a.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        h1 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        h2 {
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background-color: var(--light);
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 500px;
+            padding: 1.5rem;
+        }
+        
+        .close {
+            float: right;
+            cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .user-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .user-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .user-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">Fantasy Sports Admin</div>
+            <div class="nav-links">
+                <a href="/admin-dashboard">Dashboard</a>
+                <a href="/admin-users" class="active">Usuarios</a>
+                <a href="/squad-builder">Squad Builder</a>
+                <a href="/match-entry">Match Entry</a>
+                <a href="/schedule">Schedule</a>
+                <a href="/profile">Perfil</a>
+            </div>
+        </header>
+
+        <div class="card">
+            <h1>Gestión de Usuarios</h1>
+            
+            <div x-data="userManagement()" x-init="init()">
+                <!-- User List -->
+                <div class="card">
+                    <h2>Lista de Usuarios</h2>
+                    <div class="actions">
+                        <button class="btn btn-primary" @click="openCreateModal">Crear Nuevo Usuario</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre de Usuario</th>
+                                <th>Email</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="user in users" :key="user.id">
+                                <tr>
+                                    <td x-text="user.id"></td>
+                                    <td x-text="user.username"></td>
+                                    <td x-text="user.email"></td>
+                                    <td x-text="user.role"></td>
+                                    <td x-text="user.is_active ? 'Activo' : 'Inactivo'"></td>
+                                    <td class="actions">
+                                        <button class="btn btn-secondary" @click="openEditModal(user)">Editar</button>
+                                        <button class="btn btn-danger" @click="confirmDelete(user.id)">Eliminar</button>
+                                        <button class="btn btn-primary" @click="resetPassword(user.id)">Resetear Contraseña</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Create User Modal -->
+                <div class="modal" x-show="showCreateModal">
+                    <div class="modal-content">
+                        <span class="close" @click="closeCreateModal">&times;</span>
+                        <h2>Crear Nuevo Usuario</h2>
+                        <form @submit.prevent="createUser">
+                            <div class="form-group">
+                                <label for="createUsername">Nombre de Usuario</label>
+                                <input type="text" id="createUsername" x-model="newUser.username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="createEmail">Email</label>
+                                <input type="email" id="createEmail" x-model="newUser.email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="createPassword">Contraseña</label>
+                                <input type="password" id="createPassword" x-model="newUser.password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="createRole">Rol</label>
+                                <select id="createRole" x-model="newUser.role" required>
+                                    <option value="user">Usuario</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                            <div class="actions">
+                                <button type="submit" class="btn btn-primary">Crear Usuario</button>
+                                <button type="button" class="btn btn-secondary" @click="closeCreateModal">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Edit User Modal -->
+                <div class="modal" x-show="showEditModal">
+                    <div class="modal-content">
+                        <span class="close" @click="closeEditModal">&times;</span>
+                        <h2>Editar Usuario</h2>
+                        <form @submit.prevent="updateUser">
+                            <input type="hidden" x-model="editingUser.id">
+                            <div class="form-group">
+                                <label for="editUsername">Nombre de Usuario</label>
+                                <input type="text" id="editUsername" x-model="editingUser.username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editEmail">Email</label>
+                                <input type="email" id="editEmail" x-model="editingUser.email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editRole">Rol</label>
+                                <select id="editRole" x-model="editingUser.role" required>
+                                    <option value="user">Usuario</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editActive">Estado</label>
+                                <select id="editActive" x-model="editingUser.is_active" required>
+                                    <option value="true">Activo</option>
+                                    <option value="false">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="actions">
+                                <button type="submit" class="btn btn-primary">Actualizar Usuario</button>
+                                <button type="button" class="btn btn-secondary" @click="closeEditModal">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Delete Confirmation -->
+                <div class="modal" x-show="showDeleteConfirm">
+                    <div class="modal-content">
+                        <span class="close" @click="closeDeleteConfirm">&times;</span>
+                        <h2>Confirmar Eliminación</h2>
+                        <p>¿Estás seguro de que quieres eliminar este usuario?</p>
+                        <div class="actions">
+                            <button class="btn btn-danger" @click="deleteUser">Eliminar</button>
+                            <button class="btn btn-secondary" @click="closeDeleteConfirm">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function userManagement() {
+            return {
+                users: [],
+                newUser: {
+                    username: '',
+                    email: '',
+                    password: '',
+                    role: 'user'
+                },
+                editingUser: {
+                    id: null,
+                    username: '',
+                    email: '',
+                    role: 'user',
+                    is_active: true
+                },
+                showCreateModal: false,
+                showEditModal: false,
+                showDeleteConfirm: false,
+                deleteUserId: null,
+                
+                init() {
+                    this.fetchUsers();
+                },
+                
+                async fetchUsers() {
+                    try {
+                        const response = await fetch('/admin/users', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': 'Bearer dummy-admin-token',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.users = data;
+                        } else {
+                            console.error('Failed to fetch users');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching users:', error);
+                    }
+                },
+                
+                openCreateModal() {
+                    this.showCreateModal = true;
+                    this.newUser = { username: '', email: '', password: '', role: 'user' };
+                },
+                
+                closeCreateModal() {
+                    this.showCreateModal = false;
+                },
+                
+                openEditModal(user) {
+                    this.editingUser = { ...user };
+                    this.showEditModal = true;
+                },
+                
+                closeEditModal() {
+                    this.showEditModal = false;
+                },
+                
+                openDeleteConfirm(userId) {
+                    this.deleteUserId = userId;
+                    this.showDeleteConfirm = true;
+                },
+                
+                closeDeleteConfirm() {
+                    this.showDeleteConfirm = false;
+                    this.deleteUserId = null;
+                },
+                
+                async createUser() {
+                    try {
+                        const response = await fetch('/admin/users', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer dummy-admin-token',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                username: this.newUser.username,
+                                email: this.newUser.email,
+                                password: this.newUser.password,
+                                role: this.newUser.role
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            const newUser = await response.json();
+                            this.users.push(newUser);
+                            this.closeCreateModal();
+                        } else {
+                            console.error('Failed to create user');
+                        }
+                    } catch (error) {
+                        console.error('Error creating user:', error);
+                    }
+                },
+                
+                async updateUser() {
+                    try {
+                        const response = await fetch(`/admin/users/${this.editingUser.id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': 'Bearer dummy-admin-token',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                username: this.editingUser.username,
+                                email: this.editingUser.email,
+                                password: '', // Password field is optional for updates
+                                role: this.editingUser.role
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            const updatedUser = await response.json();
+                            const index = this.users.findIndex(user => user.id === this.editingUser.id);
+                            if (index !== -1) {
+                                this.users[index] = updatedUser;
+                            }
+                            this.closeEditModal();
+                        } else {
+                            console.error('Failed to update user');
+                        }
+                    } catch (error) {
+                        console.error('Error updating user:', error);
+                    }
+                },
+                
+                async deleteUser() {
+                    try {
+                        const response = await fetch(`/admin/users/${this.deleteUserId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': 'Bearer dummy-admin-token',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            this.users = this.users.filter(user => user.id !== this.deleteUserId);
+                            this.closeDeleteConfirm();
+                        } else {
+                            console.error('Failed to delete user');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting user:', error);
+                    }
+                },
+                
+                async resetPassword(userId) {
+                    try {
+                        const response = await fetch(`/admin/users/${userId}/reset-password`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer dummy-admin-token',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const result = await response.json();
+                            alert(result.message);
+                        } else {
+                            console.error('Failed to reset password');
+                        }
+                    } catch (error) {
+                        console.error('Error resetting password:', error);
+                    }
+                },
+                
+                confirmDelete(userId) {
+                    this.openDeleteConfirm(userId);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
