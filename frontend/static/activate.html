@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" x-data="activateApp()" x-init="init()">
+<html lang="es" x-data="activateApp()" x-init="init()">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Activate Account — Fantasy SV</title>
+  <title>Activar Cuenta — Fantasy SV</title>
   <link rel="stylesheet" href="style.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -58,7 +58,7 @@
     <div class="auth-logo">
       <span class="logo-icon">⚽</span>
       <h1>Fantasy SV</h1>
-      <p>Activate your account — Step 2 of 3</p>
+      <p>Activa tu cuenta — Paso 2 de 3</p>
     </div>
 
     <div class="step-indicator">
@@ -73,18 +73,18 @@
     <template x-if="!activated">
       <div>
         <p style="color:rgba(255,255,255,0.55);margin:0 0 24px;line-height:1.6;font-size:0.95rem;">
-          Enter the activation token from your email, or paste the full activation link.
+          Ingresa el token de activación de tu correo, o pega el enlace completo de activación.
         </p>
         <div class="form-group">
-          <label>Activation Token</label>
-          <input type="text" x-model="token" placeholder="Paste your token here…"
+          <label>Token de Activación</label>
+          <input type="text" x-model="token" placeholder="Pega tu token aquí…"
                  @keydown.enter="activate()" autocomplete="off"/>
         </div>
         <button class="submit-btn" @click="activate()" :disabled="loading || !token.trim()">
-          <span x-text="loading ? 'Activating…' : 'Activate Account →'"></span>
+          <span x-text="loading ? 'Activando…' : 'Activar Cuenta →'"></span>
         </button>
         <p style="color:rgba(255,255,255,0.3);font-size:0.8rem;text-align:center;margin-top:16px;">
-          💡 Dev tip: check the backend server logs for your token.
+          💡 Consejo para desarrolladores: revisa los registros del servidor backend para tu token.
         </p>
       </div>
     </template>
@@ -93,12 +93,12 @@
     <template x-if="activated">
       <div class="success-state">
         <div class="success-icon">🎉</div>
-        <h2 style="color:#fff;margin:0 0 12px;">Account activated!</h2>
+        <h2 style="color:#fff;margin:0 0 12px;">¡Cuenta activada!</h2>
         <p style="color:rgba(255,255,255,0.55);line-height:1.6;margin:0 0 24px;">
-          Your account is now active. Next, give your fantasy team a name!
+          Tu cuenta ahora está activa. ¡A continuación, ponle un nombre a tu equipo fantasy!
         </p>
         <button class="submit-btn" onclick="window.location.href='/onboarding'">
-          Name My Team →
+          Nombrar Mi Equipo →
         </button>
       </div>
     </template>
@@ -138,10 +138,10 @@ function activateApp() {
           localStorage.setItem('user_id', data.id);
           this.activated = true;
         } else {
-          this.errorMsg = data.detail || 'Invalid or expired token. Please try again.';
+          this.errorMsg = data.detail || 'Token inválido o expirado. Por favor inténtalo de nuevo.';
         }
       } catch (e) {
-        this.errorMsg = 'Network error. Please check your connection.';
+        this.errorMsg = 'Error de red. Por favor verifica tu conexión.';
       } finally {
         this.loading = false;
       }

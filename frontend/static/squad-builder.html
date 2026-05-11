@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en" x-data="squadBuilder()" x-init="init()">
+<html lang="es" x-data="squadBuilder()" x-init="init()">
     <head>
         <meta charset="UTF-8" />
         <meta
             name="viewport"
             content="width=device-width, initial-scale=1.0, viewport-fit=cover"
         />
-        <title>Squad Builder — Fantasy SV</title>
+        <title>Constructor de Equipos — Fantasy SV</title>
         <link rel="stylesheet" href="style.css" />
         <link
             href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
@@ -217,9 +217,9 @@
                     <span></span><span></span><span></span>
                 </button>
                 <div class="nav-links" id="nav-links">
-                    <a href="squad-builder.html" class="nav-link">My Squad</a>
-                    <a href="leaderboard.html" class="nav-link">Leaderboard</a>
-                    <a href="profile.html" class="nav-link">Profile</a>
+                    <a href="squad-builder.html" class="nav-link">Mi Equipo</a>
+                    <a href="leaderboard.html" class="nav-link">Clasificación</a>
+                    <a href="profile.html" class="nav-link">Perfil</a>
                     <button
                         class="sign-out-btn"
                         onclick="
@@ -227,7 +227,7 @@
                             window.location.href = '/register';
                         "
                     >
-                        Sign Out
+                        Cerrar Sesión
                     </button>
                 </div>
             </div>
@@ -240,7 +240,7 @@
                     <span
                         class="logo-label"
                         style="font-size: 1.1rem; opacity: 0.8"
-                        >Squad Builder</span
+                        >Constructor de Equipos</span
                     >
                 </div>
                 <div
@@ -257,7 +257,7 @@
                         class="budget-pill"
                         :class="remainingCredits < 0 ? 'over' : remainingCredits < 10 ? 'warn' : ''"
                     >
-                        <span class="budget-pill-label">Budget</span>
+                        <span class="budget-pill-label">Presupuesto</span>
                         <span
                             class="budget-pill-value"
                             x-text="remainingCredits.toFixed(1) + ' CR'"
@@ -271,10 +271,9 @@
         <div class="lock-banner" x-show="isLocked" x-cloak>
             <span style="font-size: 1.3rem">🔒</span>
             <div>
-                <div>Matchday in progress — squad editing is locked.</div>
+                <div>La jornada está en curso — la edición de tu equipo está bloqueada.</div>
                 <div style="font-weight: 400; opacity: 0.7; font-size: 0.8rem">
-                    Your squad is locked in. Check back after the matchday
-                    closes.
+                    Tu equipo está bloqueado. Vuelve después de que se cierre la jornada.
                 </div>
             </div>
         </div>
@@ -286,14 +285,14 @@
                 :class="activeTab==='field' && 'active'"
                 @click="activeTab='field'"
             >
-                <span class="tab-icon">🏟️</span> Pitch
+                <span class="tab-icon">🏟️</span> Campo
             </button>
             <button
                 class="tab-btn"
                 :class="activeTab==='pool' && 'active'"
                 @click="activeTab='pool'"
             >
-                <span class="tab-icon">👥</span> Players
+                <span class="tab-icon">👥</span> Jugadores
                 <span
                     class="tab-badge"
                     x-show="selectedPlayers.length > 0"
@@ -305,14 +304,14 @@
                 :class="activeTab==='squad' && 'active'"
                 @click="activeTab='squad'"
             >
-                <span class="tab-icon">📋</span> Squad
+                <span class="tab-icon">📋</span> Equipo
             </button>
             <button
                 class="tab-btn"
                 :class="activeTab==='points' && 'active'"
                 @click="activeTab='points'; loadPoints()"
             >
-                <span class="tab-icon">📊</span> Points
+                <span class="tab-icon">📊</span> Puntos
             </button>
         </div>
 
@@ -680,26 +679,25 @@
                 class="wildcard-locked-msg"
                 x-show="isDeadlinePassed && wildcardPlayerId"
             >
-                ⏰ Matchday deadline passed – wildcard locked.
+                ⏰ Se ha superado el plazo de la jornada — comodín bloqueado.
             </div>
             <div
                 class="wildcard-locked-msg"
                 x-show="!isDeadlinePassed && !wildcardPlayerId && starterCount >= 11"
             >
-                ☆ Click ★ on any starter to set as Wildcard (double points).
+                ☆ Haz clic en ★ en cualquier titular para establecerlo como Comodín (puntos dobles).
             </div>
             <div
                 class="wildcard-locked-msg"
                 x-show="swapSource !== null"
                 style="color: #f5c842"
             >
-                🔄 Click a bench player of the same position to swap, or click
-                same player to cancel.
+                🔄 Haz clic en un jugador del banco del mismo puesto para intercambiarlo, o haz clic en el mismo jugador para cancelar.
             </div>
 
             <!-- ── BENCH (outside field-wrapper, never overlaps) ── -->
             <div class="bench-section">
-                <h3 class="bench-title">Bench (max 4)</h3>
+                <h3 class="bench-title">Banco (máx. 4)</h3>
                 <div class="bench-row">
                     <template x-for="(bench, i) in benchSlots" :key="i">
                         <div
@@ -812,7 +810,7 @@
                             fill="rgba(255,255,255,0.5)"
                             font-weight="600"
                         >
-                            SPENT
+                            GASTADO
                         </text>
                         <text
                             x="80"
@@ -821,7 +819,7 @@
                             font-size="11"
                             fill="rgba(255,255,255,0.4)"
                         >
-                            of 100 CR
+                            de 100 CR
                         </text>
                     </svg>
                 </div>
@@ -831,7 +829,7 @@
                             class="bstat-val"
                             x-text="selectedPlayers.length+'/15'"
                         ></span
-                        ><span class="bstat-label">Players</span>
+                        ><span class="bstat-label">Jugadores</span>
                     </div>
                     <div class="bstat-divider"></div>
                     <div class="bstat">
@@ -840,7 +838,7 @@
                             :class="remainingCredits<0?'over':''"
                             x-text="remainingCredits.toFixed(1)"
                         ></span
-                        ><span class="bstat-label">Remaining</span>
+                        ><span class="bstat-label">Restante</span>
                     </div>
                     <div class="bstat-divider"></div>
                     <div class="bstat">
@@ -848,7 +846,7 @@
                             class="bstat-val"
                             x-text="validationErrors.length===0?'✓':validationErrors.length"
                         ></span
-                        ><span class="bstat-label">Issues</span>
+                        ><span class="bstat-label">Problemas</span>
                     </div>
                 </div>
                 <button
@@ -858,7 +856,7 @@
                     @click="submitSquad()"
                 >
                     <span
-                        x-text="canSubmit?'🚀 Submit Squad':'🔒 Squad Incomplete'"
+                        x-text="canSubmit?'🚀 Enviar Equipo':'🔒 Equipo Incompleto'"
                     ></span>
                 </button>
             </div>
@@ -868,10 +866,9 @@
         <!-- ══════════ PLAYERS TAB ══════════ -->
         <div class="tab-content" x-show="activeTab==='pool'">
             <div class="pool-header">
-                <h2 class="pool-title">Pick Players</h2>
-                <p class="pool-sub">
-                    Tap to add to squad ·
-                    <span x-text="selectedPlayers.length"></span>/15 selected
+                <h2 class="pool-title">Seleccionar Jugadores</h2>
+                <p class="pool-sub">Haz clic para añadir al equipo ·
+                    <span x-text="selectedPlayers.length"></span>/15 seleccionados
                 </p>
             </div>
 
@@ -880,7 +877,7 @@
                 <input
                     class="search-box"
                     type="text"
-                    placeholder="🔍 Search player…"
+                    placeholder="🔍 Buscar jugador…"
                     x-model="searchQuery"
                 />
 
@@ -912,7 +909,7 @@
                         :class="filterTeam==='ALL'&&'active'"
                         @click="filterTeam='ALL'"
                     >
-                        All Teams
+                        Todos los Equipos
                     </button>
                     <template x-for="club in teamList" :key="club">
                         <button
@@ -978,7 +975,7 @@
                 </template>
                 <div class="empty-pool" x-show="filteredPlayers.length===0">
                     <span style="font-size: 2.5rem">🤷</span>
-                    <p>No players found</p>
+                    <p>No se encontraron jugadores</p>
                 </div>
             </div>
         </div>
@@ -986,14 +983,14 @@
         <!-- ══════════ SQUAD TAB ══════════ -->
         <div class="tab-content" x-show="activeTab==='squad'">
             <div class="pool-header">
-                <h2 class="pool-title">My Squad</h2>
+                <h2 class="pool-title">Mi Equipo</h2>
                 <p
                     class="pool-sub"
-                    x-text="selectedPlayers.length+' of 15 players selected'"
+                    x-text="selectedPlayers.length+' de 15 jugadores seleccionados'"
                 ></p>
             </div>
             <div class="comp-card">
-                <h3 class="comp-card-title">Formation Rules</h3>
+                <h3 class="comp-card-title">Reglas de Formación</h3>
                 <template x-for="rule in compositionRules" :key="rule.pos">
                     <div class="comp-bar-row">
                         <span class="comp-label"
@@ -1020,7 +1017,7 @@
                         <span
                             class="comp-req"
                             :class="countInSquad(rule.pos)>=rule.min?'req-ok':'req-warn'"
-                            >min <span x-text="rule.min"></span
+                            >mín. <span x-text="rule.min"></span
                         ></span>
                     </div>
                 </template>
@@ -1088,7 +1085,7 @@
                         class="squad-group-dot"
                         style="background: #888"
                     ></span>
-                    <span class="squad-group-label">Bench</span>
+                    <span class="squad-group-label">Banco</span>
                     <span
                         class="squad-group-count"
                         x-text="benchPlayers.length"
@@ -1139,7 +1136,7 @@
                     @click="submitSquad()"
                 >
                     <span
-                        x-text="canSubmit?'🚀 Submit Squad':'🔒 Squad Incomplete'"
+                        x-text="canSubmit?'🚀 Enviar Equipo':'🔒 Equipo Incompleto'"
                     ></span>
                 </button>
             </div>
@@ -1148,8 +1145,8 @@
         <!-- ══════════ POINTS TAB ══════════ -->
         <div class="tab-content" x-show="activeTab==='points'" style="padding:0 12px 80px;">
             <div class="pool-header">
-                <h2 class="pool-title">📊 Points</h2>
-                <span class="pool-subtitle" x-text="allMatchdays.length ? 'Season history' : 'No scored matchday yet'"></span>
+                <h2 class="pool-title">📊 Puntos</h2>
+                <span class="pool-subtitle" x-text="allMatchdays.length ? 'Historial de la temporada' : 'Aún no hay resultados de jornadas'"></span>
             </div>
 
             <!-- Matchday selector pills -->
@@ -1171,21 +1168,21 @@
                 <div>
                     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
                         <div style="flex:1;min-width:130px;background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.3);border-radius:12px;padding:14px 16px;text-align:center;">
-                            <div style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Matchday Pts</div>
+                            <div style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Puntos de Jornada</div>
                             <div style="font-size:2rem;font-weight:900;color:var(--teal);" x-text="selectedMd.team_total"></div>
                         </div>
                         <div style="flex:1;min-width:130px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px 16px;text-align:center;">
-                            <div style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Cumulative</div>
+                            <div style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Acumulados</div>
                             <div style="font-size:2rem;font-weight:900;" x-text="selectedMd.cumulative"></div>
                         </div>
                         <div style="flex:1;min-width:130px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px 16px;text-align:center;">
-                            <div style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Status</div>
+                            <div style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Estado</div>
                             <div style="font-size:1rem;font-weight:800;text-transform:capitalize;" x-text="selectedMd.matchday.status.replace('_',' ')"></div>
                         </div>
                     </div>
 
                     <!-- Starters -->
-                    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:8px 0 6px;">Starting XI</div>
+                    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:8px 0 6px;">XI Inicial</div>
                     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;">
                         <template x-for="p in selectedMd.players.filter(p=>p.slot==='starter')" :key="p.player_id">
                             <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -1226,7 +1223,7 @@
                     </div>
 
                     <!-- Bench -->
-                    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:14px 0 6px;">Bench</div>
+                    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:14px 0 6px;">Banco</div>
                     <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:12px;overflow:hidden;">
                         <template x-for="p in selectedMd.players.filter(p=>p.slot==='bench')" :key="p.player_id">
                             <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);opacity:0.75;">
@@ -1245,12 +1242,12 @@
             <!-- Empty state -->
             <div x-show="!allMatchdays.length && !pointsLoading" style="text-align:center;padding:48px 16px;color:var(--text-dim);">
                 <div style="font-size:2.5rem;margin-bottom:12px;">📭</div>
-                <div style="font-weight:700;">No matchday scores yet</div>
-                <div style="font-size:0.85rem;margin-top:6px;">Points will appear here once the admin submits match results.</div>
+                <div style="font-weight:700;">Aún no hay resultados</div>
+                <div style="font-size:0.85rem;margin-top:6px;">Los puntos aparecerán aquí una vez que el administrador envíe los resultados.</div>
             </div>
 
             <!-- Loading -->
-            <div x-show="pointsLoading" style="text-align:center;padding:32px;color:var(--text-dim);">Loading…</div>
+            <div x-show="pointsLoading" style="text-align:center;padding:32px;color:var(--text-dim);">Cargando…</div>
         </div>
 
         <!-- Modals & Toast -->
@@ -1261,12 +1258,12 @@
         >
             <div class="modal-card">
                 <div class="modal-emoji">🏆</div>
-                <h2 class="modal-title">Squad Submitted!</h2>
+                <h2 class="modal-title">¡Equipo Enviado!</h2>
                 <p class="modal-body">
-                    Your squad is locked in for the upcoming matchday.
+                    Tu equipo está bloqueado para la próxima jornada.
                 </p>
                 <button class="modal-btn" @click="showSuccess=false">
-                    Awesome! 🎉
+                    ¡Genial! 🎉
                 </button>
             </div>
         </div>
@@ -2309,7 +2306,7 @@
                     addPlayer(player) {
                         if (this.isSelected(player.id)) return;
                         if (this.totalCost + player.cost > 100) {
-                            this.toast("Not enough budget!");
+                            this.toast("¡No hay suficiente presupuesto!");
                             return;
                         }
                         const rule = this.compositionRules.find(
@@ -2317,7 +2314,7 @@
                         );
                         if (rule && this.countInSquad(player.pos) >= rule.max) {
                             this.toast(
-                                `Max ${rule.max} ${player.pos} players allowed`,
+                                `Máximo ${rule.max} ${player.pos} jugadores permitidos`,
                             );
                             return;
                         }
@@ -2350,7 +2347,7 @@
                                 player,
                             ];
                         } else {
-                            this.toast(`No available slot for ${player.pos}`);
+                            this.toast(`No hay espacio disponible para ${player.pos}`);
                             return;
                         }
 
@@ -2398,7 +2395,7 @@
                             const allowed = limits[pos];
                             if (posPlayers.length > allowed) {
                                 this.toast(
-                                    `Removed ${posPlayers.length - allowed} extra ${pos}(s) due to formation change.`,
+                                    `Eliminado ${posPlayers.length - allowed} extra ${pos}(s) debido al cambio de formación.`,
                                 );
                                 newStarters.push(
                                     ...posPlayers.slice(0, allowed),
@@ -2436,16 +2433,16 @@
                             (p) => p.id === playerId,
                         );
                         if (!isStarter) {
-                            this.toast("Only starters can be set as wildcard!");
+                            this.toast("¡Sólo los titulares pueden ser establecidos como comodín!");
                             return;
                         }
                         if (this.wildcardPlayerId === playerId) {
                             this.wildcardPlayerId = null;
-                            this.toast("Wildcard removed.");
+                            this.toast("Comodín eliminado.");
                         } else {
                             this.wildcardPlayerId = playerId;
                             this.toast(
-                                `★ Wildcard: ${this.selectedPlayers.find((p) => p.id === playerId)?.name}`,
+                                `★ Comodín: ${this.selectedPlayers.find((p) => p.id === playerId)?.name}`,
                             );
                         }
                         this.saveToLocalStorage();
@@ -2468,21 +2465,21 @@
                         const e = [];
                         if (this.selectedPlayers.length < 15)
                             e.push(
-                                `Need ${15 - this.selectedPlayers.length} more players`,
+                                `Necesitas ${15 - this.selectedPlayers.length} jugadores más`,
                             );
                         if (this.remainingCredits < 0)
                             e.push(
-                                `Over budget by ${-this.remainingCredits} CR`,
+                                `Presupuesto excedido por ${-this.remainingCredits} CR`,
                             );
                         if (this.countInSquad("GK") !== 1)
-                            e.push("Exactly 1 GK required");
+                            e.push("Se requiere exactamente 1 portero");
                         if (this.countInSquad("DF") < 3)
-                            e.push("At least 3 defenders needed");
+                            e.push("Se necesitan al menos 3 defensores");
                         if (this.countInSquad("MF") < 2)
-                            e.push("At least 2 midfielders needed");
+                            e.push("Se necesitan al menos 2 mediocampistas");
                         if (this.countInSquad("FW") < 1)
-                            e.push("At least 1 forward needed");
-                        if (this.isLocked) e.push("🔒 Matchday is locked");
+                            e.push("Se necesita al menos 1 delantero");
+                        if (this.isLocked) e.push("🔒 La jornada está bloqueada");
                         return e;
                     },
                     get canSubmit() {
@@ -2490,10 +2487,10 @@
                     },
                     posLabel(p) {
                         return {
-                            GK: "Goalkeepers",
-                            DF: "Defenders",
-                            MF: "Midfielders",
-                            FW: "Forwards",
+                            GK: "Porteros",
+                            DF: "Defensores",
+                            MF: "Mediocampistas",
+                            FW: "Delanteros",
                         }[p];
                     },
 
@@ -2554,10 +2551,10 @@
                         }, 1000);
                     },
                     getCountdownText() {
-                        if (!this.matchdayDeadline) return "No deadline set";
+                        if (!this.matchdayDeadline) return "No hay fecha límite";
                         const diff =
                             this.matchdayDeadline - this.currentTimestamp;
-                        if (diff <= 0) return "⏰ LOCKED";
+                        if (diff <= 0) return "⏰ BLOQUEADO";
                         const d = Math.floor(diff / 86400000);
                         const h = Math.floor((diff % 86400000) / 3600000);
                         const m = Math.floor((diff % 3600000) / 60000);
@@ -2601,7 +2598,7 @@
                                 this.selectedMdId = this.allMatchdays[this.allMatchdays.length - 1].matchday.id;
                             }
                         } catch (e) {
-                            this.toast("Could not load points: " + e.message);
+                            this.toast("No se pudo cargar los puntos: " + e.message);
                         } finally {
                             this.pointsLoading = false;
                         }

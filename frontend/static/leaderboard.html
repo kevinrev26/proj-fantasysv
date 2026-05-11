@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Leaderboard — EA FC Fantasy</title>
+  <title>Clasificación — EA FC Fantasy</title>
   <link rel="stylesheet" href="style.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -299,10 +299,10 @@
     </button>
 
     <div class="nav-links" id="nav-links">
-      <a href="squad-builder.html" class="nav-link">My Squad</a>
-      <a href="leaderboard.html" class="nav-link">Leaderboard</a>
-      <a href="profile.html" class="nav-link">Profile</a>
-      <button class="sign-out-btn">Sign Out</button>
+      <a href="squad-builder.html" class="nav-link">Mi Equipo</a>
+      <a href="leaderboard.html" class="nav-link">Clasificación</a>
+      <a href="profile.html" class="nav-link">Perfil</a>
+      <button class="sign-out-btn">Cerrar Sesión</button>
     </div>
   </div>
 </nav>
@@ -311,12 +311,12 @@
   <div class="leaderboard-container">
     <div class="leaderboard-header">
       <div class="leaderboard-title">
-        <h1>🏆 Leaderboard</h1>
-        <p>Season 2026 · Global rankings updated after each matchday</p>
+        <h1>🏆 Clasificación</h1>
+        <p>Temporada 2026 · Clasificaciones globales actualizadas después de cada jornada</p>
       </div>
       <div class="refresh-info">
         <span>🔄</span>
-        <span>Last update: <span x-text="lastUpdatedText"></span></span>
+        <span>Última actualización: <span x-text="lastUpdatedText"></span></span>
         <button @click="refreshData" style="background: none; border: none; color: inherit; cursor: pointer; font-weight: bold;">⟳</button>
       </div>
     </div>
@@ -326,10 +326,10 @@
       <table class="leaderboard-table">
         <thead>
           <tr>
-            <th>Rank</th>
-            <th>Team Name</th>
-            <th>Matchday Points</th>
-            <th>Total Points</th>
+            <th>Rango</th>
+            <th>Nombre del Equipo</th>
+            <th>Puntos de Jornada</th>
+            <th>Puntos Totales</th>
           </tr>
         </thead>
         <tbody>
@@ -337,7 +337,7 @@
             <tr :class="team.is_current_user ? 'current-user-row' : ''">
               <td class="rank-cell">
                 <span x-text="team.rank"></span>
-                <span x-show="team.is_current_user" class="user-badge">You</span>
+                <span x-show="team.is_current_user" class="user-badge">Tú</span>
               </td>
               <td class="team-name">
                 <span class="team-badge">⚡</span>
@@ -348,7 +348,7 @@
             </tr>
           </template>
           <tr x-show="paginatedTeams.length === 0">
-            <td colspan="4" class="empty-row">🏟️ No teams available – check back after matchday starts</td>
+            <td colspan="4" class="empty-row">🏟️ No hay equipos disponibles – vuelve a comprobar después de que comience la jornada</td>
           </tr>
         </tbody>
       </table>
@@ -356,15 +356,15 @@
 
     <!-- Pagination -->
     <div class="pagination" x-show="totalPages > 1">
-      <button class="page-btn" :class="{ disabled: currentPage === 1 }" @click="prevPage" :disabled="currentPage === 1">← Prev</button>
+      <button class="page-btn" :class="{ disabled: currentPage === 1 }" @click="prevPage" :disabled="currentPage === 1">← Anterior</button>
       <template x-for="page in visiblePages" :key="page">
         <button class="page-btn" :class="{ active: currentPage === page }" @click="goToPage(page)" x-text="page"></button>
       </template>
-      <button class="page-btn" :class="{ disabled: currentPage === totalPages }" @click="nextPage" :disabled="currentPage === totalPages">Next →</button>
-      <span class="page-indicator" x-text="`Page ${currentPage} of ${totalPages}`"></span>
+      <button class="page-btn" :class="{ disabled: currentPage === totalPages }" @click="nextPage" :disabled="currentPage === totalPages">Siguiente →</button>
+      <span class="page-indicator" x-text="`Página ${currentPage} de ${totalPages}`"></span>
     </div>
     <div class="footer-note">
-      * Points update automatically after each matchday calculation. Highlighted row = your team.
+      * Los puntos se actualizan automáticamente después de cada cálculo de jornada. Fila resaltada = tu equipo.
     </div>
   </div>
 </main>
@@ -383,7 +383,7 @@
       const rand2 = secondNames[Math.floor(Math.random() * secondNames.length)];
       let name = `${rand1} ${rand2}`;
       if (i % 7 === 0) name = "Invincible XI";
-      if (i === 5) name = "★ My Awesome Squad ★";  // current user's team
+      if (i === 5) name = "★ Mi Equipo Fantástico ★";  // current user's team
       const totalPoints = Math.floor(Math.random() * 450) + 120;
       const matchdayPoints = Math.floor(Math.random() * 85) + 15;
       teamList.push({

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Schedule — Fantasy SV</title>
+  <title>Calendario — Fantasy SV</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
@@ -324,35 +324,35 @@
   <div class="nav-inner">
     <a href="/" class="nav-brand">FANTASY SV</a>
     <div class="nav-links">
-      <a href="/squad-builder" class="nav-link">My Squad</a>
-      <a href="/schedule" class="nav-link active">Schedule</a>
-      <a href="/leaderboard" class="nav-link">Leaderboard</a>
+      <a href="/squad-builder" class="nav-link">Mi Equipo</a>
+      <a href="/schedule" class="nav-link active">Calendario</a>
+      <a href="/leaderboard" class="nav-link">Clasificación</a>
     </div>
   </div>
 </nav>
 
 <!-- ── HERO ── -->
 <div class="hero">
-  <div class="hero-eyebrow">2025 Season</div>
-  <h1 class="hero-title">MATCH<br><span>SCHEDULE</span></h1>
-  <p class="hero-sub">All fixtures, matchdays and results — live as the tournament unfolds.</p>
+  <div class="hero-eyebrow">Temporada 2025</div>
+  <h1 class="hero-title">PARTIDOS<br><span>PROGRAMADOS</span></h1>
+  <p class="hero-sub">Todos los partidos, jornadas y resultados — en vivo mientras se desarrolla el torneo.</p>
 </div>
 
 <!-- ── FILTER BAR ── -->
 <div class="filter-bar">
-  <span class="filter-label">Season</span>
+  <span class="filter-label">Temporada</span>
   <select class="season-select" x-model="selectedSeasonId" @change="onSeasonChange()">
-    <option value="">— Pick season —</option>
+    <option value="">— Seleccionar temporada —</option>
     <template x-for="s in seasons" :key="s.id">
       <option :value="s.id" x-text="s.name"></option>
     </template>
   </select>
 
   <div class="filter-pills" x-show="selectedSeasonId">
-    <button class="pill pill-all" :class="filter==='all'?'active':''" @click="filter='all'">All</button>
-    <button class="pill pill-upcoming" :class="filter==='upcoming'?'active':''" @click="filter='upcoming'">Upcoming</button>
-    <button class="pill pill-live" :class="filter==='live'?'active':''" @click="filter='live'">Live</button>
-    <button class="pill pill-finished" :class="filter==='finished'?'active':''" @click="filter='finished'">Finished</button>
+    <button class="pill pill-all" :class="filter==='all'?'active':''" @click="filter='all'">Todos</button>
+    <button class="pill pill-upcoming" :class="filter==='upcoming'?'active':''" @click="filter='upcoming'">Próximos</button>
+    <button class="pill pill-live" :class="filter==='live'?'active':''" @click="filter='live'">En Vivo</button>
+    <button class="pill pill-finished" :class="filter==='finished'?'active':''" @click="filter='finished'">Finalizados</button>
   </div>
 </div>
 
@@ -363,19 +363,19 @@
   <div class="stats-strip" x-show="selectedSeasonId && !loading">
     <div class="stat-item">
       <div class="stat-val" x-text="totalMatchdays"></div>
-      <div class="stat-label">Matchdays</div>
+      <div class="stat-label">Jornadas</div>
     </div>
     <div class="stat-item">
       <div class="stat-val" x-text="totalFixtures"></div>
-      <div class="stat-label">Fixtures</div>
+      <div class="stat-label">Partidos</div>
     </div>
     <div class="stat-item">
       <div class="stat-val" x-text="finishedFixtures"></div>
-      <div class="stat-label">Played</div>
+      <div class="stat-label">Jugados</div>
     </div>
     <div class="stat-item">
       <div class="stat-val" x-text="upcomingFixtures"></div>
-      <div class="stat-label">Upcoming</div>
+      <div class="stat-label">Próximos</div>
     </div>
   </div>
 
@@ -398,13 +398,13 @@
   <!-- No season selected -->
   <div class="empty-state" x-show="!selectedSeasonId && !loading">
     <div class="empty-icon">🏆</div>
-    <div class="empty-text">Select a season to view the schedule</div>
+    <div class="empty-text">Selecciona una temporada para ver el calendario</div>
   </div>
 
   <!-- No results for filter -->
   <div class="empty-state" x-show="selectedSeasonId && !loading && filteredMatchdays.length === 0">
     <div class="empty-icon">📭</div>
-    <div class="empty-text">No matchdays match this filter</div>
+    <div class="empty-text">No hay jornadas que coincidan con este filtro</div>
   </div>
 
   <!-- Matchday sections -->
@@ -421,8 +421,8 @@
             <span class="lock-line" :class="md.is_locked?'locked':''"
                   x-show="md.lock_at_utc"
                   x-text="md.is_locked
-                    ? '🔒 Locked'
-                    : '🔓 Locks ' + fmtRelative(md.lock_at_utc)">
+                    ? '🔒 Bloqueado'
+                    : '🔓 Se bloquea ' + fmtRelative(md.lock_at_utc)">
             </span>
           </div>
         </div>
@@ -436,7 +436,7 @@
             <div class="fixture-kickoff">
               <span class="kickoff-dot" :class="fixtureClass(f)"></span>
               <span x-text="fmtKickoff(f.kickoff_utc)"></span>
-              <span x-show="isLive(f)" style="margin-left:4px;color:var(--gold);font-weight:900;">● LIVE</span>
+              <span x-show="isLive(f)" style="margin-left:4px;color:var(--gold);font-weight:900;">● EN VIVO</span>
             </div>
             <div class="fixture-matchup">
               <!-- Home -->
@@ -444,7 +444,7 @@
                 <div class="team-badge" :class="badgeClass(f.home_name || f.home_team_id)">
                   <span x-text="initials(f.home_name || '?')"></span>
                 </div>
-                <div class="team-name" x-text="f.home_name || 'TBD'"></div>
+                <div class="team-name" x-text="f.home_name || 'Por Confirmar'"></div>
               </div>
               <!-- VS -->
               <div class="vs-block">
@@ -463,7 +463,7 @@
                 <div class="team-badge" :class="badgeClass(f.away_name || f.away_team_id)">
                   <span x-text="initials(f.away_name || '?')"></span>
                 </div>
-                <div class="team-name" :class="f.finished?'dim':''" x-text="f.away_name || 'TBD'"></div>
+                <div class="team-name" :class="f.finished?'dim':''" x-text="f.away_name || 'Por Confirmar'"></div>
               </div>
             </div>
           </div>
@@ -473,7 +473,7 @@
       <!-- No fixtures yet -->
       <div x-show="!md.fixtures || md.fixtures.length === 0"
            style="color:var(--muted);font-size:.85rem;font-weight:700;padding:12px 0 4px;">
-        Fixtures not announced yet
+        Partidos aún no anunciados
       </div>
 
     </div>
@@ -574,7 +574,7 @@ function scheduleApp() {
 
     // ── Helpers ────────────────────────────────────────────────────────
     mdStatusLabel(s) {
-      return { scheduled: 'UPCOMING', in_progress: '● LIVE', closed: 'FINISHED' }[s] ?? s.toUpperCase();
+      return { scheduled: 'PRÓXIMO', in_progress: '● EN VIVO', closed: 'FINALIZADO' }[s] ?? s.toUpperCase();
     },
 
     fixtureClass(f) {
@@ -592,19 +592,19 @@ function scheduleApp() {
 
     fmtKickoff(iso) {
       const d = new Date(iso);
-      return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' })
-             + ' · ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+      return d.toLocaleDateString('es-ES', { weekday:'short', day:'numeric', month:'short' })
+             + ' · ' + d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
     },
 
     fmtRelative(iso) {
       if (!iso) return '';
       const diff = new Date(iso) - new Date();
-      if (diff <= 0) return 'now';
+      if (diff <= 0) return 'ahora';
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
-      if (h > 48) return `in ${Math.floor(h/24)}d`;
-      if (h > 0)  return `in ${h}h ${m}m`;
-      return `in ${m}m`;
+      if (h > 48) return `en ${Math.floor(h/24)}d`;
+      if (h > 0)  return `en ${h}h ${m}m`;
+      return `en ${m}m`;
     },
 
     countdown(iso) {

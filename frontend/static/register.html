@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" x-data="registerApp()" x-init="init()">
+<html lang="es" x-data="registerApp()" x-init="init()">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Register — Fantasy SV</title>
+  <title>Registro — Fantasy SV</title>
   <link rel="stylesheet" href="style.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -73,7 +73,7 @@
     <div class="auth-logo">
       <span class="logo-icon">⚽</span>
       <h1>Fantasy SV</h1>
-      <p>Create your account — Step 1 of 3</p>
+      <p>Crea tu cuenta — Paso 1 de 3</p>
     </div>
 
     <div class="step-indicator">
@@ -90,31 +90,31 @@
     <template x-if="!registered">
       <div>
         <div class="form-group">
-          <label>Username</label>
+          <label>Nombre de Usuario</label>
           <input type="text" x-model="form.username" :class="fieldErrors.username ? 'error' : ''"
-                 placeholder="your_username" @input="clearError('username')" autocomplete="username"/>
+                 placeholder="tu_usuario" @input="clearError('username')" autocomplete="username"/>
           <div x-show="fieldErrors.username" class="field-error" x-text="fieldErrors.username"></div>
         </div>
         <div class="form-group">
-          <label>Email</label>
+          <label>Correo Electrónico</label>
           <input type="email" x-model="form.email" :class="fieldErrors.email ? 'error' : ''"
-                 placeholder="you@example.com" @input="clearError('email')" autocomplete="email"/>
+                 placeholder="tu@ejemplo.com" @input="clearError('email')" autocomplete="email"/>
           <div x-show="fieldErrors.email" class="field-error" x-text="fieldErrors.email"></div>
         </div>
         <div class="form-group">
-          <label>Password</label>
+          <label>Contraseña</label>
           <input type="password" x-model="form.password" :class="fieldErrors.password ? 'error' : ''"
-                 placeholder="Min. 8 characters" @input="clearError('password')" autocomplete="new-password"/>
+                 placeholder="Mínimo 8 caracteres" @input="clearError('password')" autocomplete="new-password"/>
           <div x-show="fieldErrors.password" class="field-error" x-text="fieldErrors.password"></div>
         </div>
         <div class="form-group">
-          <label>Confirm Password</label>
+          <label>Confirmar Contraseña</label>
           <input type="password" x-model="form.confirmPassword" :class="fieldErrors.confirmPassword ? 'error' : ''"
-                 placeholder="Repeat password" @keydown.enter="submit()" autocomplete="new-password"/>
+                 placeholder="Repetir contraseña" @keydown.enter="submit()" autocomplete="new-password"/>
           <div x-show="fieldErrors.confirmPassword" class="field-error" x-text="fieldErrors.confirmPassword"></div>
         </div>
         <button class="submit-btn" @click="submit()" :disabled="loading">
-          <span x-text="loading ? 'Creating account…' : 'Create Account →'"></span>
+          <span x-text="loading ? 'Creando cuenta…' : 'Crear Cuenta →'"></span>
         </button>
       </div>
     </template>
@@ -123,22 +123,22 @@
     <template x-if="registered">
       <div style="text-align:center;">
         <div style="font-size:3rem;margin-bottom:16px;">📬</div>
-        <h2 style="color:#fff;margin:0 0 12px;">Check your email!</h2>
+        <h2 style="color:#fff;margin:0 0 12px;">¡Revisa tu correo!</h2>
         <p style="color:rgba(255,255,255,0.55);line-height:1.6;margin:0 0 20px;">
-          We sent an activation link to <strong style="color:#00d4aa;" x-text="form.email"></strong>.
-          Click the link in the email to activate your account and continue.
+          Hemos enviado un enlace de activación a <strong style="color:#00d4aa;" x-text="form.email"></strong>.
+          Haz clic en el enlace del correo para activar tu cuenta y continuar.
         </p>
         <p style="color:rgba(255,255,255,0.35);font-size:0.82rem;">
-          💡 For development: check the backend server logs for the activation token/URL.
+          💡 Para desarrollo: revisa los registros del servidor backend para el token/URL de activación.
         </p>
         <a href="/activate" style="display:inline-block;margin-top:16px;padding:12px 28px;background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.4);border-radius:10px;color:#00d4aa;font-weight:700;text-decoration:none;">
-          I have my activation code →
+          Tengo mi código de activación →
         </a>
       </div>
     </template>
 
     <div class="auth-footer">
-      Already have an account? <a href="/squad-builder.html">Sign in</a>
+      ¿Ya tienes una cuenta? <a href="/squad-builder.html">Iniciar sesión</a>
     </div>
   </div>
 </div>
@@ -164,19 +164,19 @@ function registerApp() {
       this.fieldErrors = {};
       let valid = true;
       if (!this.form.username || this.form.username.trim().length < 2) {
-        this.fieldErrors.username = 'Username must be at least 2 characters';
+        this.fieldErrors.username = 'El nombre de usuario debe tener al menos 2 caracteres';
         valid = false;
       }
       if (!this.form.email || !this.form.email.includes('@')) {
-        this.fieldErrors.email = 'Please enter a valid email';
+        this.fieldErrors.email = 'Por favor ingresa un correo válido';
         valid = false;
       }
       if (!this.form.password || this.form.password.length < 8) {
-        this.fieldErrors.password = 'Password must be at least 8 characters';
+        this.fieldErrors.password = 'La contraseña debe tener al menos 8 caracteres';
         valid = false;
       }
       if (this.form.password !== this.form.confirmPassword) {
-        this.fieldErrors.confirmPassword = 'Passwords do not match';
+        this.fieldErrors.confirmPassword = 'Las contraseñas no coinciden';
         valid = false;
       }
       return valid;
@@ -200,10 +200,10 @@ function registerApp() {
         if (resp.ok) {
           this.registered = true;
         } else {
-          this.errorMsg = data.detail || 'Registration failed. Please try again.';
+          this.errorMsg = data.detail || 'El registro falló. Por favor inténtalo de nuevo.';
         }
       } catch (e) {
-        this.errorMsg = 'Network error. Please try again.';
+        this.errorMsg = 'Error de red. Por favor inténtalo de nuevo.';
       } finally {
         this.loading = false;
       }
