@@ -13,6 +13,7 @@ import argparse
 import getpass
 import sys
 from pathlib import Path
+import structlog
 
 # Ensure project root is on PYTHONPATH
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -22,20 +23,25 @@ from app.models import User, UserRole
 from app.security import get_password_hash
 from sqlalchemy.exc import IntegrityError
 
+logger = structlog.get_logger()
 
 def create_admin(username: str, email: str, password: str) -> None:
+    logger.info("Starting admin user creation", username=username, email=email)
     db = SessionLocal()
     try:
         # Validate inputs
         if not username or len(username.strip()) < 2:
+            logger.error("Invalid username", username=username)
             print("Error: Username must be at least 2 characters.", file=sys.stderr)
             sys.exit(1)
 
         if "@" not in email:
+            logger.error("Invalid email", email=email)
             print("Error: Invalid email address.", file=sys.stderr)
             sys.exit(1)
 
         if len(password) < 8:
+            logger.error("Password too short", length=len(password))
             print("Error: Password must be at least 8 characters.", file=sys.stderr)
             sys.exit(1)
 
@@ -49,8 +55,10 @@ def create_admin(username: str, email: str, password: str) -> None:
 
         if existing:
             if existing.email == email:
+                logger.error("Email already exists", email=email)
                 print(f"Error: A user with email '{email}' already exists.", file=sys.stderr)
             else:
+                logger.error("Username already exists", username=username)
                 print(f"Error: A user with username '{username}' already exists.", file=sys.stderr)
             sys.exit(1)
 
@@ -69,6 +77,7 @@ def create_admin(username: str, email: str, password: str) -> None:
         db.commit()
         db.refresh(admin)
 
+        logger.info("Admin user created successfully", user_id=admin.id)
         print(f"✅  Admin user created successfully!")
         print(f"    Username : {admin.username}")
         print(f"    Email    : {admin.email}")
@@ -77,10 +86,12 @@ def create_admin(username: str, email: str, password: str) -> None:
 
     except IntegrityError as e:
         db.rollback()
+        logger.error("Database integrity error during admin creation", error=str(e.orig))
         print(f"Error: Database integrity error — {e.orig}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         db.rollback()
+        logger.error("Error creating admin user", error=str(e))
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
     finally:
@@ -124,6 +135,7 @@ Examples:
         password = getpass.getpass(f"Password for '{args.username}': ")
         confirm = getpass.getpass("Confirm password: ")
         if password != confirm:
+            logger.error("Password confirmation mismatch")
             print("Error: Passwords do not match.", file=sys.stderr)
             sys.exit(1)
 

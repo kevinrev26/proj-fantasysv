@@ -24,22 +24,11 @@ from .scoring import (
     validate_wildcard_constraint,
 )
 
+logger = structlog.get_logger()
 
 @celery_setup_logging.connect
 def on_celery_setup_logging(**kwargs):
     setup_logging()
-
-
-logger = structlog.get_logger()
-
-if settings.SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
-        environment=settings.ENVIRONMENT,
-        integrations=[CeleryIntegration()],
-        traces_sample_rate=1.0,
-        profiles_sample_rate=1.0,
-    )
 
 
 # Ensure the broker URL explicitly uses the redis:// scheme so kombu never
@@ -77,6 +66,9 @@ def add_numbers_task(a: int, b: int) -> int:
 
 
 def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_session):
+    logger.info("Starting matchday scoring for fantasy team", 
+                matchday_id=matchday_id, 
+                fantasy_team_id=fantasy_team_id)
     # 1. Fetch all FantasyPlayer records for this fantasy team and matchday
     fantasy_players = (
         db_session.query(FantasyPlayer)
@@ -87,18 +79,20 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
         )
         .all()
     )
+    logger.debug("Fetched fantasy players", count=len(fantasy_players))
 
     # 2. Validate wildcard constraint
     if not validate_wildcard_constraint(
         [{"is_x2_joker": fp.is_x2_joker} for fp in fantasy_players]
     ):
-        raise ValueError(
-            f"Fantasy team {fantasy_team_id} has more than one wildcard for matchday {matchday_id}"
-        )
+        error_msg = f"Fantasy team {fantasy_team_id} has more than one wildcard for matchday {matchday_id}"
+        logger.error("Wildcard constraint violated", error=error_msg)
+        raise ValueError(error_msg)
 
     total_team_points = 0
 
     for fp in fantasy_players:
+        logger.debug("Processing fantasy player", fantasy_player_id=fp.id)
         # 3. Get raw stats for the real player from PlayerScore (already computed)
         player_stats = (
             db_session.query(PlayerScore)
@@ -110,6 +104,7 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
         )
 
         if not player_stats:
+            logger.warning("No player stats found", player_id=fp.player_id, matchday_id=matchday_id)
             continue  # or default zeros
 
         # 4. Compute base + bonus using existing pure function
@@ -139,6 +134,7 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
 
         # For now, accumulate team total
         total_team_points += scored["final_points"]
+        logger.debug("Player scored", player_id=fp.player_id, final_points=scored["final_points"])
 
     # 7. Update or create TeamScore for this matchday
     team_score = (
@@ -156,11 +152,25 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
             points_this_matchday=total_team_points,
             cumulative_points=0,  # compute later
         )
+        logger.info("Creating new team score", team_score_id=team_score.id)
     else:
-        team_score.points_this_matchday = total_team_points
+        logger.info("Updating existing team score", team_score_id=team_score.id)
 
+    team_score.points_this_matchday = total_team_points
     db_session.add(team_score)
-    db_session.commit()
+    try:
+        db_session.commit()
+        logger.info("Matchday scoring completed successfully", 
+                   matchday_id=matchday_id, 
+                   fantasy_team_id=fantasy_team_id,
+                   total_points=total_team_points)
+    except Exception as e:
+        logger.error("Failed to commit team score", 
+                    matchday_id=matchday_id, 
+                    fantasy_team_id=fantasy_team_id, 
+                    error=str(e))
+        db_session.rollback()
+        raise
 
 
 @celery_app.task(
@@ -171,11 +181,13 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
     retry_kwargs={"max_retries": 3},
 )
 def recalculate_matchday_scores_task(self, matchday_id: int):
+    logger.info("Starting matchday score recalculation", matchday_id=matchday_id)
     db = SessionLocal()
     try:
         # Update task status to processing
         matchday = db.query(Matchday).filter(Matchday.id == matchday_id).first()
         if not matchday:
+            logger.error("Matchday not found", matchday_id=matchday_id)
             return
         matchday.task_status = "processing"
         db.commit()
@@ -184,9 +196,12 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
         player_scores = (
             db.query(PlayerScore).filter(PlayerScore.matchday_id == matchday_id).all()
         )
+        logger.debug("Retrieved player scores", count=len(player_scores))
+
         if not player_scores:
             matchday.task_status = "done"  # nothing to score
             db.commit()
+            logger.info("No player scores to process, marking matchday as done", matchday_id=matchday_id)
             return
 
         player_ids = [ps.player_id for ps in player_scores]
@@ -203,9 +218,11 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
             .distinct()
             .all()
         )
+        logger.debug("Retrieved fantasy teams", count=len(fantasy_teams))
 
         # 3. For each fantasy team, compute TeamScore
         for fantasy_team in fantasy_teams:
+            logger.debug("Processing fantasy team", fantasy_team_id=fantasy_team.id)
             total_points = 0
 
             # Get all fantasy players of this team (for the season)
@@ -217,12 +234,14 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
 
             for fp in fantasy_players:
                 if not fp.player.is_active:
+                    logger.debug("Player is inactive, skipping", player_id=fp.player_id)
                     continue
                 # Find the corresponding PlayerScore for this player and matchday
                 ps = next(
                     (p for p in player_scores if p.player_id == fp.player_id), None
                 )
                 if not ps:
+                    logger.debug("No player score found, skipping", player_id=fp.player_id)
                     continue  # player didn't play, no points
 
                 # Get raw points from real player's stats
@@ -246,9 +265,10 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                 scored = apply_wildcard_multiplier(raw, fp.is_x2_joker)
 
                 total_points += scored["final_points"]
-
-                # Optional: store per‑player fantasy points in a new table for audit
-                # For now we only keep team total.
+                logger.debug("Player scored for team", 
+                            player_id=fp.player_id, 
+                            team_id=fantasy_team.id, 
+                            points=scored["final_points"])
 
             # Update or create TeamScore
             team_score = (
@@ -263,6 +283,7 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                 team_score = TeamScore(
                     fantasy_team_id=fantasy_team.id, matchday_id=matchday_id
                 )
+                logger.info("Creating new team score", team_score_id=team_score.id)
             team_score.points_this_matchday = total_points
             # Cumulative points: we could compute by summing previous + current
             previous_total = (
@@ -281,18 +302,22 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                 team_score.cumulative_points = total_points
 
             db.add(team_score)
+            logger.debug("Team score updated", team_score_id=team_score.id, points=total_points)
 
         # 4. Mark matchday as closed (all matches processed)
         matchday.status = MatchdayStatus.closed
         matchday.task_status = "done"
         db.commit()
+        logger.info("Matchday score recalculation completed successfully", matchday_id=matchday_id)
 
     except Exception as e:
+        logger.error("Matchday score recalculation failed", matchday_id=matchday_id, error=str(e))
         db.commit()
         # Retry the task
         raise self.retry(exc=e)
     finally:
         db.close()
+        logger.debug("Database session closed for recalculate_matchday_scores_task")
 
 
 @celery_app.task(
@@ -303,18 +328,22 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
     max_retries=3,
 )
 def deactivate_players_for_teams_task(self, team_ids: List[int]):
+    logger.info("Starting player deactivation for teams", team_ids=team_ids)
     db = SessionLocal()
     try:
         # Atomic bulk update
-        db.query(Player).filter(Player.team_id.in_(team_ids)).update(
+        updated_count = db.query(Player).filter(Player.team_id.in_(team_ids)).update(
             {Player.is_active: False}, synchronize_session=False
         )
         db.commit()
+        logger.info("Player deactivation completed", team_ids=team_ids, updated_count=updated_count)
     except Exception as e:
+        logger.error("Player deactivation failed", team_ids=team_ids, error=str(e))
         db.rollback()
         raise self.retry(exc=e)
     finally:
         db.close()
+        logger.debug("Database session closed for deactivate_players_for_teams_task")
     return {"deactivated_teams": team_ids}
 
 
@@ -326,15 +355,19 @@ def deactivate_players_for_teams_task(self, team_ids: List[int]):
     max_retries=3,
 )
 def reactivate_players_for_teams_task(self, team_ids: List[int]):
+    logger.info("Starting player reactivation for teams", team_ids=team_ids)
     db = SessionLocal()
     try:
         db.query(Player).filter(Player.team_id.in_(team_ids)).update(
             {Player.is_active: True}, synchronize_session=False
         )
         db.commit()
+        logger.info("Player reactivation completed", team_ids=team_ids)
     except Exception as e:
+        logger.error("Player reactivation failed", team_ids=team_ids, error=str(e))
         db.rollback()
         raise self.retry(exc=e)
     finally:
         db.close()
+        logger.debug("Database session closed for reactivate_players_for_teams_task")
     return {"reactivated_teams": team_ids}

@@ -26,6 +26,7 @@ from .routers import auth, squad, admin
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Fantasy Football API")
+logger.info("FastAPI application initialized")
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,7 +64,8 @@ async def logging_middleware(request: Request, call_next):
         process_time = time.time() - start_time
         logger.exception(
             "Request failed",
-            process_time=f"{process_time:.4f}s"
+            process_time=f"{process_time:.4f}s",
+            error=str(e)
         )
         raise
 
@@ -71,9 +73,11 @@ from . import models
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
+    logger.debug("Health check endpoint called")
     db_status = "ok"
     try:
         db.execute(text("SELECT 1"))
+        logger.debug("Database health check passed")
     except Exception as e:
         logger.error("DB health check failed", error=str(e))
         db_status = "error"
@@ -82,14 +86,17 @@ def health_check(db: Session = Depends(get_db)):
     try:
         r = redis.from_url(settings.REDIS_URL)
         r.ping()
+        logger.debug("Redis health check passed")
     except Exception as e:
         logger.error("Redis health check failed", error=str(e))
         redis_status = "error"
         
     status = "ok" if db_status == "ok" and redis_status == "ok" else "error"
+    logger.info("Health check completed", status=status, db=db_status, redis=redis_status)
     return {"status": status, "db": db_status, "redis": redis_status}
 
 @app.get("/test-celery")
 def test_celery(a: int = 1, b: int = 2):
+    logger.info("Testing Celery task", a=a, b=b)
     task = add_numbers_task.delay(a, b)
     return {"task_id": task.id}

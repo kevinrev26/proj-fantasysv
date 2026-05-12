@@ -1,4 +1,7 @@
 from typing import Dict, List
+import structlog
+
+logger = structlog.get_logger()
 
 # Goal points per position (spec: FW=6, MF=8, DF=10; GK not specified, fallback to 15)
 GOAL_POINTS: Dict[str, int] = {
@@ -27,7 +30,14 @@ def calculate_player_points(
     Returns:
         dict: {"base_points": int, "bonus_points": int, "final_points": int}
     """
+    logger.debug("Calculating player points", 
+                 position=position, 
+                 minutes_played=minutes_played,
+                 goals=goals,
+                 assists=assists)
+    
     if minutes_played <= 0:
+        logger.info("Player played 0 minutes, returning zero points")
         return {"base_points": 0, "bonus_points": 0, "final_points": 0}
 
     position = position.value if hasattr(position, "value") else position
@@ -82,6 +92,10 @@ def calculate_player_points(
         bonus_points += 2
 
     final_points = base_points + bonus_points
+    logger.debug("Player points calculated", 
+                 base_points=base_points, 
+                 bonus_points=bonus_points, 
+                 final_points=final_points)
     return {
         "base_points": base_points,
         "bonus_points": bonus_points,
@@ -103,14 +117,17 @@ def apply_wildcard_multiplier(
     Returns:
         dict with same keys, but final_points multiplied by 2 if wildcard
     """
+    logger.debug("Applying wildcard multiplier", is_wildcard=is_wildcard)
     if not is_wildcard:
         return player_score.copy()
 
-    return {
+    result = {
         "base_points": player_score["base_points"],
         "bonus_points": player_score["bonus_points"],
         "final_points": player_score["final_points"] * 2,
     }
+    logger.debug("Wildcard applied", final_points=result["final_points"])
+    return result
 
 
 def validate_wildcard_constraint(fantasy_players: List[Dict]) -> bool:
@@ -124,5 +141,8 @@ def validate_wildcard_constraint(fantasy_players: List[Dict]) -> bool:
     Returns:
         True if constraint satisfied, False otherwise
     """
+    logger.debug("Validating wildcard constraint")
     wildcard_count = sum(1 for p in fantasy_players if p.get("is_x2_joker", False))
-    return wildcard_count <= 1
+    is_valid = wildcard_count <= 1
+    logger.debug("Wildcard constraint validation result", count=wildcard_count, valid=is_valid)
+    return is_valid

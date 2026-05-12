@@ -10,15 +10,16 @@ Usage (in any write endpoint)
 
     matchday = get_current_matchday(db)
     assert_matchday_unlocked(matchday)   # raises 409 if locked
-    # … proceed with transfer / squad change / etc.
 """
 
 from __future__ import annotations
 
+import structlog
 from fastapi import HTTPException
 
 from ..models import Matchday
 
+logger = structlog.get_logger()
 
 def assert_matchday_unlocked(matchday: Matchday | None) -> None:
     """
@@ -34,10 +35,13 @@ def assert_matchday_unlocked(matchday: Matchday | None) -> None:
     ------
     HTTPException(409) when matchday.is_locked is True.
     """
+    logger.debug("Checking matchday lock status", matchday_id=getattr(matchday, 'id', None))
     if matchday is None:
+        logger.debug("No matchday provided, skipping lock check")
         return
 
     if matchday.is_locked:
+        logger.warning("Matchday is locked, rejecting operation", matchday_id=matchday.id)
         raise HTTPException(
             status_code=409,
             detail=(
@@ -46,3 +50,4 @@ def assert_matchday_unlocked(matchday: Matchday | None) -> None:
                 "are allowed until the matchday is closed."
             ),
         )
+    logger.debug("Matchday is unlocked, operation allowed", matchday_id=matchday.id)

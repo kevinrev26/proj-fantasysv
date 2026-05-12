@@ -20,12 +20,15 @@ Design notes
 
 from __future__ import annotations
 
+import structlog
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from ..models import Fixture, Matchday, MatchdayStatus, SystemConfig
+
+logger = structlog.get_logger()
 
 _DEFAULT_OFFSET_MINUTES = 60
 _CONFIG_KEY = "MATCHDAY_LOCK_OFFSET_MINUTES"
@@ -37,17 +40,24 @@ _CONFIG_KEY = "MATCHDAY_LOCK_OFFSET_MINUTES"
 
 def _get_lock_offset(db: Session) -> int:
     """Return the configured lock offset in minutes (default 60)."""
+    logger.debug("Retrieving lock offset from database")
     row = db.query(SystemConfig).filter(SystemConfig.key == _CONFIG_KEY).first()
     if row:
         try:
-            return int(row.value)
+            offset = int(row.value)
+            logger.debug("Lock offset retrieved from config", offset=offset)
+            return offset
         except ValueError:
+            logger.warning("Invalid lock offset value in config, using default", value=row.value)
             pass
+    logger.debug("Using default lock offset", offset=_DEFAULT_OFFSET_MINUTES)
     return _DEFAULT_OFFSET_MINUTES
 
 
 def _now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    now = datetime.now(timezone.utc)
+    logger.debug("Current UTC time", time=now)
+    return now
 
 
 # ---------------------------------------------------------------------------
@@ -62,6 +72,7 @@ def calculate_matchday_lock(matchday: Matchday, db: Session) -> Optional[datetim
     -------
     datetime (UTC-aware) or None if the matchday has no fixtures.
     """
+    logger.debug("Calculating matchday lock time", matchday_id=matchday.id)
     earliest: Optional[datetime] = None
     for fixture in matchday.fixtures:
         kickoff = fixture.kickoff_utc
@@ -71,10 +82,13 @@ def calculate_matchday_lock(matchday: Matchday, db: Session) -> Optional[datetim
             earliest = kickoff
 
     if earliest is None:
+        logger.warning("Matchday has no fixtures, no lock time calculated", matchday_id=matchday.id)
         return None
 
     offset = _get_lock_offset(db)
-    return earliest - timedelta(minutes=offset)
+    lock_at = earliest - timedelta(minutes=offset)
+    logger.debug("Matchday lock time calculated", lock_at=lock_at, offset=offset)
+    return lock_at
 
 
 def initialize_matchday_lock(matchday: Matchday, db: Session) -> Optional[datetime]:
@@ -87,12 +101,19 @@ def initialize_matchday_lock(matchday: Matchday, db: Session) -> Optional[dateti
 
     Returns the computed lock_at_utc (or None if no fixtures exist yet).
     """
+    logger.info("Initializing matchday lock", matchday_id=matchday.id)
     lock_at = calculate_matchday_lock(matchday, db)
     matchday.lock_at_utc = lock_at
     db.add(matchday)
-    db.commit()
-    db.refresh(matchday)
-    return lock_at
+    try:
+        db.commit()
+        db.refresh(matchday)
+        logger.info("Matchday lock initialized successfully", matchday_id=matchday.id, lock_at=lock_at)
+        return lock_at
+    except Exception as e:
+        logger.error("Failed to initialize matchday lock", matchday_id=matchday.id, error=str(e))
+        db.rollback()
+        raise
 
 
 def process_matchday_lock(matchday: Matchday, db: Session) -> bool:
@@ -103,11 +124,14 @@ def process_matchday_lock(matchday: Matchday, db: Session) -> bool:
 
     Returns True if the lock was *newly* applied, False otherwise.
     """
+    logger.debug("Processing matchday lock", matchday_id=matchday.id)
     # Guard: nothing to do if already locked or no lock time set
     if matchday.is_locked:
+        logger.debug("Matchday already locked", matchday_id=matchday.id)
         return False
 
     if matchday.lock_at_utc is None:
+        logger.debug("No lock time set for matchday", matchday_id=matchday.id)
         return False
 
     now = _now_utc()
@@ -116,6 +140,10 @@ def process_matchday_lock(matchday: Matchday, db: Session) -> bool:
         lock_at = lock_at.replace(tzinfo=timezone.utc)
 
     if now < lock_at:
+        logger.debug("Matchday lock time not reached yet", 
+                     matchday_id=matchday.id, 
+                     now=now, 
+                     lock_at=lock_at)
         return False
 
     # Apply the lock
@@ -125,6 +153,15 @@ def process_matchday_lock(matchday: Matchday, db: Session) -> bool:
         matchday.status = MatchdayStatus.in_progress
 
     db.add(matchday)
-    db.commit()
-    db.refresh(matchday)
-    return True
+    try:
+        db.commit()
+        db.refresh(matchday)
+        logger.info("Matchday locked successfully", 
+                   matchday_id=matchday.id, 
+                   locked_at=now, 
+                   status=matchday.status)
+        return True
+    except Exception as e:
+        logger.error("Failed to lock matchday", matchday_id=matchday.id, error=str(e))
+        db.rollback()
+        raise
