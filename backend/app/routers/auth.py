@@ -4,22 +4,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from .. import models, schemas, security
 from ..database import get_db
+from ..security import get_current_user_id_from_token
 
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
-
-
-def get_current_user_id_from_dummy_token(request: Request) -> int:
-    """Extract user ID from dummy bearer token. Used until JWT is implemented."""
-    auth_header = request.headers.get("Authorization", "")
-    if auth_header.startswith("Bearer dummy-token-user-"):
-        try:
-            return int(auth_header.split("-")[-1])
-        except ValueError:
-            pass
-    return 1  # fallback
 
 
 @router.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
@@ -32,7 +22,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
 
-    hashed_password = security.get_password_hash(user.password)
+    hashed_password = security.hash_password(user.password)
     activation_token = secrets.token_urlsafe(32)
     
     new_user = models.User(
@@ -83,7 +73,7 @@ def set_team_name(
     db: Session = Depends(get_db)
 ):
     """Second onboarding step: set the user's fantasy team name."""
-    user_id = get_current_user_id_from_dummy_token(request)
+    user_id = get_current_user_id_from_token(request)
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -122,7 +112,7 @@ def get_current_user_profile(
     db: Session = Depends(get_db)
 ):
     """Get the current user's profile."""
-    user_id = get_current_user_id_from_dummy_token(request)
+    user_id = get_current_user_id_from_token(request)
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -148,16 +138,11 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
             detail="Account not activated. Please check your email.",
         )
         
-    access_token = security.create_access_token(data={"sub": user.email, "role": user.role.value})
-    refresh_token = security.create_refresh_token(data={"sub": user.email, "role": user.role.value})
+    access_token = security.create_access_token_for_user(user)
+    refresh_token = security.create_refresh_token_for_user(user)
     
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer"
     }
-
-
-@router.get("/admin-only", response_model=schemas.UserResponse)
-def admin_only_endpoint(current_admin: models.User = Depends(security.get_current_admin_user)):
-    return current_admin
