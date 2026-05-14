@@ -708,11 +708,22 @@ def reset_matchday_lock_to_earliest_fixture(matchday_id: int, db: Session = Depe
     if not matchday.fixtures:
         raise HTTPException(status_code=400, detail="No fixtures found for this matchday")
     
-    # Find the earliest fixture
-    earliest_fixture = min(matchday.fixtures, key=lambda f: f.kickoff_utc)
+    # Find the earliest fixture that hasn't kicked off yet
+    now_utc = _now_utc()
+    upcoming_fixtures = [
+        f for f in matchday.fixtures 
+        if f.kickoff_utc > now_utc
+    ]
+    
+    if not upcoming_fixtures:
+        # If no upcoming fixtures, use the earliest fixture (even if it's in the past)
+        # This maintains backward compatibility for edge cases
+        earliest_fixture = min(matchday.fixtures, key=lambda f: f.kickoff_utc)
+    else:
+        # Use the earliest upcoming fixture
+        earliest_fixture = min(upcoming_fixtures, key=lambda f: f.kickoff_utc)
     
     # Calculate lock time based on earliest fixture
-    # This mimics the logic in calculate_matchday_lock but uses the earliest fixture
     lock_offset = _get_lock_offset(db)
     lock_at = earliest_fixture.kickoff_utc - timedelta(minutes=lock_offset)
     
