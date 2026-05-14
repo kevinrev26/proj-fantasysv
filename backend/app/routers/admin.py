@@ -692,6 +692,40 @@ def init_matchday_lock(matchday_id: int, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/matchday/{matchday_id}/reset-lock", status_code=200)
+def reset_matchday_lock_to_earliest_fixture(matchday_id: int, db: Session = Depends(get_db)):
+    """
+    Reset the matchday lock time to the earliest fixture's kickoff time.
+    This is useful for manually adjusting the lock time from admin view.
+    """
+    from ..services.matchday_lock_service import _get_lock_offset, _now_utc
+    from datetime import timedelta
+
+    matchday = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
+    if not matchday:
+        raise HTTPException(status_code=404, detail="Matchday not found")
+    
+    if not matchday.fixtures:
+        raise HTTPException(status_code=400, detail="No fixtures found for this matchday")
+    
+    # Find the earliest fixture
+    earliest_fixture = min(matchday.fixtures, key=lambda f: f.kickoff_utc)
+    
+    # Calculate lock time based on earliest fixture
+    # This mimics the logic in calculate_matchday_lock but uses the earliest fixture
+    lock_offset = _get_lock_offset(db)
+    lock_at = earliest_fixture.kickoff_utc - timedelta(minutes=lock_offset)
+    
+    matchday.lock_at_utc = lock_at
+    db.commit()
+    db.refresh(matchday)
+    
+    return {
+        "matchday_id": matchday_id,
+        "lock_at_utc": lock_at.isoformat() if lock_at else None,
+    }
+
+
 class FixtureUpdate(BaseModel):
     home_team_id: Optional[int] = None
     away_team_id: Optional[int] = None

@@ -224,6 +224,21 @@ def _get_config_str(db: Session, key: str, default: str) -> str:
     return row.value if row else default
 
 
+def _earliest_non_finished_fixture_match(
+    db: Session, matchday_id: int
+) -> Optional[datetime]:
+    """Return the earliest non-finished fixture's kickoff time for a matchday."""
+    fixture = (
+        db.query(models.Fixture)
+        .join(models.Fixture.matchday)
+        .filter(models.Matchday.id == 3, models.Fixture.finished == False)
+        .order_by(models.Fixture.kickoff_utc.asc())
+        .first()
+    )
+    print(fixture.kickoff_utc)
+    return fixture.kickoff_utc if fixture else None
+
+
 # ---------------------------------------------------------------------------
 # READ endpoints (no lock guard needed)
 # ---------------------------------------------------------------------------
@@ -255,6 +270,7 @@ def get_squad(request: Request, db: Session = Depends(get_db)):
     season = _active_season(db)
     team = _fantasy_team(db, user_id, season.id)
     matchday = _upcoming_matchday(db, season.id)
+    print(matchday)
 
     # Evaluate and flip the lock for the entire matchday if the deadline has passed.
     # This is idempotent and covers all fixtures — the lock time is derived from the
@@ -276,9 +292,9 @@ def get_squad(request: Request, db: Session = Depends(get_db)):
             "budget": 100,
             "free_transfers_remaining": base_allowance,
             "is_locked": matchday.is_locked if matchday else False,
-            "matchday_deadline": (
-                matchday.lock_at_utc.isoformat()
-                if matchday and matchday.lock_at_utc
+            "deadline": (
+                _earliest_non_finished_fixture_match(db, matchday.id).isoformat()
+                if matchday and _earliest_non_finished_fixture_match(db, matchday.id)
                 else None
             ),
         }
@@ -300,10 +316,12 @@ def get_squad(request: Request, db: Session = Depends(get_db)):
         "squad": players,
         "budget": 100 - total_cost,
         "free_transfers_remaining": free_remaining,
-        "is_locked": matchday.is_locked if matchday else False,
-        "matchday_deadline": (
-            matchday.lock_at_utc.isoformat()
-            if matchday and matchday.lock_at_utc
+        # "is_locked": matchday.is_locked if matchday else False,
+        # Since we are moving to fixture locking match, matchday locked is deprecated.
+        "is_locked": False,
+        "deadline": (
+            _earliest_non_finished_fixture_match(db, matchday.id).isoformat()
+            if matchday and _earliest_non_finished_fixture_match(db, matchday.id)
             else None
         ),
     }
@@ -338,9 +356,9 @@ def get_squad_points(request: Request, db: Session = Depends(get_db)):
     # Get all player scores for this matchday indexed by player_id
     scores_by_player = {
         ps.player_id: ps
-        for ps in db.query(models.PlayerScore).filter(
-            models.PlayerScore.matchday_id == scored_matchday.id
-        ).all()
+        for ps in db.query(models.PlayerScore)
+        .filter(models.PlayerScore.matchday_id == scored_matchday.id)
+        .all()
     }
 
     # Build per-player rows for the user's squad
@@ -353,23 +371,27 @@ def get_squad_points(request: Request, db: Session = Depends(get_db)):
         final = ps.final_points if ps else 0
         if fp.is_x2_joker and ps:
             final = final * 2  # wildcard doubling shown in UI
-        rows.append({
-            "player_id": p.id,
-            "name": p.name,
-            "pos": p.position.value,
-            "club": p.team.name if p.team else "",
-            "slot": fp.slot.value,
-            "is_x2_joker": fp.is_x2_joker,
-            "minutes_played": ps.minutes_played if ps else 0,
-            "goals": ps.goals if ps else 0,
-            "assists": ps.assists if ps else 0,
-            "yellow_card": ps.yellow_card if ps else 0,
-            "red_card": ps.red_card if ps else 0,
-            "clean_sheet": (ps.goals_conceded == 0 and ps.minutes_played >= 60) if ps else False,
-            "base_points": base,
-            "bonus_points": bonus,
-            "final_points": final,
-        })
+        rows.append(
+            {
+                "player_id": p.id,
+                "name": p.name,
+                "pos": p.position.value,
+                "club": p.team.name if p.team else "",
+                "slot": fp.slot.value,
+                "is_x2_joker": fp.is_x2_joker,
+                "minutes_played": ps.minutes_played if ps else 0,
+                "goals": ps.goals if ps else 0,
+                "assists": ps.assists if ps else 0,
+                "yellow_card": ps.yellow_card if ps else 0,
+                "red_card": ps.red_card if ps else 0,
+                "clean_sheet": (ps.goals_conceded == 0 and ps.minutes_played >= 60)
+                if ps
+                else False,
+                "base_points": base,
+                "bonus_points": bonus,
+                "final_points": final,
+            }
+        )
 
     # Team totals
     team_score = (
@@ -430,23 +452,27 @@ def get_points_all_matchdays(request: Request, db: Session = Depends(get_db)):
             p = fp.player
             ps = scores_by_player.get(p.id)
             final = (ps.final_points * (2 if fp.is_x2_joker else 1)) if ps else 0
-            rows.append({
-                "player_id": p.id,
-                "name": p.name,
-                "pos": p.position.value,
-                "club": p.team.name if p.team else "",
-                "slot": fp.slot.value,
-                "is_x2_joker": fp.is_x2_joker,
-                "minutes_played": ps.minutes_played if ps else 0,
-                "goals": ps.goals if ps else 0,
-                "assists": ps.assists if ps else 0,
-                "yellow_card": ps.yellow_card if ps else 0,
-                "red_card": ps.red_card if ps else 0,
-                "clean_sheet": bool(ps and ps.goals_conceded == 0 and ps.minutes_played >= 60),
-                "base_points": ps.base_points if ps else 0,
-                "bonus_points": ps.bonus_points if ps else 0,
-                "final_points": final,
-            })
+            rows.append(
+                {
+                    "player_id": p.id,
+                    "name": p.name,
+                    "pos": p.position.value,
+                    "club": p.team.name if p.team else "",
+                    "slot": fp.slot.value,
+                    "is_x2_joker": fp.is_x2_joker,
+                    "minutes_played": ps.minutes_played if ps else 0,
+                    "goals": ps.goals if ps else 0,
+                    "assists": ps.assists if ps else 0,
+                    "yellow_card": ps.yellow_card if ps else 0,
+                    "red_card": ps.red_card if ps else 0,
+                    "clean_sheet": bool(
+                        ps and ps.goals_conceded == 0 and ps.minutes_played >= 60
+                    ),
+                    "base_points": ps.base_points if ps else 0,
+                    "bonus_points": ps.bonus_points if ps else 0,
+                    "final_points": final,
+                }
+            )
 
         team_score = (
             db.query(models.TeamScore)
@@ -457,16 +483,18 @@ def get_points_all_matchdays(request: Request, db: Session = Depends(get_db)):
             .first()
         )
 
-        result.append({
-            "matchday": {
-                "id": md.id,
-                "name": md.name,
-                "status": md.status.value,
-            },
-            "players": rows,
-            "team_total": team_score.points_this_matchday if team_score else 0,
-            "cumulative": team_score.cumulative_points if team_score else 0,
-        })
+        result.append(
+            {
+                "matchday": {
+                    "id": md.id,
+                    "name": md.name,
+                    "status": md.status.value,
+                },
+                "players": rows,
+                "team_total": team_score.points_this_matchday if team_score else 0,
+                "cumulative": team_score.cumulative_points if team_score else 0,
+            }
+        )
 
     return {"matchdays": result}
 

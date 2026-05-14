@@ -1,12 +1,23 @@
 import enum
 from datetime import datetime, timezone
+
+import structlog
 from sqlalchemy import (
-    Column, Integer, String, Boolean, ForeignKey,
-    Date, DateTime, Enum as SQLEnum, func,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import relationship
+
 from .database import Base
-import structlog
 
 logger = structlog.get_logger()
 
@@ -14,11 +25,13 @@ logger = structlog.get_logger()
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class PlayerPosition(enum.Enum):
     GK = "GK"
     DF = "DF"
     MF = "MF"
     FW = "FW"
+
 
 class PlayerTier(enum.Enum):
     A = "A"
@@ -26,18 +39,22 @@ class PlayerTier(enum.Enum):
     C = "C"
     D = "D"
 
+
 class SeasonStatus(enum.Enum):
     active = "active"
     finished = "finished"
+
 
 class MatchdayStatus(enum.Enum):
     scheduled = "scheduled"
     in_progress = "in_progress"
     closed = "closed"
 
+
 class FantasySlot(enum.Enum):
     starter = "starter"
     bench = "bench"
+
 
 class PhaseName(enum.Enum):
     round_of_64 = "round_of_64"
@@ -48,6 +65,7 @@ class PhaseName(enum.Enum):
     semifinal = "semifinal"
     final = "final"
 
+
 class UserRole(enum.Enum):
     user = "user"
     admin = "admin"
@@ -56,6 +74,7 @@ class UserRole(enum.Enum):
 # ---------------------------------------------------------------------------
 # Models
 # ---------------------------------------------------------------------------
+
 
 class User(Base):
     __tablename__ = "user"
@@ -83,10 +102,18 @@ class Season(Base):
     end_date = Column(Date, nullable=False)
     status = Column(SQLEnum(SeasonStatus), default=SeasonStatus.active, nullable=False)
 
-    leagues = relationship("League", back_populates="season", cascade="all, delete-orphan")
-    matchdays = relationship("Matchday", back_populates="season", cascade="all, delete-orphan")
-    fantasy_teams = relationship("FantasyTeam", back_populates="season", cascade="all, delete-orphan")
-    tournament_phases = relationship("TournamentPhase", back_populates="season", cascade="all, delete-orphan")
+    leagues = relationship(
+        "League", back_populates="season", cascade="all, delete-orphan"
+    )
+    matchdays = relationship(
+        "Matchday", back_populates="season", cascade="all, delete-orphan"
+    )
+    fantasy_teams = relationship(
+        "FantasyTeam", back_populates="season", cascade="all, delete-orphan"
+    )
+    tournament_phases = relationship(
+        "TournamentPhase", back_populates="season", cascade="all, delete-orphan"
+    )
 
 
 class Matchday(Base):
@@ -105,6 +132,7 @@ class Matchday(Base):
     Callers that still reference deadline_utc will continue to work; new code
     should prefer lock_at_utc.
     """
+
     __tablename__ = "matchday"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -163,6 +191,7 @@ class Fixture(Base):
     A real match that belongs to a Matchday.
     The earliest kickoff_utc across all fixtures in a matchday drives lock_at_utc.
     """
+
     __tablename__ = "fixture"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -211,7 +240,9 @@ class Team(Base):
     eliminated_in_phase = relationship(
         "TournamentPhase", back_populates="eliminated_teams"
     )
-    players = relationship("Player", back_populates="team", cascade="all, delete-orphan")
+    players = relationship(
+        "Player", back_populates="team", cascade="all, delete-orphan"
+    )
 
 
 class Player(Base):

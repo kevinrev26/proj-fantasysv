@@ -313,6 +313,10 @@
                     x-show="fixtureRows.length > 0" title="Recalculate lock time from earliest kickoff">
               🔒 Recalculate Lock
             </button>
+            <button class="btn-add-row" style="margin-left:auto;" @click="resetLockToEarliest()"
+                    x-show="fixtureRows.length > 0" title="Reset lock to earliest fixture of closest matchday">
+              🔄 Reset to Earliest Fixture
+            </button>
           </div>
         </div>
 
@@ -606,6 +610,25 @@ function adminApp() {
         this.matchdayDeadline = d.lock_at_utc;
         this.showMessage(`Lock set to ${new Date(d.lock_at_utc).toLocaleString()}`, 'success');
       } catch (e) { this.showMessage(e.message, 'error'); }
+    },
+
+    async resetLockToEarliest() {
+      if (!this.matchdayId) {
+        this.showMessage('Please select a matchday first', 'error');
+        return;
+      }
+      try {
+        const res = await fetch(`/admin/matchday/${this.matchdayId}/reset-lock`, {
+          method: 'POST',
+          headers: this.authHeader(),
+        });
+        if (!res.ok) throw new Error('Reset failed');
+        const d = await res.json();
+        this.matchdayDeadline = d.lock_at_utc;
+        this.showMessage(`Lock reset to earliest fixture: ${new Date(d.lock_at_utc).toLocaleString()}`, 'success');
+      } catch (e) { 
+        this.showMessage(e.message, 'error'); 
+      }
     },
 
     // ── RESULTS TAB ──────────────────────────────────────
