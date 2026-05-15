@@ -1,4 +1,3 @@
-import secrets
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -14,6 +13,18 @@ router = APIRouter(
 
 @router.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # Validate username
+    if not (3 <= len(user.username) <= 20):
+        raise HTTPException(status_code=422, detail="Username must be 3-20 characters")
+    
+    if not user.username.isalnum():
+        raise HTTPException(status_code=422, detail="Username must be alphanumeric")
+    
+    # Validate password
+    if len(user.password) < 8:
+        raise HTTPException(status_code=422, detail="Password must be 8+ characters")
+    
+    # Check if user already exists
     existing_email = db.query(models.User).filter(models.User.email == user.email).first()
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -22,25 +33,22 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
 
+    # Hash password
     hashed_password = security.hash_password(user.password)
-    activation_token = secrets.token_urlsafe(32)
     
+    # Create user with is_active=True and onboarding_complete=False
     new_user = models.User(
         username=user.username,
         email=user.email,
         hashed_password=hashed_password,
-        is_active=False,
+        is_active=True,
         onboarding_complete=False,
-        activation_token=activation_token,
+        activation_token=None,  # No email sending for now
     )
     
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
-    # TODO: Send activation email with token. For now, log it to stdout.
-    print(f"[ACTIVATION] User {new_user.email} — token: {activation_token}")
-    print(f"[ACTIVATION] URL: /auth/activate?token={activation_token}")
     
     return new_user
 
