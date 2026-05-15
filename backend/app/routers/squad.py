@@ -36,6 +36,7 @@ from .. import models
 from ..database import get_db
 from ..services.lock_guard import assert_matchday_unlocked
 from ..services.matchday_lock_service import process_matchday_lock
+from ..dependencies import get_current_user
 
 router = APIRouter(prefix="/squad", tags=["squad"])
 
@@ -43,18 +44,6 @@ router = APIRouter(prefix="/squad", tags=["squad"])
 # ---------------------------------------------------------------------------
 # Auth helpers (kept identical to original)
 # ---------------------------------------------------------------------------
-
-
-def get_current_user_id(request: Request) -> int:
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split(" ")[1]
-        if token.startswith("dummy-token-user-"):
-            try:
-                return int(token.split("-")[-1])
-            except ValueError:
-                pass
-    return 1
 
 
 # ---------------------------------------------------------------------------
@@ -265,8 +254,12 @@ def get_all_players(db: Session = Depends(get_db)):
 
 
 @router.get("/")
-def get_squad(request: Request, db: Session = Depends(get_db)):
-    user_id = get_current_user_id(request)
+def get_squad(
+    request: Request, 
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user_id = current_user.id
     season = _active_season(db)
     team = _fantasy_team(db, user_id, season.id)
     matchday = _upcoming_matchday(db, season.id)
@@ -328,13 +321,17 @@ def get_squad(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/points")
-def get_squad_points(request: Request, db: Session = Depends(get_db)):
+def get_squad_points(
+    request: Request, 
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
     Return fantasy points for the current user's squad for the most recent
     matchday that has scoring data (closed or in-progress).
     Includes both per-matchday points and cumulative total.
     """
-    user_id = get_current_user_id(request)
+    user_id = current_user.id
     season = _active_season(db)
     team = _fantasy_team(db, user_id, season.id)
 
@@ -416,12 +413,16 @@ def get_squad_points(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/points/all-matchdays")
-def get_points_all_matchdays(request: Request, db: Session = Depends(get_db)):
+def get_points_all_matchdays(
+    request: Request, 
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
     Return per-matchday fantasy points for the current user's squad,
     across every matchday that has scoring data. Used for the history view.
     """
-    user_id = get_current_user_id(request)
+    user_id = current_user.id
     season = _active_season(db)
     team = _fantasy_team(db, user_id, season.id)
 
@@ -500,8 +501,12 @@ def get_points_all_matchdays(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/leaderboard")
-def get_leaderboard(request: Request, db: Session = Depends(get_db)):
-    user_id = get_current_user_id(request)
+def get_leaderboard(
+    request: Request, 
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user_id = current_user.id
     season = (
         db.query(models.Season)
         .filter(models.Season.status == models.SeasonStatus.active)
@@ -568,13 +573,14 @@ def get_leaderboard(request: Request, db: Session = Depends(get_db)):
 def update_squad(
     payload: SquadUpdateRequest,
     request: Request,
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     Full squad update (initial selection + subsequent transfers).
     Blocked while the matchday is locked.
     """
-    user_id = get_current_user_id(request)
+    user_id = current_user.id
     season = _active_season(db)
     matchday = _upcoming_matchday(db, season.id)
 
@@ -706,13 +712,14 @@ def update_squad(
 def set_captain(
     payload: CaptainRequest,
     request: Request,
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     Assign captain / x2-joker.
     Blocked while the matchday is locked.
     """
-    user_id = get_current_user_id(request)
+    user_id = current_user.id
     season = _active_season(db)
     matchday = _upcoming_matchday(db, season.id)
 
@@ -735,13 +742,14 @@ def set_captain(
 def bench_swap(
     payload: BenchSwapRequest,
     request: Request,
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     Swap a starter with a bench player.
     Blocked while the matchday is locked.
     """
-    user_id = get_current_user_id(request)
+    user_id = current_user.id
     season = _active_season(db)
     matchday = _upcoming_matchday(db, season.id)
 

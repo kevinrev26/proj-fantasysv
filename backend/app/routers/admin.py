@@ -1,17 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Header
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
 from ..database import get_db
 from .. import models, schemas
 from ..worker import recalculate_matchday_scores_task, deactivate_players_for_teams_task, reactivate_players_for_teams_task
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from ..dependencies import require_admin
 
-def verify_admin(authorization: str = Header(...)):
-    if authorization not in ("Bearer dummy-admin-token", "dummy-admin-token"):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
-router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(verify_admin)])
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
 class MatchdayUpdateRequest(BaseModel):
     name: Optional[str] = None
