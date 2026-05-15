@@ -220,7 +220,7 @@ def _earliest_non_finished_fixture_match(
     fixture = (
         db.query(models.Fixture)
         .join(models.Fixture.matchday)
-        .filter(models.Matchday.id == 3, models.Fixture.finished == False)
+        .filter(models.Matchday.id == matchday_id, models.Fixture.finished == False)
         .order_by(models.Fixture.kickoff_utc.asc())
         .first()
     )
@@ -263,7 +263,6 @@ def get_squad(
     season = _active_season(db)
     team = _fantasy_team(db, user_id, season.id)
     matchday = _upcoming_matchday(db, season.id)
-    print(matchday)
 
     # Evaluate and flip the lock for the entire matchday if the deadline has passed.
     # This is idempotent and covers all fixtures — the lock time is derived from the

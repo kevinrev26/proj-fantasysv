@@ -528,20 +528,15 @@
     </main>
 
     <script>
-        // Add role requirement
-        requireRole('admin');
 
-        // Tab switching
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        // ── Shared state ──────────────────────────────────────────────────────────
+        let _exportRows = [];
+        let _mdData     = [];
 
-                item.classList.add('active');
-                document.getElementById(item.dataset.target).classList.add('active');
-            });
-        });
+        const STATUS_OPTIONS = ['scheduled', 'in_progress', 'closed'];
+        const STATUS_COLORS  = { scheduled: '#5096ff', in_progress: '#ffc800', closed: '#00c864' };
 
+        // ── Utilities ─────────────────────────────────────────────────────────────
         function log(targetId, msg, type = "info") {
             const consoleEl = document.getElementById(targetId.replace('csv-', 'log-'));
             const div = document.createElement('div');
@@ -551,6 +546,19 @@
             consoleEl.scrollTop = consoleEl.scrollHeight;
         }
 
+        function escHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function csvEsc(val) {
+            const s = String(val ?? '');
+            return s.includes(',') || s.includes('"') || s.includes('\n')
+                ? `"${s.replace(/"/g, '""')}"` : s;
+        }
+
+        // ── CSV bulk import ───────────────────────────────────────────────────────
         async function processCSV(textareaId, urlTemplate, payloadFields, method = "POST") {
             const btn = document.querySelector(`#${textareaId}`).parentElement.nextElementSibling;
             btn.disabled = true;
@@ -571,7 +579,7 @@
                 return;
             }
 
-            const lines = raw.split('\n').filter(l => l.trim() !== "");
+            const lines   = raw.split('\n').filter(l => l.trim() !== "");
             const headers = lines[0].split(',').map(h => h.trim());
 
             for (let i = 1; i < lines.length; i++) {
@@ -580,35 +588,29 @@
 
                 headers.forEach((h, index) => {
                     let val = values[index];
-                    if (val === '' || val === undefined) val = null;
-                    else if (val.toLowerCase() === 'true') val = true;
-                    else if (val.toLowerCase() === 'false') val = false;
-                    else if (!isNaN(val) && val !== null && !val.includes('T')) val = Number(val); // Avoid converting iso dates
+                    if (val === '' || val === undefined)          val = null;
+                    else if (val.toLowerCase() === 'true')        val = true;
+                    else if (val.toLowerCase() === 'false')       val = false;
+                    else if (!isNaN(val) && val !== null && !val.includes('T')) val = Number(val);
                     rowData[h] = val;
                 });
 
-                // Generate Dynamic URL
-                let baseUrl = "http://localhost:8000";
+                let baseUrl  = "";
                 let finalUrl = baseUrl + urlTemplate;
                 if (finalUrl.includes('{season_id}')) finalUrl = finalUrl.replace('{season_id}', rowData.season_id);
                 if (finalUrl.includes('{league_id}')) finalUrl = finalUrl.replace('{league_id}', rowData.league_id);
-                if (finalUrl.includes('{team_id}')) finalUrl = finalUrl.replace('{team_id}', rowData.team_id);
+                if (finalUrl.includes('{team_id}'))   finalUrl = finalUrl.replace('{team_id}',   rowData.team_id);
                 if (finalUrl.includes('{player_id}')) finalUrl = finalUrl.replace('{player_id}', rowData.player_id);
 
-                // Build Payload
                 let payload = {};
                 payloadFields.forEach(pf => {
-                    if (rowData[pf] !== null) {
-                        payload[pf] = rowData[pf];
-                    }
+                    if (rowData[pf] !== null) payload[pf] = rowData[pf];
                 });
 
                 try {
                     const response = await authFetch(finalUrl, {
-                        method: method,
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        method,
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
@@ -627,16 +629,14 @@
             log(textareaId, "Process finished.");
             btn.disabled = false;
         }
-        // ── Export Players ────────────────────────────────────────────────
-        let _exportRows = [];   // cached rows for re-download without re-fetch
 
+        // ── Export Players ────────────────────────────────────────────────────────
         async function loadSeasonsForExport() {
-            const token = getToken();
             try {
-                const res = await authFetch('http://localhost:8000/admin/seasons');
+                const res = await authFetch('/admin/seasons');
                 if (!res.ok) return;
                 const data = await res.json();
-                const sel = document.getElementById('export-season');
+                const sel  = document.getElementById('export-season');
                 (data.seasons || []).forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s.id;
@@ -647,34 +647,31 @@
         }
 
         async function exportPlayers() {
-            const token = getToken();
-            const seasonId = document.getElementById('export-season').value;
-            const btn = document.getElementById('export-btn');
-            const errEl = document.getElementById('export-error');
+            const seasonId  = document.getElementById('export-season').value;
+            const btn       = document.getElementById('export-btn');
+            const errEl     = document.getElementById('export-error');
             const previewEl = document.getElementById('export-preview');
 
-            errEl.style.display = 'none';
+            errEl.style.display    = 'none';
             previewEl.style.display = 'none';
-            btn.disabled = true;
-            btn.textContent = '⏳ Fetching…';
+            btn.disabled            = true;
+            btn.textContent         = '⏳ Fetching…';
 
             try {
-                const base = 'http://localhost:8000';
-                const url = seasonId
+                const base = '';
+                const url  = seasonId
                     ? `${base}/admin/export/players?season_id=${seasonId}`
                     : `${base}/admin/export/players`;
 
                 const res = await authFetch(url);
-
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
                     throw new Error(err.detail || `HTTP ${res.status}`);
                 }
 
-                const data = await res.json();
+                const data  = await res.json();
                 _exportRows = data.players || [];
 
-                // Populate preview table
                 const tbody = document.getElementById('export-tbody');
                 tbody.innerHTML = '';
                 _exportRows.forEach(p => {
@@ -690,13 +687,12 @@
                 document.getElementById('export-count').textContent =
                     `${_exportRows.length} player${_exportRows.length !== 1 ? 's' : ''} found`;
                 previewEl.style.display = 'block';
-
                 triggerCsvDownload();
             } catch (e) {
-                errEl.textContent = `Error: ${e.message}`;
-                errEl.style.display = 'block';
+                errEl.textContent    = `Error: ${e.message}`;
+                errEl.style.display  = 'block';
             } finally {
-                btn.disabled = false;
+                btn.disabled    = false;
                 btn.textContent = '⬇️ Download CSV';
             }
         }
@@ -704,37 +700,23 @@
         function triggerCsvDownload() {
             if (!_exportRows.length) return;
             const header = 'player_id,name,team_name\n';
-            const rows = _exportRows.map(p =>
+            const rows   = _exportRows.map(p =>
                 `${p.player_id},${csvEsc(p.name)},${csvEsc(p.team_name)}`
             ).join('\n');
             const blob = new Blob([header + rows], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = URL.createObjectURL(blob);
             a.download = 'players_export.csv';
             a.click();
         }
 
-        function csvEsc(val) {
-            const s = String(val ?? '');
-            return s.includes(',') || s.includes('"') || s.includes('\n')
-                ? `"${s.replace(/"/g, '""')}"` : s;
-        }
-
-        function escHtml(str) {
-            return String(str ?? '')
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
-
-        // ── Matchday CRUD ─────────────────────────────────────────────────────
-        let _mdData = [];
-
+        // ── Matchday CRUD ─────────────────────────────────────────────────────────
         async function mdLoadSeasons() {
             try {
-                const res = await authFetch('http://localhost:8000/admin/seasons');
+                const res  = await authFetch('/admin/seasons');
                 if (!res.ok) return;
                 const data = await res.json();
-                const sel = document.getElementById('md-crud-season');
+                const sel  = document.getElementById('md-crud-season');
                 sel.innerHTML = '<option value="">— select season —</option>';
                 (data.seasons || []).forEach(s => {
                     const o = document.createElement('option');
@@ -745,41 +727,40 @@
         }
 
         async function mdLoadMatchdays() {
-            const seasonId = document.getElementById('md-crud-season').value;
-            const errEl = document.getElementById('md-error');
+            const seasonId  = document.getElementById('md-crud-season').value;
+            const errEl     = document.getElementById('md-error');
             const tableWrap = document.getElementById('md-table-wrap');
-            const emptyEl = document.getElementById('md-empty');
-            errEl.style.display = 'none';
+            const emptyEl   = document.getElementById('md-empty');
+
+            errEl.style.display     = 'none';
             tableWrap.style.display = 'none';
-            emptyEl.style.display = 'none';
+            emptyEl.style.display   = 'none';
             if (!seasonId) return;
 
             try {
-                const res = await authFetch(`http://localhost:8000/admin/seasons/${seasonId}/matchdays`);
+                const res  = await authFetch(`/admin/seasons/${seasonId}/matchdays`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
-                _mdData = data.matchdays || [];
+                _mdData    = data.matchdays || [];
                 mdRenderTable();
             } catch (e) {
-                errEl.textContent = `Error loading matchdays: ${e.message}`;
+                errEl.textContent   = `Error loading matchdays: ${e.message}`;
                 errEl.style.display = 'block';
             }
         }
 
-        const STATUS_OPTIONS = ['scheduled', 'in_progress', 'closed'];
-        const STATUS_COLORS  = { scheduled:'#5096ff', in_progress:'#ffc800', closed:'#00c864' };
-
         function mdRenderTable() {
-            const tbody = document.getElementById('md-tbody');
+            const tbody     = document.getElementById('md-tbody');
             const tableWrap = document.getElementById('md-table-wrap');
-            const emptyEl = document.getElementById('md-empty');
+            const emptyEl   = document.getElementById('md-empty');
             tbody.innerHTML = '';
+
             if (!_mdData.length) { emptyEl.style.display = 'block'; return; }
             tableWrap.style.display = 'block';
 
             _mdData.forEach(md => {
                 const tr = document.createElement('tr');
-                tr.id = `md-row-${md.id}`;
+                tr.id    = `md-row-${md.id}`;
                 tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
                 tr.innerHTML = mdRowHtml(md);
                 tbody.appendChild(tr);
@@ -788,16 +769,16 @@
 
         function mdRowHtml(md) {
             const statusColor = STATUS_COLORS[md.status] || '#888';
-            const lockIcon = md.is_locked ? '🔒' : '🔓';
-            const lockTime = md.lock_at_utc ? new Date(md.lock_at_utc).toLocaleString() : '—';
+            const lockIcon    = md.is_locked ? '🔒' : '🔓';
+            const lockTime    = md.lock_at_utc ? new Date(md.lock_at_utc).toLocaleString() : '—';
             return `
                 <td style="padding:.6rem 1rem;color:var(--text-muted);">${md.id}</td>
                 <td style="padding:.6rem 1rem;font-weight:600;">${escHtml(md.name)}</td>
                 <td style="padding:.6rem 1rem;">
                     <select onchange="mdChangeStatus(${md.id}, this.value)"
                         style="background:var(--bg-color);border:1px solid ${statusColor};color:${statusColor};
-                               padding:3px 8px;border-radius:6px;font-size:0.82rem;font-weight:700;cursor:pointer;">
-                        ${STATUS_OPTIONS.map(s => `<option value="${s}" ${md.status===s?'selected':''}>${s}</option>`).join('')}
+                            padding:3px 8px;border-radius:6px;font-size:0.82rem;font-weight:700;cursor:pointer;">
+                        ${STATUS_OPTIONS.map(s => `<option value="${s}" ${md.status === s ? 'selected' : ''}>${s}</option>`).join('')}
                     </select>
                 </td>
                 <td style="padding:.6rem 1rem;font-size:0.82rem;color:var(--text-muted);">${lockTime}</td>
@@ -806,10 +787,10 @@
                 <td style="padding:.6rem 1rem;text-align:center;display:flex;gap:6px;justify-content:center;">
                     <button onclick="mdStartEdit(${md.id})"
                         style="background:rgba(255,200,80,.12);color:#ffc850;border:none;border-radius:6px;
-                               padding:4px 10px;cursor:pointer;font-size:0.82rem;">✏️ Edit</button>
+                            padding:4px 10px;cursor:pointer;font-size:0.82rem;">✏️ Edit</button>
                     <button onclick="mdDelete(${md.id})"
                         style="background:rgba(255,80,80,.12);color:#ff5050;border:none;border-radius:6px;
-                               padding:4px 10px;cursor:pointer;font-size:0.82rem;">✕</button>
+                            padding:4px 10px;cursor:pointer;font-size:0.82rem;">✕</button>
                 </td>`;
         }
 
@@ -825,31 +806,31 @@
                 <td style="padding:.5rem .8rem;">
                     <input id="md-edit-name-${id}" value="${escHtml(md.name)}"
                         style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
-                               color:var(--text-color);padding:4px 8px;border-radius:6px;font-size:.88rem;width:130px;">
+                            color:var(--text-color);padding:4px 8px;border-radius:6px;font-size:.88rem;width:130px;">
                 </td>
                 <td style="padding:.5rem .8rem;">
                     <select id="md-edit-status-${id}"
                         style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
-                               color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.82rem;">
-                        ${STATUS_OPTIONS.map(s => `<option value="${s}" ${md.status===s?'selected':''}>${s}</option>`).join('')}
+                            color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.82rem;">
+                        ${STATUS_OPTIONS.map(s => `<option value="${s}" ${md.status === s ? 'selected' : ''}>${s}</option>`).join('')}
                     </select>
                 </td>
                 <td style="padding:.5rem .8rem;">
                     <input id="md-edit-lock-${id}" type="datetime-local" value="${lockVal}"
                         style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
-                               color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.8rem;">
+                            color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.8rem;">
                 </td>
                 <td style="padding:.5rem .8rem;text-align:center;">
-                    <input id="md-edit-islocked-${id}" type="checkbox" ${md.is_locked?'checked':''}>
+                    <input id="md-edit-islocked-${id}" type="checkbox" ${md.is_locked ? 'checked' : ''}>
                 </td>
                 <td></td>
                 <td style="padding:.5rem .8rem;display:flex;gap:6px;justify-content:center;">
                     <button onclick="mdSaveEdit(${id})"
                         style="background:var(--secondary-color);color:#0d1b2e;border:none;border-radius:6px;
-                               padding:4px 12px;cursor:pointer;font-size:.82rem;font-weight:700;">💾</button>
+                            padding:4px 12px;cursor:pointer;font-size:.82rem;font-weight:700;">💾</button>
                     <button onclick="mdCancelEdit(${id})"
                         style="background:rgba(255,255,255,.07);color:var(--text-muted);border:none;border-radius:6px;
-                               padding:4px 10px;cursor:pointer;font-size:.82rem;">✕</button>
+                            padding:4px 10px;cursor:pointer;font-size:.82rem;">✕</button>
                 </td>`;
         }
 
@@ -868,14 +849,14 @@
             try {
                 const body = { name, status, is_locked: isLocked };
                 if (lockRaw) body.deadline_utc = lockRaw.includes('Z') ? lockRaw : lockRaw + ':00Z';
-                const res = await authFetch(`http://localhost:8000/admin/matchday/${id}`, {
+                const res = await authFetch(`/admin/matchday/${id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body),
                 });
                 if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
                 const updated = await res.json();
-                const idx = _mdData.findIndex(m => m.id === id);
+                const idx     = _mdData.findIndex(m => m.id === id);
                 if (idx !== -1) _mdData[idx] = { ..._mdData[idx], ...updated };
                 mdCancelEdit(id);
             } catch (e) {
@@ -885,30 +866,27 @@
 
         async function mdChangeStatus(id, newStatus) {
             try {
-                const res = await authFetch(`http://localhost:8000/admin/matchday/${id}`, {
+                const res = await authFetch(`/admin/matchday/${id}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: newStatus }),
                 });
                 if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
                 const updated = await res.json();
-                const idx = _mdData.findIndex(m => m.id === id);
+                const idx     = _mdData.findIndex(m => m.id === id);
                 if (idx !== -1) _mdData[idx] = { ..._mdData[idx], ...updated };
-                // re-render just that row
                 const tr = document.getElementById(`md-row-${id}`);
                 if (tr) tr.innerHTML = mdRowHtml(_mdData[idx]);
             } catch (e) {
                 alert(`Status update failed: ${e.message}`);
-                mdLoadMatchdays(); // revert UI
+                mdLoadMatchdays();
             }
         }
 
         async function mdDelete(id) {
             if (!confirm(`Delete matchday #${id}? This also removes all its fixtures and scores.`)) return;
             try {
-                const res = await authFetch(`http://localhost:8000/admin/matchday/${id}`, {
-                    method: 'DELETE',
-                });
+                const res = await authFetch(`/admin/matchday/${id}`, { method: 'DELETE' });
                 if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
                 _mdData = _mdData.filter(m => m.id !== id);
                 mdRenderTable();
@@ -919,20 +897,20 @@
 
         async function mdCreate() {
             const seasonId = document.getElementById('md-crud-season').value;
-            const name = document.getElementById('md-new-name').value.trim();
+            const name     = document.getElementById('md-new-name').value.trim();
             const deadline = document.getElementById('md-new-deadline').value;
             if (!seasonId) return alert('Select a season first');
             if (!name)     return alert('Name is required');
             try {
                 const body = { name };
                 if (deadline) body.deadline_utc = deadline.includes('Z') ? deadline : deadline + ':00Z';
-                const res = await authFetch(`http://localhost:8000/admin/seasons/${seasonId}/matchdays`, {
+                const res = await authFetch(`/admin/seasons/${seasonId}/matchdays`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body),
                 });
                 if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
-                document.getElementById('md-new-name').value = '';
+                document.getElementById('md-new-name').value     = '';
                 document.getElementById('md-new-deadline').value = '';
                 await mdLoadMatchdays();
             } catch (e) {
@@ -940,19 +918,28 @@
             }
         }
 
-        // Load seasons for matchday CRUD when tab activates
-        document.querySelector('[data-target="matchday-crud-sec"]').addEventListener('click', () => {
-            if (document.getElementById('md-crud-season').options.length === 1) {
-                mdLoadSeasons();
-            }
-        });
+        // ── Init: auth gate + tab switching + lazy loaders ────────────────────────
+        (async () => {
+            await requireRole('admin');
 
-        // Load seasons when the Export tab is first activated
-        document.querySelector('[data-target="export-sec"]').addEventListener('click', () => {
-            if (document.getElementById('export-season').options.length === 1) {
-                loadSeasonsForExport();
-            }
-        });
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                    item.classList.add('active');
+                    document.getElementById(item.dataset.target).classList.add('active');
+                });
+            });
+
+            document.querySelector('[data-target="matchday-crud-sec"]').addEventListener('click', () => {
+                if (document.getElementById('md-crud-season').options.length === 1) mdLoadSeasons();
+            });
+
+            document.querySelector('[data-target="export-sec"]').addEventListener('click', () => {
+                if (document.getElementById('export-season').options.length === 1) loadSeasonsForExport();
+            });
+        })();
+
     </script>
 </body>
 

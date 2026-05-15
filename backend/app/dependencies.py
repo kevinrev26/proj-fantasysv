@@ -22,13 +22,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         payload = decode_token(token)
         if payload is None:
             raise credentials_exception
-        username: str = payload.get("sub")
-        if username is None:
+        user_id: str = payload.get("sub")
+        if user_id is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    
-    user = db.query(User).filter(User.username == username).first()
+
+    user = db.query(User).filter(User.id == int(user_id)).first()  # ← fix here
     if user is None:
         raise credentials_exception
     if not user.is_active:

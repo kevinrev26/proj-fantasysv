@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.database import SessionLocal
 from app.models import User, UserRole
-from app.security import get_password_hash
+from app.security import hash_password as get_password_hash
 from sqlalchemy.exc import IntegrityError
 
 logger = structlog.get_logger()

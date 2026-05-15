@@ -307,13 +307,19 @@
               }
             })
             .then(response => response.json())
-            .then(user => {
-              if (user.onboarding_complete === false) {
-                window.location.href = '/onboarding';
-              } else {
-                window.location.href = '/profile';
-              }
-            });
+              .then(user => {
+                console.log(user)
+                if (user.onboarding_complete === false) {
+                  console.log("REDIREC TO ONBOARDING")
+                  window.location.href = '/onboarding';
+                } else if (user.role === 'admin') {
+                  console.log("REDIREC TO ADMIN DASHBOARD")
+                  window.location.href = '/admin-dashboard';
+                } else {
+                  console.log("REDIREC TO SQUAD BUILDER")
+                  window.location.href = '/squad-builder';
+                }
+              });
           })
           .catch(error => {
             this.error = 'Credenciales inválidas';

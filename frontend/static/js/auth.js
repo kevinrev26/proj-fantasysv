@@ -1,5 +1,5 @@
 // frontend/static/js/auth.js
-async function getToken() {
+function getToken() {
   return localStorage.getItem('jwt_token') || null;
 }
 
@@ -31,20 +31,22 @@ async function requireRole(requiredRole) {
     window.location.href = '/login';
     return false;
   }
-  
+
   try {
-    // Decode JWT payload (second part)
     const payload = token.split('.')[1];
-    const decoded = atob(payload);
-    const claims = JSON.parse(decoded);
-    
+    // Fix base64url → base64 padding before decoding
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+    const claims = JSON.parse(atob(padded));
+
     if (claims.role !== requiredRole) {
-      window.location.href = '/login';
+      window.location.href = '/unauthorized'; // better than silently going to /login
       return false;
     }
-    
+
     return true;
   } catch (error) {
+    console.error('requireRole error:', error);
     window.location.href = '/login';
     return false;
   }
