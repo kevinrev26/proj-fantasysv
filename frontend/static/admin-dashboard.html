@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Fantasy SV</title>
+    <script src="/js/auth.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -527,6 +528,9 @@
     </main>
 
     <script>
+        // Add role requirement
+        requireRole('admin');
+
         // Tab switching
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -553,7 +557,7 @@
             document.getElementById(textareaId.replace('csv-', 'log-')).innerHTML = "";
             log(textareaId, "Starting bulk process...");
 
-            const token = document.getElementById('admin-token').value;
+            const token = getToken();
             if (!token) {
                 log(textareaId, "Missing admin token!", "error");
                 btn.disabled = false;
@@ -600,11 +604,10 @@
                 });
 
                 try {
-                    const response = await fetch(finalUrl, {
+                    const response = await authFetch(finalUrl, {
                         method: method,
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify(payload)
                     });
@@ -628,11 +631,9 @@
         let _exportRows = [];   // cached rows for re-download without re-fetch
 
         async function loadSeasonsForExport() {
-            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            const token = getToken();
             try {
-                const res = await fetch('http://localhost:8000/admin/seasons', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await authFetch('http://localhost:8000/admin/seasons');
                 if (!res.ok) return;
                 const data = await res.json();
                 const sel = document.getElementById('export-season');
@@ -646,7 +647,7 @@
         }
 
         async function exportPlayers() {
-            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
+            const token = getToken();
             const seasonId = document.getElementById('export-season').value;
             const btn = document.getElementById('export-btn');
             const errEl = document.getElementById('export-error');
@@ -663,9 +664,7 @@
                     ? `${base}/admin/export/players?season_id=${seasonId}`
                     : `${base}/admin/export/players`;
 
-                const res = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await authFetch(url);
 
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
@@ -731,11 +730,8 @@
         let _mdData = [];
 
         async function mdLoadSeasons() {
-            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
             try {
-                const res = await fetch('http://localhost:8000/admin/seasons', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await authFetch('http://localhost:8000/admin/seasons');
                 if (!res.ok) return;
                 const data = await res.json();
                 const sel = document.getElementById('md-crud-season');
@@ -749,7 +745,6 @@
         }
 
         async function mdLoadMatchdays() {
-            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
             const seasonId = document.getElementById('md-crud-season').value;
             const errEl = document.getElementById('md-error');
             const tableWrap = document.getElementById('md-table-wrap');
@@ -760,9 +755,7 @@
             if (!seasonId) return;
 
             try {
-                const res = await fetch(`http://localhost:8000/admin/seasons/${seasonId}/matchdays`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await authFetch(`http://localhost:8000/admin/seasons/${seasonId}/matchdays`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 _mdData = data.matchdays || [];
@@ -867,7 +860,6 @@
         }
 
         async function mdSaveEdit(id) {
-            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
             const name     = document.getElementById(`md-edit-name-${id}`)?.value?.trim();
             const status   = document.getElementById(`md-edit-status-${id}`)?.value;
             const lockRaw  = document.getElementById(`md-edit-lock-${id}`)?.value;
@@ -876,9 +868,9 @@
             try {
                 const body = { name, status, is_locked: isLocked };
                 if (lockRaw) body.deadline_utc = lockRaw.includes('Z') ? lockRaw : lockRaw + ':00Z';
-                const res = await fetch(`http://localhost:8000/admin/matchday/${id}`, {
+                const res = await authFetch(`http://localhost:8000/admin/matchday/${id}`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body),
                 });
                 if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
@@ -892,11 +884,10 @@
         }
 
         async function mdChangeStatus(id, newStatus) {
-            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
             try {
-                const res = await fetch(`http://localhost:8000/admin/matchday/${id}`, {
+                const res = await authFetch(`http://localhost:8000/admin/matchday/${id}`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: newStatus }),
                 });
                 if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
@@ -914,11 +905,9 @@
 
         async function mdDelete(id) {
             if (!confirm(`Delete matchday #${id}? This also removes all its fixtures and scores.`)) return;
-            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
             try {
-                const res = await fetch(`http://localhost:8000/admin/matchday/${id}`, {
+                const res = await authFetch(`http://localhost:8000/admin/matchday/${id}`, {
                     method: 'DELETE',
-                    headers: { Authorization: `Bearer ${token}` },
                 });
                 if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
                 _mdData = _mdData.filter(m => m.id !== id);
@@ -929,7 +918,6 @@
         }
 
         async function mdCreate() {
-            const token = document.getElementById('admin-token').value || 'dummy-admin-token';
             const seasonId = document.getElementById('md-crud-season').value;
             const name = document.getElementById('md-new-name').value.trim();
             const deadline = document.getElementById('md-new-deadline').value;
@@ -938,9 +926,9 @@
             try {
                 const body = { name };
                 if (deadline) body.deadline_utc = deadline.includes('Z') ? deadline : deadline + ':00Z';
-                const res = await fetch(`http://localhost:8000/admin/seasons/${seasonId}/matchdays`, {
+                const res = await authFetch(`http://localhost:8000/admin/seasons/${seasonId}/matchdays`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body),
                 });
                 if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);

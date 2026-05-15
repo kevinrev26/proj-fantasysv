@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administración de Usuarios</title>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/js/auth.js"></script>
     <style>
         :root {
             --primary: #3b82f6;
@@ -367,6 +368,8 @@
     </div>
 
     <script>
+        requireRole('admin');
+        
         function userManagement() {
             return {
                 users: [],
@@ -394,12 +397,8 @@
                 
                 async fetchUsers() {
                     try {
-                        const response = await fetch('/admin/users', {
-                            method: 'GET',
-                            headers: {
-                                'Authorization': 'Bearer dummy-admin-token',
-                                'Content-Type': 'application/json'
-                            }
+                        const response = await authFetch('/admin/users', {
+                            method: 'GET'
                         });
                         
                         if (response.ok) {
@@ -443,10 +442,9 @@
                 
                 async createUser() {
                     try {
-                        const response = await fetch('/admin/users', {
+                        const response = await authFetch('/admin/users', {
                             method: 'POST',
                             headers: {
-                                'Authorization': 'Bearer dummy-admin-token',
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
@@ -471,10 +469,9 @@
                 
                 async updateUser() {
                     try {
-                        const response = await fetch(`/admin/users/${this.editingUser.id}`, {
+                        const response = await authFetch(`/admin/users/${this.editingUser.id}`, {
                             method: 'PUT',
                             headers: {
-                                'Authorization': 'Bearer dummy-admin-token',
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
@@ -502,12 +499,8 @@
                 
                 async deleteUser() {
                     try {
-                        const response = await fetch(`/admin/users/${this.deleteUserId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Authorization': 'Bearer dummy-admin-token',
-                                'Content-Type': 'application/json'
-                            }
+                        const response = await authFetch(`/admin/users/${this.deleteUserId}`, {
+                            method: 'DELETE'
                         });
                         
                         if (response.ok) {
@@ -523,12 +516,8 @@
                 
                 async resetPassword(userId) {
                     try {
-                        const response = await fetch(`/admin/users/${userId}/reset-password`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': 'Bearer dummy-admin-token',
-                                'Content-Type': 'application/json'
-                            }
+                        const response = await authFetch(`/admin/users/${userId}/reset-password`, {
+                            method: 'POST'
                         });
                         
                         if (response.ok) {

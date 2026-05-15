@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="/js/auth.js"></script>
   <style>
     .profile-page { max-width: 520px; margin: 0 auto; padding: 24px 16px 80px; }
     .profile-card {
@@ -157,6 +158,12 @@
 </div>
 
 <script>
+// Add role requirement at the top
+if (!requireRole('user')) {
+  // If requireRole returns false, it already redirected to login
+  // So we don't need to do anything here
+}
+
 function profileApp() {
   return {
     user: null,
@@ -172,16 +179,11 @@ function profileApp() {
       await this.loadLeaderboard();
     },
 
-    getToken() {
-      return localStorage.getItem('dummy_token') || 'dummy-token-user-1';
-    },
-
     async loadProfile() {
       this.loading = true;
       try {
-        const resp = await fetch('/auth/me', {
-          headers: { 'Authorization': `Bearer ${this.getToken()}` }
-        });
+        // Replace fetch with authFetch
+        const resp = await authFetch('/auth/me');
         if (resp.ok) {
           this.user = await resp.json();
         }
@@ -194,9 +196,8 @@ function profileApp() {
 
     async loadLeaderboard() {
       try {
-        const resp = await fetch('/squad/leaderboard', {
-          headers: { 'Authorization': `Bearer ${this.getToken()}` }
-        });
+        // Replace fetch with authFetch
+        const resp = await authFetch('/squad/leaderboard');
         if (resp.ok) {
           const data = await resp.json();
           const myEntry = data.leaderboard?.find(e => e.is_current_user);
@@ -219,11 +220,11 @@ function profileApp() {
       this.savingTeamName = true;
       this.teamNameMsg = '';
       try {
-        const resp = await fetch('/auth/onboarding/team-name', {
+        // Replace fetch with authFetch
+        const resp = await authFetch('/auth/onboarding/team-name', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.getToken()}`
           },
           body: JSON.stringify({ team_name: name })
         });
@@ -246,9 +247,10 @@ function profileApp() {
     },
 
     signOut() {
-      localStorage.removeItem('dummy_token');
+      // Remove jwt_token and user_id from localStorage
+      localStorage.removeItem('jwt_token');
       localStorage.removeItem('user_id');
-      window.location.href = '/register';
+      window.location.href = '/login.html';
     }
   };
 }

@@ -20,6 +20,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
     try:
         payload = decode_token(token)
+        if payload is None:
+            raise credentials_exception
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception

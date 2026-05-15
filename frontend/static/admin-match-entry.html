@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Fantasy SV – Admin Dashboard</title>
     <link rel="stylesheet" href="/style.css">
+    <script src="/js/auth.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
       .admin-tabs { display:flex; gap:0; border-bottom:2px solid rgba(255,255,255,0.1); margin-bottom:20px; }
@@ -422,6 +423,8 @@
 </div>
 
 <script>
+  requireRole('admin')
+
 function adminApp() {
   return {
     // ── state ───────────────────────────────────────────
@@ -452,12 +455,11 @@ function adminApp() {
     // ── init ────────────────────────────────────────────
     async init() {
       try {
-        const res = await fetch('/admin/seasons', { headers: this.authHeader() });
+        const res = await authFetch('/admin/seasons', { method: 'GET' });
         if (res.ok) { const d = await res.json(); this.seasons = d.seasons; }
       } catch { this.showMessage('Failed to load seasons', 'error'); }
     },
 
-    authHeader() { return { 'Authorization': 'Bearer dummy-admin-token' }; },
 
     // ── season / matchday selectors ──────────────────────
     async loadLeaguesAndMatchdays() {
@@ -468,8 +470,8 @@ function adminApp() {
       if (!this.selectedSeasonId) return;
       try {
         const [resL, resM] = await Promise.all([
-          fetch(`/admin/seasons/${this.selectedSeasonId}/leagues`,  { headers: this.authHeader() }),
-          fetch(`/admin/seasons/${this.selectedSeasonId}/matchdays`, { headers: this.authHeader() }),
+          authFetch(`/admin/seasons/${this.selectedSeasonId}/leagues`,  { method: 'GET' }),
+          authFetch(`/admin/seasons/${this.selectedSeasonId}/matchdays`, { method: 'GET'  }),
         ]);
         if (resL.ok) { const d = await resL.json(); this.leagues = d.leagues; }
         if (resM.ok) { const d = await resM.json(); this.matchdays = d.matchdays; }
@@ -489,8 +491,10 @@ function adminApp() {
     async loadTeams() {
       if (!this.selectedSeasonId) return;
       try {
-        const res = await fetch(`/admin/seasons/${this.selectedSeasonId}/teams`,
-                                { headers: this.authHeader() });
+        const res = await authFetch(
+          `/admin/seasons/${this.selectedSeasonId}/teams`,
+          { method: 'GET' }
+        );
         if (res.ok) { const d = await res.json(); this.allTeams = d.teams ?? d; }
       } catch { /* non-critical */ }
     },
@@ -503,8 +507,8 @@ function adminApp() {
     async loadFixtures() {
       if (!this.matchdayId) return;
       try {
-        const res = await fetch(`/admin/matchday/${this.matchdayId}/fixtures`,
-                                { headers: this.authHeader() });
+        const res = await authFetch(`/admin/matchday/${this.matchdayId}/fixtures`,
+                                { method: 'GET' });
         if (res.ok) { const d = await res.json(); this.savedFixtures = d.fixtures ?? []; }
       } catch { /* endpoint may not exist yet */ }
     },
@@ -577,11 +581,14 @@ function adminApp() {
             finished: r.finished,
           }))
         };
-        const res = await fetch(`/admin/matchday/${this.matchdayId}/fixtures`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...this.authHeader() },
-          body: JSON.stringify(payload),
-        });
+        const res = await authFetch(
+          `/admin/matchday/${this.matchdayId}/fixtures`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          }
+        );
         if (!res.ok) {
           const err = await res.json();
           throw new Error(err.detail || 'Save failed');
@@ -602,8 +609,8 @@ function adminApp() {
 
     async initLock() {
       try {
-        const res = await fetch(`/admin/matchday/${this.matchdayId}/init-lock`, {
-          method: 'POST', headers: this.authHeader(),
+        const res = await authFetch(`/admin/matchday/${this.matchdayId}/init-lock`, {
+          method: 'POST'
         });
         if (!res.ok) throw new Error('Lock init failed');
         const d = await res.json();
@@ -618,9 +625,8 @@ function adminApp() {
         return;
       }
       try {
-        const res = await fetch(`/admin/matchday/${this.matchdayId}/reset-lock`, {
+        const res = await authFetch(`/admin/matchday/${this.matchdayId}/reset-lock`, {
           method: 'POST',
-          headers: this.authHeader(),
         });
         if (!res.ok) throw new Error('Reset failed');
         const d = await res.json();
@@ -638,7 +644,7 @@ function adminApp() {
       try {
         let url = `/admin/matchday/${this.matchdayId}/players`;
         if (this.selectedLeagueId) url += `?league_id=${this.selectedLeagueId}`;
-        const res = await fetch(url, { headers: this.authHeader() });
+        const res = await authFetch(url, { method: 'GET' });
         if (!res.ok) throw new Error('Failed to load players');
         const data = await res.json();
         this.teams = data.teams.map(team => ({
@@ -721,9 +727,9 @@ function adminApp() {
         team.players.map(p => ({ player_id: p.player_id, ...p.stats }))
       );
       try {
-        const res = await fetch(`/admin/matchday/${this.matchdayId}/results`, {
+        const res = await authFetch(`/admin/matchday/${this.matchdayId}/results`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...this.authHeader() },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ stats }),
         });
         if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Submission failed'); }
@@ -741,8 +747,8 @@ function adminApp() {
       this.pollInterval = setInterval(async () => {
         if (!this.taskId) return;
         try {
-          const res = await fetch(`/admin/matchday/${this.matchdayId}/task-status`,
-                                  { headers: this.authHeader() });
+          const res = await authFetch(`/admin/matchday/${this.matchdayId}/task-status`,
+                                  { method: 'GET' });
           if (!res.ok) return;
           const d = await res.json();
           this.taskStatus = d.status;
@@ -784,9 +790,9 @@ function adminApp() {
       }
       this.savingFixtureEdit = true;
       try {
-        const res = await fetch(`/admin/fixtures/${fixtureId}`, {
+        const res = await authFetch(`/admin/fixtures/${fixtureId}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', ...this.authHeader() },
+          headers: { 'Content-Type': 'application/json'},
           body: JSON.stringify({
             home_team_id: d.home_team_id,
             away_team_id: d.away_team_id,
@@ -815,9 +821,8 @@ function adminApp() {
     async deleteFixture(fixtureId) {
       if (!confirm('Delete this fixture?')) return;
       try {
-        const res = await fetch(`/admin/fixtures/${fixtureId}`, {
+        const res = await authFetch(`/admin/fixtures/${fixtureId}`, {
           method: 'DELETE',
-          headers: this.authHeader(),
         });
         if (!res.ok) {
           const err = await res.json();
