@@ -119,22 +119,23 @@ function onboardingApp() {
     ],
 
     init() {
-      // Check we have a dummy token from activation step
-      const token = localStorage.getItem('dummy_token');
+      // Check if we have a JWT token
+      const token = localStorage.getItem('jwt_token');
       if (!token) {
-        // If no token, redirect to activation
-        // window.location.href = '/activate';
+        // If no token, redirect to login
+        window.location.href = '/login.html';
       }
     },
 
     async submit() {
       const name = this.teamName.trim();
-      if (name.length < 2) return;
+      if (name.length < 2 || name.length > 50) return;
       this.loading = true;
       this.errorMsg = '';
-      const token = localStorage.getItem('dummy_token') || 'dummy-token-user-1';
+      
+      const token = localStorage.getItem('jwt_token');
       try {
-        const resp = await fetch('/auth/onboarding/team-name', {
+        const resp = await fetch('/auth/onboarding', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -144,8 +145,8 @@ function onboardingApp() {
         });
         const data = await resp.json();
         if (resp.ok) {
-          // Onboarding complete — go to squad builder
-          window.location.href = '/squad-builder.html';
+          // Onboarding complete — go to profile
+          window.location.href = '/profile';
         } else {
           this.errorMsg = data.detail || 'Could not save team name. Please try again.';
         }

@@ -279,16 +279,46 @@
             return;
           }
           
-          // Simulate login process
-          this.error = '';
-          this.success = '¡Inicio de sesión exitoso! Redirigiendo...';
-          
-          // Reset success message after delay
-          setTimeout(() => {
+          // Make actual API call
+          fetch('/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              username: this.email,
+              password: this.password
+            })
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Credenciales inválidas');
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Store JWT token
+            localStorage.setItem('jwt_token', data.access_token);
+            
+            // Check if onboarding is complete
+            fetch('/auth/me', {
+              headers: {
+                'Authorization': `Bearer ${data.access_token}`
+              }
+            })
+            .then(response => response.json())
+            .then(user => {
+              if (user.onboarding_complete === false) {
+                window.location.href = '/onboarding';
+              } else {
+                window.location.href = '/profile';
+              }
+            });
+          })
+          .catch(error => {
+            this.error = 'Credenciales inválidas';
             this.success = '';
-            // In a real app, you would redirect to dashboard or home
-            // window.location.href = '/dashboard';
-          }, 2000);
+          });
         }
       }
     }

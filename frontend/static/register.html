@@ -198,7 +198,28 @@ function registerApp() {
         });
         const data = await resp.json();
         if (resp.ok) {
-          this.registered = true;
+          // Immediately call login with same credentials
+          const loginResp = await fetch('/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              username: this.form.username.trim(),
+              password: this.form.password,
+            })
+          });
+          
+          if (loginResp.ok) {
+            const loginData = await loginResp.json();
+            // Store JWT token
+            localStorage.setItem('jwt_token', loginData.access_token);
+            // Redirect to onboarding
+            window.location.href = '/onboarding.html';
+          } else {
+            const errorData = await loginResp.json();
+            this.errorMsg = errorData.detail || 'Error en el inicio de sesión';
+          }
         } else {
           this.errorMsg = data.detail || 'El registro falló. Por favor inténtalo de nuevo.';
         }
