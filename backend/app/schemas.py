@@ -29,6 +29,10 @@ class ActivateAccountRequest(BaseModel):
 class SetTeamNameRequest(BaseModel):
     team_name: str
 
+class TeamResponse(BaseModel):
+    team_id: int
+    team_name: str
+
 class SeasonCreate(BaseModel):
     name: str
     start_date: date

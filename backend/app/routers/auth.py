@@ -74,13 +74,13 @@ def activate_account(payload: schemas.ActivateAccountRequest, db: Session = Depe
     return user
 
 
-@router.post("/onboarding/team-name", response_model=schemas.UserResponse)
-def set_team_name(
+@router.post("/onboarding", response_model=schemas.TeamResponse)
+def complete_onboarding(
     payload: schemas.SetTeamNameRequest,
     request: Request,
     db: Session = Depends(get_db)
 ):
-    """Second onboarding step: set the user's fantasy team name."""
+    """Complete onboarding by creating a fantasy team."""
     user_id = get_current_user_id_from_token(request)
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
@@ -88,30 +88,36 @@ def set_team_name(
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account not yet activated")
     
+    # Validate team name
     team_name = payload.team_name.strip()
     if len(team_name) < 2 or len(team_name) > 50:
         raise HTTPException(status_code=400, detail="Team name must be between 2 and 50 characters")
 
-    season = db.query(models.Season).filter(models.Season.status == models.SeasonStatus.active).first()
-    if season:
-        team = db.query(models.FantasyTeam).filter(
-            models.FantasyTeam.user_id == user_id,
-            models.FantasyTeam.season_id == season.id
-        ).first()
-        if team:
-            team.name = team_name
-        else:
-            team = models.FantasyTeam(
-                name=team_name,
-                user_id=user_id,
-                season_id=season.id
-            )
-            db.add(team)
-
+    # Get the first league
+    league = db.query(models.League).first()
+    if not league:
+        raise HTTPException(status_code=400, detail="No league found")
+    
+    # Create fantasy team
+    fantasy_team = models.FantasyTeam(
+        name=team_name,
+        user_id=user_id,
+        season_id=league.season_id
+    )
+    
+    db.add(fantasy_team)
+    db.commit()
+    db.refresh(fantasy_team)
+    
+    # Mark user as onboarding complete
     user.onboarding_complete = True
     db.commit()
     db.refresh(user)
-    return user
+    
+    return {
+        "team_id": fantasy_team.id,
+        "team_name": fantasy_team.name
+    }
 
 
 @router.get("/me", response_model=schemas.UserResponse)
