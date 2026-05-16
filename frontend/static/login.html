@@ -39,49 +39,100 @@
       flex-direction: column;
       overflow-x: hidden;
     }
-    /* header (compact) */
-    .app-header {
+    /* ── NAVBAR ── */
+    .navbar {
       position: sticky;
       top: 0;
-      z-index: 50;
-      background: rgba(10,22,40,0.96);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      z-index: 100;
+      background: rgba(10, 22, 40, 0.88);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
     }
-    .header-inner {
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 18px;
     }
-    .header-logo {
+    .nav-brand {
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-    .logo-icon { font-size: 1.5rem; }
-    .logo-label {
-      font-size: 1.25rem;
-      font-weight: 800;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 900;
+      font-size: 1.3rem;
+      color: var(--text-white);
       letter-spacing: -0.01em;
+    }
+    .nav-brand span { font-size: 1.5rem; }
+    .nav-brand em {
+      font-style: normal;
+      color: var(--teal);
     }
     .nav-links {
       display: flex;
-      gap: 20px;
+      align-items: center;
+      gap: 0.25rem;
     }
-    .nav-link {
+    .nav-links a {
       color: var(--text-dim);
       text-decoration: none;
       font-weight: 700;
-      font-size: 0.9rem;
-      transition: color 0.2s;
+      font-size: 0.88rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-sm);
+      transition: color 0.2s, background 0.2s;
     }
-    .nav-link.active {
-      color: var(--teal);
-      border-bottom: 2px solid var(--teal);
-      padding-bottom: 4px;
+    .nav-links a:hover {
+      color: var(--text-white);
+      background: rgba(255,255,255,0.06);
     }
-    .nav-link:hover { color: var(--teal); }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-ghost-sm {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: var(--text-white);
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-ghost-sm:hover {
+      border-color: rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.05);
+    }
+    .btn-teal-sm {
+      background: var(--teal);
+      color: var(--navy);
+      padding: 0.45rem 1.1rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-teal-sm:hover {
+      background: var(--teal-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px var(--teal-glow);
+    }
+    @media (max-width: 680px) {
+      .nav-links { display: none; }
+    }
 
     /* main container */
     .login-container {
@@ -199,23 +250,19 @@
   </style>
 </head>
 <body>
-  <!-- ── MAIN NAVIGATION ── -->
-  <nav class="main-nav">
-    <div class="nav-container">
+  <!-- ── NAVBAR ── -->
+  <nav class="navbar">
+    <div class="nav-inner">
       <a href="/" class="nav-brand">
-        <span class="nav-logo-icon">⚽</span>
-        Fantasy SV
+        <span>⚽</span> Fantasy<em>SV</em>
       </a>
-      
-      <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
-        <span></span><span></span><span></span>
-      </button>
-
-      <div class="nav-links" id="nav-links">
-        <a href="squad-builder.html" class="nav-link">Mi Equipo</a>
-        <a href="leaderboard.html" class="nav-link">Clasificación</a>
-        <a href="profile.html" class="nav-link">Perfil</a>
-        <button class="sign-out-btn">Cerrar Sesión</button>
+      <div class="nav-links">
+        <a href="/leaderboard">Clasificación</a>
+        <a href="/schedule">Calendario</a>
+      </div>
+      <div class="nav-actions">
+        <a href="/login" class="btn-ghost-sm" style="border-color:rgba(0,212,170,0.4);color:var(--teal);">Iniciar Sesión</a>
+        <a href="/register" class="btn-teal-sm">Registrarse</a>
       </div>
     </div>
   </nav>
