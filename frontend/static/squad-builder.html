@@ -281,7 +281,7 @@
                         <span class="budget-pill-label">Presupuesto</span>
                         <span
                             class="budget-pill-value"
-                            x-text="remainingCredits.toFixed(1) + ' CR'"
+                            x-text="remainingCredits.toFixed(1) + ' $'"
                         ></span>
                     </div>
                 </div>
@@ -839,7 +839,7 @@
                             font-size="11"
                             fill="rgba(255,255,255,0.4)"
                         >
-                            de 100 CR
+                            de 100 $
                         </text>
                     </svg>
                 </div>
@@ -985,7 +985,7 @@
                                 :class="'pos-badge-'+p.pos.toLowerCase()"
                                 x-text="p.pos"
                             ></span>
-                            <span class="row-cost" x-text="p.cost+' CR'"></span>
+                            <span class="row-cost" x-text="p.cost+' $'"></span>
                             <span class="row-check" x-show="isSelected(p.id)"
                                 >✓</span
                             >
@@ -1082,7 +1082,7 @@
                             </div>
                             <span
                                 class="squad-cost"
-                                x-text="p.cost+' CR'"
+                                x-text="p.cost+' $'"
                             ></span>
                             <span
                                 x-show="wildcardPlayerId===p.id"
@@ -1139,7 +1139,7 @@
                                 >BENCH</span
                             >
                         </div>
-                        <span class="squad-cost" x-text="p.cost+' CR'"></span>
+                        <span class="squad-cost" x-text="p.cost+' $'"></span>
                         <button
                             class="squad-remove"
                             @click.stop="removePlayer(p)"
@@ -2382,7 +2382,7 @@
                             );
                         if (this.remainingCredits < 0)
                             e.push(
-                                `Presupuesto excedido por ${-this.remainingCredits} CR`,
+                                `Presupuesto excedido por ${-this.remainingCredits} $`,
                             );
                         if (this.countInSquad("GK") !== 1)
                             e.push("Se requiere exactamente 1 portero");
