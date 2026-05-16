@@ -455,7 +455,7 @@ function adminApp() {
     // ── init ────────────────────────────────────────────
     async init() {
       try {
-        const res = await authFetch('/admin/seasons', { method: 'GET' });
+        const res = await authFetch('/seasons', { method: 'GET' });
         if (res.ok) { const d = await res.json(); this.seasons = d.seasons; }
       } catch { this.showMessage('Failed to load seasons', 'error'); }
     },
@@ -470,8 +470,8 @@ function adminApp() {
       if (!this.selectedSeasonId) return;
       try {
         const [resL, resM] = await Promise.all([
-          authFetch(`/admin/seasons/${this.selectedSeasonId}/leagues`,  { method: 'GET' }),
-          authFetch(`/admin/seasons/${this.selectedSeasonId}/matchdays`, { method: 'GET'  }),
+          authFetch(`/seasons/${this.selectedSeasonId}/leagues`,  { method: 'GET' }),
+          authFetch(`/seasons/${this.selectedSeasonId}/matchdays`, { method: 'GET'  }),
         ]);
         if (resL.ok) { const d = await resL.json(); this.leagues = d.leagues; }
         if (resM.ok) { const d = await resM.json(); this.matchdays = d.matchdays; }
@@ -492,7 +492,7 @@ function adminApp() {
       if (!this.selectedSeasonId) return;
       try {
         const res = await authFetch(
-          `/admin/seasons/${this.selectedSeasonId}/teams`,
+          `/seasons/${this.selectedSeasonId}/teams`,
           { method: 'GET' }
         );
         if (res.ok) { const d = await res.json(); this.allTeams = d.teams ?? d; }
@@ -507,7 +507,7 @@ function adminApp() {
     async loadFixtures() {
       if (!this.matchdayId) return;
       try {
-        const res = await authFetch(`/admin/matchday/${this.matchdayId}/fixtures`,
+        const res = await authFetch(`/matchday/${this.matchdayId}/fixtures`,
                                 { method: 'GET' });
         if (res.ok) { const d = await res.json(); this.savedFixtures = d.fixtures ?? []; }
       } catch { /* endpoint may not exist yet */ }

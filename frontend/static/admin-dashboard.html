@@ -633,7 +633,7 @@
         // ── Export Players ────────────────────────────────────────────────────────
         async function loadSeasonsForExport() {
             try {
-                const res = await authFetch('/admin/seasons');
+                const res = await authFetch('/seasons/');
                 if (!res.ok) return;
                 const data = await res.json();
                 const sel  = document.getElementById('export-season');
@@ -713,7 +713,7 @@
         // ── Matchday CRUD ─────────────────────────────────────────────────────────
         async function mdLoadSeasons() {
             try {
-                const res  = await authFetch('/admin/seasons');
+                const res  = await authFetch('/seasons/');
                 if (!res.ok) return;
                 const data = await res.json();
                 const sel  = document.getElementById('md-crud-season');
@@ -738,7 +738,7 @@
             if (!seasonId) return;
 
             try {
-                const res  = await authFetch(`/admin/seasons/${seasonId}/matchdays`);
+                const res  = await authFetch(`/seasons/${seasonId}/matchdays`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 _mdData    = data.matchdays || [];

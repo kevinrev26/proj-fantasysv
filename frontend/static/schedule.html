@@ -498,7 +498,7 @@ function scheduleApp() {
       this._ticker = setInterval(() => { this._now = new Date(); }, 30000);
 
       try {
-        const res = await fetch('/admin/seasons', { headers: { Authorization: 'Bearer dummy-admin-token' } });
+        const res = await fetch('/seasons/');
         if (res.ok) {
           const d = await res.json();
           this.seasons = d.seasons ?? [];
@@ -515,8 +515,8 @@ function scheduleApp() {
       try {
         // Load matchdays + teams in parallel
         const [resM, resT] = await Promise.all([
-          fetch(`/admin/seasons/${this.selectedSeasonId}/matchdays`, { headers: { Authorization: 'Bearer dummy-admin-token' } }),
-          fetch(`/admin/seasons/${this.selectedSeasonId}/teams`,     { headers: { Authorization: 'Bearer dummy-admin-token' } }),
+          fetch(`/seasons/${this.selectedSeasonId}/matchdays`),
+          fetch(`/seasons/${this.selectedSeasonId}/teams`),
         ]);
 
         if (resT.ok) {
@@ -532,7 +532,7 @@ function scheduleApp() {
         // Load fixtures for each matchday
         const enriched = await Promise.all(mds.map(async md => {
           try {
-            const r = await fetch(`/admin/matchday/${md.id}/fixtures`, { headers: { Authorization: 'Bearer dummy-admin-token' } });
+            const r = await fetch(`/matchday/${md.id}/fixtures`);
             if (r.ok) {
               const fd = await r.json();
               md.fixtures = (fd.fixtures ?? []).map(f => ({

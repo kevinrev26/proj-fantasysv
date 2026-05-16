@@ -3,7 +3,7 @@ import uuid
 import structlog
 import sentry_sdk
 import redis
-from fastapi import FastAPI, Depends, Request, Response
+from fastapi import FastAPI, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from .database import get_db, Base, engine
@@ -100,3 +100,84 @@ def test_celery(a: int = 1, b: int = 2):
     logger.info("Testing Celery task", a=a, b=b)
     task = add_numbers_task.delay(a, b)
     return {"task_id": task.id}
+
+
+@app.get("/matchday/{matchday_id}/fixtures")
+def get_fixtures(matchday_id: int, db: Session = Depends(get_db)):
+    """Return all fixtures for a matchday."""
+    matchday = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
+    if not matchday:
+        raise HTTPException(status_code=404, detail="Matchday not found")
+    return {
+        "fixtures": [
+            {
+                "id": f.id,
+                "matchday_id": f.matchday_id,
+                "home_team_id": f.home_team_id,
+                "away_team_id": f.away_team_id,
+                "kickoff_utc": f.kickoff_utc.isoformat(),
+                "finished": f.finished,
+            }
+            for f in matchday.fixtures
+        ]
+    }
+
+@app.get("/seasons")
+def get_seasons(db: Session = Depends(get_db)):
+    seasons = db.query(models.Season).all()
+    return {"seasons": seasons}
+
+@app.get("/seasons/{season_id}/leagues")
+def get_leagues(season_id: int, db: Session = Depends(get_db)):
+    leagues = db.query(models.League).filter(models.League.season_id == season_id).all()
+    return {"leagues": leagues}
+
+@app.get("/seasons/{season_id}/matchdays")
+def get_matchdays(season_id: int, db: Session = Depends(get_db)):
+    mds = db.query(models.Matchday).filter(
+        models.Matchday.season_id == season_id
+    ).order_by(models.Matchday.id).all()
+    return {"matchdays": [
+        {
+            "id": md.id,
+            "name": md.name,
+            "season_id": md.season_id,
+            "status": md.status.value,
+            "is_locked": md.is_locked,
+            "lock_at_utc": md.lock_at_utc.isoformat() if md.lock_at_utc else None,
+            "locked_at": md.locked_at.isoformat() if md.locked_at else None,
+            "task_status": md.task_status,
+            "fixture_count": len(md.fixtures),
+        }
+        for md in mds
+    ]}
+
+@app.get("/seasons/{season_id}/teams")
+def get_teams_for_season(season_id: int, db: Session = Depends(get_db)):
+    """Return all teams belonging to any league in a season (for fixture dropdowns)."""
+    teams = (
+        db.query(models.Team)
+        .join(models.League, models.Team.league_id == models.League.id)
+        .filter(models.League.season_id == season_id)
+        .order_by(models.Team.name)
+        .all()
+    )
+    return {"teams": [{"id": t.id, "name": t.name, "league_id": t.league_id} for t in teams]}
+
+@app.get("/matchday/{matchday_id}", status_code=200)
+def get_matchday(matchday_id: int, db: Session = Depends(get_db)):
+    """Return a single matchday with its fixtures and lock state."""
+    md = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
+    if not md:
+        raise HTTPException(status_code=404, detail="Matchday not found")
+    return {
+        "id": md.id,
+        "name": md.name,
+        "season_id": md.season_id,
+        "status": md.status.value,
+        "is_locked": md.is_locked,
+        "lock_at_utc": md.lock_at_utc.isoformat() if md.lock_at_utc else None,
+        "locked_at": md.locked_at.isoformat() if md.locked_at else None,
+        "task_status": md.task_status,
+        "fixture_count": len(md.fixtures),
+    }
