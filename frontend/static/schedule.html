@@ -6,6 +6,7 @@
   <title>Calendario — Fantasy SV</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="/js/auth.js"></script>
   <style>
     /* ── Variables ── */
     :root {
@@ -498,7 +499,7 @@ function scheduleApp() {
       this._ticker = setInterval(() => { this._now = new Date(); }, 30000);
 
       try {
-        const res = await fetch('/seasons/');
+        const res = await fetch('/seasons');
         if (res.ok) {
           const d = await res.json();
           this.seasons = d.seasons ?? [];
