@@ -431,12 +431,10 @@
             const data = await resp.json();
             this.allTeams = data.leaderboard || [];
           } else {
-            console.warn("Failed to load real leaderboard data, using mock", resp.statusText);
-            this.allTeams = generateMockTeams();
+            console.warn("Failed to load real leaderboard data", resp.statusText);
           }
         } catch (e) {
-          console.warn("Failed to fetch leaderboard API, falling back to mock", e);
-          this.allTeams = generateMockTeams();
+          console.warn("Failed to fetch leaderboard API", e);
         }
         this.updatePaginated();
       },
