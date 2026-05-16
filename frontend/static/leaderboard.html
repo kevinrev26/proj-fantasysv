@@ -426,7 +426,7 @@
 
       async loadTeams() {
         try {
-          const resp = await fetch('/squad/leaderboard', { headers: { 'Authorization': 'Bearer dummy-token-user-1' } });
+          const resp = await fetch('/squad/leaderboard');
           if (resp.ok) {
             const data = await resp.json();
             this.allTeams = data.leaderboard || [];
