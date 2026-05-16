@@ -334,13 +334,6 @@
             >
                 <span class="tab-icon">📋</span> Equipo
             </button>
-            <button
-                class="tab-btn"
-                :class="activeTab==='points' && 'active'"
-                @click="activeTab='points'; loadPoints()"
-            >
-                <span class="tab-icon">📊</span> Puntos
-            </button>
         </div>
 
         <!-- ══════════ PITCH TAB ══════════ -->
@@ -1175,424 +1168,6 @@
         </div>
 
         <!-- ══════════ POINTS TAB ══════════ -->
-        <div
-            class="tab-content"
-            x-show="activeTab==='points'"
-            style="padding: 0 12px 80px"
-        >
-            <div class="pool-header">
-                <h2 class="pool-title">📊 Puntos</h2>
-                <span
-                    class="pool-subtitle"
-                    x-text="allMatchdays.length ? 'Historial de la temporada' : 'Aún no hay resultados de jornadas'"
-                ></span>
-            </div>
-
-            <!-- Matchday selector pills -->
-            <div
-                x-show="allMatchdays.length"
-                style="
-                    display: flex;
-                    gap: 6px;
-                    flex-wrap: wrap;
-                    margin: 10px 0 14px;
-                    overflow-x: auto;
-                    padding-bottom: 4px;
-                "
-            >
-                <template x-for="md in allMatchdays" :key="md.matchday.id">
-                    <button
-                        @click="selectedMdId = md.matchday.id"
-                        :style="selectedMdId === md.matchday.id
-                            ? 'background:var(--teal);color:#000;font-weight:800;'
-                            : 'background:rgba(255,255,255,0.07);color:var(--text-dim);'"
-                        style="
-                            border: none;
-                            border-radius: 20px;
-                            padding: 5px 14px;
-                            font-size: 0.78rem;
-                            cursor: pointer;
-                            white-space: nowrap;
-                            flex-shrink: 0;
-                        "
-                        x-text="md.matchday.name"
-                    ></button>
-                </template>
-            </div>
-
-            <!-- Summary cards for selected matchday -->
-            <template x-if="selectedMd">
-                <div>
-                    <div
-                        style="
-                            display: flex;
-                            gap: 10px;
-                            margin-bottom: 14px;
-                            flex-wrap: wrap;
-                        "
-                    >
-                        <div
-                            style="
-                                flex: 1;
-                                min-width: 130px;
-                                background: rgba(0, 212, 170, 0.1);
-                                border: 1px solid rgba(0, 212, 170, 0.3);
-                                border-radius: 12px;
-                                padding: 14px 16px;
-                                text-align: center;
-                            "
-                        >
-                            <div
-                                style="
-                                    font-size: 0.72rem;
-                                    color: var(--text-dim);
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.05em;
-                                    margin-bottom: 4px;
-                                "
-                            >
-                                Puntos de Jornada
-                            </div>
-                            <div
-                                style="
-                                    font-size: 2rem;
-                                    font-weight: 900;
-                                    color: var(--teal);
-                                "
-                                x-text="selectedMd.team_total"
-                            ></div>
-                        </div>
-                        <div
-                            style="
-                                flex: 1;
-                                min-width: 130px;
-                                background: rgba(255, 255, 255, 0.04);
-                                border: 1px solid rgba(255, 255, 255, 0.08);
-                                border-radius: 12px;
-                                padding: 14px 16px;
-                                text-align: center;
-                            "
-                        >
-                            <div
-                                style="
-                                    font-size: 0.72rem;
-                                    color: var(--text-dim);
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.05em;
-                                    margin-bottom: 4px;
-                                "
-                            >
-                                Acumulados
-                            </div>
-                            <div
-                                style="font-size: 2rem; font-weight: 900"
-                                x-text="selectedMd.cumulative"
-                            ></div>
-                        </div>
-                        <div
-                            style="
-                                flex: 1;
-                                min-width: 130px;
-                                background: rgba(255, 255, 255, 0.02);
-                                border: 1px solid rgba(255, 255, 255, 0.06);
-                                border-radius: 12px;
-                                padding: 14px 16px;
-                                text-align: center;
-                            "
-                        >
-                            <div
-                                style="
-                                    font-size: 0.72rem;
-                                    color: var(--text-dim);
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.05em;
-                                    margin-bottom: 4px;
-                                "
-                            >
-                                Estado
-                            </div>
-                            <div
-                                style="
-                                    font-size: 1rem;
-                                    font-weight: 800;
-                                    text-transform: capitalize;
-                                "
-                                x-text="selectedMd.matchday.status.replace('_',' ')"
-                            ></div>
-                        </div>
-                    </div>
-
-                    <!-- Starters -->
-                    <div
-                        style="
-                            font-size: 0.7rem;
-                            font-weight: 800;
-                            text-transform: uppercase;
-                            letter-spacing: 0.1em;
-                            color: var(--text-dim);
-                            margin: 8px 0 6px;
-                        "
-                    >
-                        XI Inicial
-                    </div>
-                    <div
-                        style="
-                            background: rgba(255, 255, 255, 0.03);
-                            border: 1px solid rgba(255, 255, 255, 0.07);
-                            border-radius: 12px;
-                            overflow: hidden;
-                        "
-                    >
-                        <template
-                            x-for="p in selectedMd.players.filter(p=>p.slot==='starter')"
-                            :key="p.player_id"
-                        >
-                            <div
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 10px;
-                                    padding: 10px 14px;
-                                    border-bottom: 1px solid
-                                        rgba(255, 255, 255, 0.05);
-                                "
-                            >
-                                <div
-                                    :class="'pos-badge pos-'+p.pos.toLowerCase()"
-                                    x-text="p.pos"
-                                    style="
-                                        width: 30px;
-                                        text-align: center;
-                                        font-size: 0.65rem;
-                                        font-weight: 800;
-                                        padding: 2px 4px;
-                                        border-radius: 5px;
-                                        flex-shrink: 0;
-                                    "
-                                ></div>
-                                <div style="flex: 1; min-width: 0">
-                                    <div
-                                        style="
-                                            font-weight: 700;
-                                            font-size: 0.88rem;
-                                            white-space: nowrap;
-                                            overflow: hidden;
-                                            text-overflow: ellipsis;
-                                        "
-                                        x-text="p.name"
-                                    ></div>
-                                    <div
-                                        style="
-                                            font-size: 0.72rem;
-                                            color: var(--text-dim);
-                                        "
-                                        x-text="p.club"
-                                    ></div>
-                                </div>
-                                <!-- stat pills -->
-                                <div
-                                    style="
-                                        display: flex;
-                                        gap: 4px;
-                                        flex-wrap: wrap;
-                                        justify-content: flex-end;
-                                    "
-                                >
-                                    <template x-if="p.minutes_played > 0">
-                                        <span class="stat-pill" title="Minutes"
-                                            >⏱
-                                            <span
-                                                x-text="p.minutes_played"
-                                            ></span
-                                            >'</span
-                                        >
-                                    </template>
-                                    <template x-if="p.goals > 0">
-                                        <span
-                                            class="stat-pill stat-pill--green"
-                                            title="Goals"
-                                            >⚽ <span x-text="p.goals"></span
-                                        ></span>
-                                    </template>
-                                    <template x-if="p.assists > 0">
-                                        <span
-                                            class="stat-pill stat-pill--blue"
-                                            title="Assists"
-                                            >🅰️ <span x-text="p.assists"></span
-                                        ></span>
-                                    </template>
-                                    <template x-if="p.clean_sheet">
-                                        <span
-                                            class="stat-pill stat-pill--teal"
-                                            title="Clean sheet"
-                                            >🛡</span
-                                        >
-                                    </template>
-                                    <template x-if="p.yellow_card > 0">
-                                        <span
-                                            class="stat-pill stat-pill--yellow"
-                                            title="Yellow card"
-                                            >🟨</span
-                                        >
-                                    </template>
-                                    <template x-if="p.red_card > 0">
-                                        <span
-                                            class="stat-pill stat-pill--red"
-                                            title="Red card"
-                                            >🟥</span
-                                        >
-                                    </template>
-                                </div>
-                                <!-- points -->
-                                <div
-                                    style="
-                                        text-align: right;
-                                        flex-shrink: 0;
-                                        min-width: 44px;
-                                    "
-                                >
-                                    <div
-                                        style="
-                                            font-size: 1.2rem;
-                                            font-weight: 900;
-                                        "
-                                        :style="p.final_points>0?'color:var(--teal)':p.final_points<0?'color:#ff6b6b':''"
-                                        x-text="p.final_points"
-                                    ></div>
-                                    <div
-                                        style="
-                                            font-size: 0.65rem;
-                                            color: var(--text-dim);
-                                        "
-                                    >
-                                        pts
-                                    </div>
-                                    <div
-                                        x-show="p.is_x2_joker"
-                                        style="
-                                            font-size: 0.6rem;
-                                            color: #ffc850;
-                                            font-weight: 800;
-                                        "
-                                    >
-                                        ×2 🃏
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-
-                    <!-- Bench -->
-                    <div
-                        style="
-                            font-size: 0.7rem;
-                            font-weight: 800;
-                            text-transform: uppercase;
-                            letter-spacing: 0.1em;
-                            color: var(--text-dim);
-                            margin: 14px 0 6px;
-                        "
-                    >
-                        Banco
-                    </div>
-                    <div
-                        style="
-                            background: rgba(255, 255, 255, 0.02);
-                            border: 1px solid rgba(255, 255, 255, 0.05);
-                            border-radius: 12px;
-                            overflow: hidden;
-                        "
-                    >
-                        <template
-                            x-for="p in selectedMd.players.filter(p=>p.slot==='bench')"
-                            :key="p.player_id"
-                        >
-                            <div
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 10px;
-                                    padding: 10px 14px;
-                                    border-bottom: 1px solid
-                                        rgba(255, 255, 255, 0.04);
-                                    opacity: 0.75;
-                                "
-                            >
-                                <div
-                                    :class="'pos-badge pos-'+p.pos.toLowerCase()"
-                                    x-text="p.pos"
-                                    style="
-                                        width: 30px;
-                                        text-align: center;
-                                        font-size: 0.65rem;
-                                        font-weight: 800;
-                                        padding: 2px 4px;
-                                        border-radius: 5px;
-                                        flex-shrink: 0;
-                                    "
-                                ></div>
-                                <div style="flex: 1; min-width: 0">
-                                    <div
-                                        style="
-                                            font-weight: 700;
-                                            font-size: 0.88rem;
-                                            white-space: nowrap;
-                                            overflow: hidden;
-                                            text-overflow: ellipsis;
-                                        "
-                                        x-text="p.name"
-                                    ></div>
-                                    <div
-                                        style="
-                                            font-size: 0.72rem;
-                                            color: var(--text-dim);
-                                        "
-                                        x-text="p.club"
-                                    ></div>
-                                </div>
-                                <div
-                                    style="
-                                        font-size: 1.1rem;
-                                        font-weight: 800;
-                                        color: var(--text-dim);
-                                    "
-                                    x-text="p.final_points + ' pts'"
-                                ></div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Empty state -->
-            <div
-                x-show="!allMatchdays.length && !pointsLoading"
-                style="
-                    text-align: center;
-                    padding: 48px 16px;
-                    color: var(--text-dim);
-                "
-            >
-                <div style="font-size: 2.5rem; margin-bottom: 12px">📭</div>
-                <div style="font-weight: 700">Aún no hay resultados</div>
-                <div style="font-size: 0.85rem; margin-top: 6px">
-                    Los puntos aparecerán aquí una vez que el administrador
-                    envíe los resultados.
-                </div>
-            </div>
-
-            <!-- Loading -->
-            <div
-                x-show="pointsLoading"
-                style="
-                    text-align: center;
-                    padding: 32px;
-                    color: var(--text-dim);
-                "
-            >
-                Cargando…
-            </div>
-        </div>
 
         <!-- Modals & Toast -->
         <div
@@ -2917,42 +2492,42 @@
                     },
 
                     // ── POINTS TAB ────────────────────────────────────────────────────────────
-                    get selectedMd() {
-                        if (!this.selectedMdId) return null;
-                        return (
-                            this.allMatchdays.find(
-                                (m) => m.matchday.id === this.selectedMdId,
-                            ) || null
-                        );
-                    },
-                    async loadPoints() {
-                        if (this.pointsLoading) return;
-                        this.pointsLoading = true;
-                        try {
-                            const r = await authFetch(
-                                "/squad/points/all-matchdays",
-                            );
-                            if (!r.ok) throw new Error("Failed to load points");
-                            const d = await r.json();
-                            this.allMatchdays = d.matchdays || [];
-                            // Auto-select the most recent matchday
-                            if (
-                                this.allMatchdays.length &&
-                                !this.selectedMdId
-                            ) {
-                                this.selectedMdId =
-                                    this.allMatchdays[
-                                        this.allMatchdays.length - 1
-                                    ].matchday.id;
-                            }
-                        } catch (e) {
-                            this.toast(
-                                "No se pudo cargar los puntos: " + e.message,
-                            );
-                        } finally {
-                            this.pointsLoading = false;
-                        }
-                    },
+                    // get selectedMd() {
+                    //     if (!this.selectedMdId) return null;
+                    //     return (
+                    //         this.allMatchdays.find(
+                    //             (m) => m.matchday.id === this.selectedMdId,
+                    //         ) || null
+                    //     );
+                    // },
+                    // async loadPoints() {
+                    //     if (this.pointsLoading) return;
+                    //     this.pointsLoading = true;
+                    //     try {
+                    //         const r = await authFetch(
+                    //             "/squad/points/all-matchdays",
+                    //         );
+                    //         if (!r.ok) throw new Error("Failed to load points");
+                    //         const d = await r.json();
+                    //         this.allMatchdays = d.matchdays || [];
+                    //         // Auto-select the most recent matchday
+                    //         if (
+                    //             this.allMatchdays.length &&
+                    //             !this.selectedMdId
+                    //         ) {
+                    //             this.selectedMdId =
+                    //                 this.allMatchdays[
+                    //                     this.allMatchdays.length - 1
+                    //                 ].matchday.id;
+                    //         }
+                    //     } catch (e) {
+                    //         this.toast(
+                    //             "No se pudo cargar los puntos: " + e.message,
+                    //         );
+                    //     } finally {
+                    //         this.pointsLoading = false;
+                    //     }
+                    // },
                 };
             }
         </script>
