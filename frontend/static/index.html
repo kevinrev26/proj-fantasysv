@@ -536,6 +536,87 @@
     }
     .footer-links a:hover { color: var(--teal); }
 
+    /* ── CREATORS ── */
+    .creators-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+    .creator-card {
+      background: rgba(15, 32, 64, 0.6);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .creator-card:hover {
+      border-color: rgba(0, 212, 170, 0.2);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.35);
+    }
+    .creator-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .creator-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      object-fit: contain;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 6px;
+      flex-shrink: 0;
+    }
+    .creator-name {
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      margin-bottom: 2px;
+    }
+    .creator-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--teal);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .creator-desc {
+      color: var(--text-dim);
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.65;
+    }
+    .creator-contacts {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 1.1rem;
+    }
+    .creator-contact-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .creator-contact-row:hover { color: var(--teal); }
+    .creator-contact-row .icon {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 680px) {
       .nav-links { display: none; }
@@ -543,6 +624,7 @@
       .stat-divider { display: none; }
       .cta-card { padding: 2.5rem 1.5rem; }
       .footer-inner { flex-direction: column; align-items: center; text-align: center; }
+      .creators-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -578,7 +660,7 @@
     <div class="hero-content">
       <div class="hero-badge">
         <span class="dot"></span>
-        Temporada 2025 en curso
+        Temporada 2026 en curso
       </div>
       <h1>
         El Fantasy del<br/>
@@ -627,14 +709,14 @@
 
       <div class="features-grid">
         <div class="feature-card">
-          <div class="feature-icon-wrap">🏆</div>
-          <h3>Ligas Competitivas</h3>
-          <p>Crea tu propia liga privada o únete a la liga global. Compite con amigos o con todos los usuarios de la plataforma.</p>
+          <div class="feature-icon-wrap">🧠</div>
+          <h3>Estrategia Jornada a Jornada</h3>
+          <p>Rota tu plantilla, gestiona tu presupuesto y toma decisiones tácticas antes de cada fecha. Cada transferencia cuenta.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon-wrap">⚡</div>
-          <h3>Puntuación en Tiempo Real</h3>
-          <p>Sigue los puntos de tus jugadores jornada a jornada, con estadísticas actualizadas al finalizar cada partido.</p>
+          <div class="feature-icon-wrap">📊</div>
+          <h3>Estadísticas de Jugadores</h3>
+          <p>Consulta el rendimiento histórico de cada jugador de la liga salvadoreña y toma decisiones informadas para tu once.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon-wrap">🥇</div>
@@ -677,6 +759,69 @@
     </div>
   </section>
 
+  <!-- CREATORS -->
+  <section class="section" style="padding-top: 0;">
+    <div class="section-inner">
+      <p class="section-eyebrow">Detrás del proyecto</p>
+      <h2 class="section-title">Hecho con pasión en El Salvador</h2>
+      <p class="section-sub">Fantasy SV es el resultado de la unión entre dos empresas salvadoreñas que comparten el amor por el deporte, la tecnología y la innovación.</p>
+
+      <div class="creators-grid">
+
+        <!-- D'Volea -->
+        <div class="creator-card">
+          <div class="creator-header">
+            <img src="/img/dvolea-logo.png" alt="D'Volea logo" class="creator-logo"/>
+            <div>
+              <div class="creator-name">D'Volea</div>
+              <div class="creator-tag">Tienda Deportiva</div>
+            </div>
+          </div>
+          <p class="creator-desc">
+            La tienda en línea líder en El Salvador para jerseys de fútbol, equipamiento deportivo y todo lo que un verdadero aficionado necesita. D'Volea nació de la pasión por el deporte y hoy viste a los fanáticos más exigentes del país.
+          </p>
+          <div class="creator-contacts">
+            <a href="https://dvoleasv.com" target="_blank" rel="noopener" class="creator-contact-row">
+              <span class="icon">🌐</span> dvoleasv.com
+            </a>
+            <a href="https://wa.me/50374781392" target="_blank" rel="noopener" class="creator-contact-row">
+              <span class="icon">💬</span> +503 7478 1392
+            </a>
+            <a href="mailto:general@dvoleasv.com" class="creator-contact-row">
+              <span class="icon">✉️</span> general@dvoleasv.com
+            </a>
+          </div>
+        </div>
+
+        <!-- Roque Studios -->
+        <div class="creator-card">
+          <div class="creator-header">
+            <img src="/img/roquestudios-logo.png" alt="Roque Studios logo" class="creator-logo"/>
+            <div>
+              <div class="creator-name">Roque Studios</div>
+              <div class="creator-tag">Software · Gaming · Simulaciones</div>
+            </div>
+          </div>
+          <p class="creator-desc">
+            Empresa salvadoreña de desarrollo de software, gaming y simulaciones. Roque Studios construye productos digitales de alto impacto, desde aplicaciones web hasta experiencias interactivas, siempre con tecnología de vanguardia.
+          </p>
+          <div class="creator-contacts">
+            <a href="https://roquestudios.io" target="_blank" rel="noopener" class="creator-contact-row">
+              <span class="icon">🌐</span> roquestudios.io
+            </a>
+            <a href="https://wa.me/50379262030" target="_blank" rel="noopener" class="creator-contact-row">
+              <span class="icon">💬</span> +503 7926 2030
+            </a>
+            <a href="mailto:contacto@roquestudios.io" class="creator-contact-row">
+              <span class="icon">✉️</span> contacto@roquestudios.io
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- CTA BAND -->
   <div class="cta-band">
     <div class="cta-card">
@@ -698,7 +843,7 @@
         <a href="/leaderboard">Clasificación</a>
         <a href="/schedule">Calendario</a>
       </div>
-      <div class="footer-copy">© 2025 FantasySV. Todos los derechos reservados.</div>
+      <div class="footer-copy">© 2026 FantasySV. Todos los derechos reservados.</div>
     </div>
   </footer>
 
