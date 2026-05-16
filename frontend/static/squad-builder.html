@@ -246,10 +246,7 @@
                     <a href="profile.html" class="nav-link">Perfil</a>
                     <button
                         class="sign-out-btn"
-                        onclick="
-                            localStorage.removeItem('jwt_token');
-                            window.location.href = '/login.html';
-                        "
+                        onclick="logout()"
                     >
                         Cerrar Sesión
                     </button>

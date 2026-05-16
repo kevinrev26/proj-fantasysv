@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Dict, Optional
+import uuid
 import structlog
 from passlib.context import CryptContext
 from jose import JWTError, jwt
@@ -36,14 +37,18 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
-    """Create a JWT access token."""
+    """Create a JWT access token, embedding a unique jti for blocklisting."""
     try:
         to_encode = data.copy()
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-        else:
-            expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        to_encode.update({"exp": expire})
+        expire = (
+            datetime.utcnow() + expires_delta
+            if expires_delta
+            else datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        )
+        to_encode.update({
+            "exp": expire,
+            "jti": str(uuid.uuid4()),   # unique token ID — used by logout blocklist
+        })
         encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
         logger.info("Access token created successfully")
         return encoded_jwt
@@ -52,14 +57,18 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
         raise
 
 def create_refresh_token(data: dict, expires_delta: timedelta = None) -> str:
-    """Create a JWT refresh token."""
+    """Create a JWT refresh token, embedding a unique jti."""
     try:
         to_encode = data.copy()
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
-        else:
-            expire = datetime.utcnow() + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-        to_encode.update({"exp": expire})
+        expire = (
+            datetime.utcnow() + expires_delta
+            if expires_delta
+            else datetime.utcnow() + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+        )
+        to_encode.update({
+            "exp": expire,
+            "jti": str(uuid.uuid4()),
+        })
         encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
         logger.info("Refresh token created successfully")
         return encoded_jwt
@@ -85,44 +94,37 @@ def decode_token(token: str) -> Optional[Dict]:
 def get_current_user_id_from_token(request: Request) -> int:
     """Extract user ID from authorization token in request."""
     try:
-        # Get the Authorization header
         auth_header = request.headers.get("Authorization")
         if not auth_header:
             logger.warning("No Authorization header found")
             raise HTTPException(status_code=401, detail="Authorization header missing")
-        
-        # Check if it's a Bearer token
+
         if not auth_header.startswith("Bearer "):
             logger.warning("Invalid Authorization header format")
             raise HTTPException(status_code=401, detail="Invalid authorization header format")
-        
-        # Extract token
+
         token = auth_header.split(" ")[1]
-        
-        # Decode token
+
         payload = decode_token(token)
         if not payload:
             logger.warning("Invalid or expired token")
             raise HTTPException(status_code=401, detail="Invalid or expired token")
-        
-        # Extract user ID from payload
+
         user_id = payload.get("sub")
         if not user_id:
             logger.warning("No user ID found in token payload")
             raise HTTPException(status_code=401, detail="Invalid token payload")
-        
-        # Convert to int
+
         try:
             user_id = int(user_id)
         except (ValueError, TypeError):
             logger.error("User ID in token is not a valid integer")
             raise HTTPException(status_code=401, detail="Invalid user ID in token")
-        
+
         logger.info("User ID extracted from token successfully", user_id=user_id)
         return user_id
-        
+
     except HTTPException:
-        # Re-raise HTTP exceptions
         raise
     except Exception as e:
         logger.error("Error extracting user ID from token", error=str(e))

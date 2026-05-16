@@ -247,10 +247,7 @@ function profileApp() {
     },
 
     signOut() {
-      // Remove jwt_token and user_id from localStorage
-      localStorage.removeItem('jwt_token');
-      localStorage.removeItem('user_id');
-      window.location.href = '/login.html';
+      logout();
     }
   };
 }

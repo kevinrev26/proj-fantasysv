@@ -8,7 +8,7 @@ from typing import Optional
 from app.database import get_db
 from app.models import User, UserRole
 from app.security import decode_token
-from app.config import get_settings
+from app.routers.auth import is_token_blocklisted
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -20,6 +20,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
     try:
         payload = decode_token(token)
+        if is_token_blocklisted(token):
+            raise credentials_exception
         if payload is None:
             raise credentials_exception
         user_id: str = payload.get("sub")
