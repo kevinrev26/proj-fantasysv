@@ -979,7 +979,7 @@
                             <span>🔄 Toca otro jugador del mismo puesto para intercambiar · toca de nuevo para cancelar</span>
                         </template>
                         <template x-if="!swapSource && !isDeadlinePassed && !wildcardPlayerId && starterCount >= 11">
-                            <span>☆ Toca ★ en un titular para elegir tu comodín</span>
+                            <span>☆ Toca ★ en un titular para elegir tu capitán</span>
                         </template>
                         <template x-if="!swapSource && (isDeadlinePassed || wildcardPlayerId || starterCount < 11)">
                             <span></span>
@@ -1345,14 +1345,14 @@
                 class="wildcard-locked-msg"
                 x-show="isDeadlinePassed && wildcardPlayerId"
             >
-                ⏰ Se ha superado el plazo de la jornada — comodín bloqueado.
+                ⏰ Se ha superado el plazo de la jornada — capitán bloqueado.
             </div>
             <div
                 class="wildcard-locked-msg"
                 x-show="!isDeadlinePassed && !wildcardPlayerId && starterCount >= 11"
             >
                 ☆ Haz clic en ★ en cualquier titular para establecerlo como
-                Comodín (puntos dobles).
+                capitán (puntos dobles).
             </div>
             <div
                 class="wildcard-locked-msg"
@@ -2767,17 +2767,17 @@
                         );
                         if (!isStarter) {
                             this.toast(
-                                "¡Sólo los titulares pueden ser establecidos como comodín!",
+                                "¡Sólo los titulares pueden ser establecidos como capitán!",
                             );
                             return;
                         }
                         if (this.wildcardPlayerId === playerId) {
                             this.wildcardPlayerId = null;
-                            this.toast("Comodín eliminado.");
+                            this.toast("capitán eliminado.");
                         } else {
                             this.wildcardPlayerId = playerId;
                             this.toast(
-                                `★ Comodín: ${this.selectedPlayers.find((p) => p.id === playerId)?.name}`,
+                                `★ capitán: ${this.selectedPlayers.find((p) => p.id === playerId)?.name}`,
                             );
                         }
                         this.saveToLocalStorage();
