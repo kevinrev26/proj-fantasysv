@@ -76,7 +76,7 @@
                 min-height: 270px;
                 max-height: 430px;
                 overflow: hidden;
-                background: linear-gradient(180deg, #0a2218 0%, #0d3d2a 100%);
+                background: linear-gradient(180deg, #1a4a2c 0%, #2c8c4a 100%);
             }
             @media (min-width: 768px) {
                 .field-wrapper {
@@ -219,6 +219,424 @@
             .squad-remove:active {
                 transform: scale(0.92);
             }
+
+            /* ── Pitch view toggle ── */
+            .pitch-view-toggle {
+                display: flex;
+                align-items: center;
+                gap: 0;
+                background: rgba(255,255,255,0.06);
+                border-radius: 10px;
+                padding: 3px;
+                margin: 10px 12px 8px;
+                border: 1px solid rgba(255,255,255,0.08);
+            }
+            .pv-btn {
+                flex: 1;
+                padding: 8px 10px;
+                border: none;
+                background: transparent;
+                color: rgba(255,255,255,0.5);
+                font-family: 'Nunito', sans-serif;
+                font-size: 0.78rem;
+                font-weight: 700;
+                border-radius: 7px;
+                cursor: pointer;
+                transition: all 0.18s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                white-space: nowrap;
+            }
+            .pv-btn.active {
+                background: rgba(0,212,170,0.18);
+                color: #00d4aa;
+                box-shadow: 0 1px 6px rgba(0,212,170,0.15);
+            }
+            .pv-btn:disabled {
+                opacity: 0.35;
+                cursor: not-allowed;
+            }
+            .pv-btn .pv-icon { font-size: 1rem; }
+
+            /* ══════════════════════════════════════════════
+               3D PITCH — SQUAD VIEW (Plantilla)
+            ══════════════════════════════════════════════ */
+
+            /* Outer scene – perspective origin */
+            .pitch3d-scene {
+                width: 100%;
+                min-height: calc(100vh - 180px);
+
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+
+                padding: 1.5rem 0 1rem;
+
+                overflow: hidden;
+
+                background: linear-gradient(
+                    180deg,
+                    #1e3a5f 0%,
+                    #2c5a7a 100%
+                );
+
+                position: relative;
+            }
+
+            /* The tilted pitch surface */
+            .pitch3d-field {
+                position: relative;
+
+                width: min(96vw, 1100px);
+                height: min(60vh, 700px);
+
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+
+                margin: 0 auto;
+
+                transform: perspective(900px);
+                transform-origin: center 60%;
+                transform-style: preserve-3d;
+
+                border-radius: 18px 18px 6px 6px;
+                overflow: visible;
+
+                background:
+                    repeating-linear-gradient(
+                        180deg,
+                        rgba(0,0,0,0.03) 0px,
+                        rgba(0,0,0,0.03) 48px,
+                        transparent 48px,
+                        transparent 96px
+                    ),
+                    linear-gradient(180deg, #4dba6e 0%, #6ad48a 35%, #5bcb7c 65%, #4db86e 100%);
+
+                padding: 3rem 1rem 2rem;
+
+                box-shadow: 0 12px 28px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+            }
+
+            /* White pitch lines via box-shadow on pseudo elements */
+            .pitch3d-field::before {
+                content:'';
+                position:absolute;
+                inset: 0;
+                border: 2px solid rgba(255,255,255,0.35);
+                border-radius: 8px 8px 3px 3px;
+                pointer-events: none;
+            }
+            .pitch3d-midline {
+                position: absolute;
+                left: 6%;
+                right: 6%;
+                height: 1.5px;
+                background: rgba(255,255,255,0.3);
+                top: 50%;
+                transform: translateY(-50%);
+                pointer-events: none;
+            }
+            .pitch3d-midcircle {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                width: 52px;
+                height: 52px;
+                border: 1.5px solid rgba(255,255,255,0.25);
+                border-radius: 50%;
+                transform: translate(-50%,-50%);
+                pointer-events: none;
+            }
+            /* Sponsor banner strip — two banners, configurable from backend */
+            .pitch3d-banners {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                position: absolute;
+
+                left: 4%;
+                right: 4%;
+
+                top: 1rem;
+
+                height: 28px;
+
+                pointer-events: none;
+                z-index: 5;
+            }
+            .pitch3d-banner {
+                flex: 1;
+
+                margin: 0 6px;
+
+                height: 100%;
+
+                border-radius: 6px;
+
+                background: rgba(0,0,0,0.15);
+
+                border: 1px solid rgba(255,255,255,0.16);
+
+                backdrop-filter: blur(4px);
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                overflow: hidden;
+            }
+            .pitch3d-banner img {
+                max-height: 14px;
+                max-width: 90%;
+                object-fit: contain;
+                opacity: 0.85;
+            }
+            .pitch3d-banner-text {
+                font-size: 0.55rem;
+                font-weight: 800;
+                letter-spacing: 0.12em;
+                color: rgba(255,255,255,0.4);
+                text-transform: uppercase;
+            }
+            /* Position row */
+            .pitch3d-row {
+                display: flex;
+                justify-content: center;
+                align-items: flex-end;
+                gap: clamp(8px, 1.4vw, 18px);
+
+                position: relative;
+                z-index: 2;
+
+                flex: 1;
+            }
+
+            /* Individual jersey slot on the 3D pitch */
+            .pitch3d-slot {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                cursor: pointer;
+                position: relative;
+                /* subtle depth per row done in JS via style */
+            }
+
+            .jersey3d {
+                position: relative;
+
+                width: clamp(42px, 5vw, 82px);
+
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+
+                gap: 2px;
+            }
+            .jersey3d-shape {
+                position: relative;
+                width: clamp(42px, 5vw, 82px);
+                height: clamp(38px, 4.5vw, 74px);
+                filter: drop-shadow(0 4px 6px rgba(0,0,0,0.55)) drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+                transition: filter 0.15s, transform 0.15s;
+            }
+            .pitch3d-slot:hover .jersey3d-shape {
+                filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.5)) brightness(1.2);
+                transform: translateY(-2px) scale(1.06);
+            }
+            .jersey3d-svg {
+                width: 100%;
+                height: 100%;
+            }
+
+            .pitch3d-slot .jersey3d-empty svg path {
+                stroke: rgba(255,255,255,0.6);
+            }
+            /* Gloss overlay on the jersey */
+            .jersey3d-gloss {
+                position: absolute;
+
+                top: 4%;
+                left: 8%;
+
+                width: 84%;
+                height: 42%;
+
+                background:
+                    linear-gradient(
+                        160deg,
+                        rgba(255,255,255,0.22) 0%,
+                        rgba(255,255,255,0) 65%
+                    );
+
+                clip-path:
+                    polygon(
+                        12% 0%,
+                        88% 0%,
+                        100% 40%,
+                        75% 100%,
+                        25% 100%,
+                        0% 40%
+                    );
+
+                pointer-events: none;
+            }
+            /* Remove × badge */
+            .jersey3d-remove {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                width: 16px;
+                height: 16px;
+                border-radius: 50%;
+                background: rgba(220,50,50,0.9);
+                border: 1.5px solid #fff;
+                color: #fff;
+                font-size: 0.55rem;
+                font-weight: 900;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 10;
+                opacity: 0;
+                transition: opacity 0.15s;
+                line-height: 1;
+            }
+            .pitch3d-slot:hover .jersey3d-remove { opacity: 1; }
+            .jersey3d-wildcard {
+                position: absolute;
+                top: -5px;
+                left: -5px;
+                font-size: 0.7rem;
+                color: gold;
+                text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+            }
+            /* Name plate */
+            .jersey3d-nameplate {
+                background: rgba(5,20,35,0.88);
+                border-radius: 3px;
+                padding: 2px 4px;
+                text-align: center;
+                min-width: 44px;
+                max-width: 56px;
+            }
+            .jersey3d-name {
+                font-size: 0.6rem;
+                font-weight: 800;
+                color: #e8f0f8;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 54px;
+                display: block;
+                letter-spacing: 0.02em;
+            }
+            .jersey3d-pos {
+                font-size: 0.5rem;
+                font-weight: 700;
+                opacity: 0.55;
+                letter-spacing: 0.05em;
+                color: #e8f0f8;
+            }
+            /* Empty slot on 3D pitch */
+            .jersey3d-empty {
+                width: 44px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+            .jersey3d-empty svg {
+                width: 44px;
+                height: 40px;
+                opacity: 0.35;
+                transition: opacity 0.15s;
+            }
+            .pitch3d-slot:hover .jersey3d-empty svg { opacity: 0.65; }
+            .jersey3d-empty-label {
+                font-size: 0.55rem;
+                color: rgba(255,255,255,0.3);
+                text-align: center;
+                margin-top: 2px;
+                font-weight: 700;
+            }
+
+            /* Swap highlights for 3D pitch */
+            .pitch3d-slot.swap-src .jersey3d-shape { outline: 2px solid #f5c842; outline-offset: 2px; border-radius: 3px; }
+            .pitch3d-slot.swap-tgt .jersey3d-shape { outline: 2px solid #00d4aa; outline-offset: 2px; border-radius: 3px; }
+
+            /* Bench row below the tilted field */
+            .pitch3d-bench {
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                padding: 10px 12px 4px;
+                background: linear-gradient(180deg,rgba(8,18,30,0.95),#0a1220);
+                border-top: 1px solid rgba(255,255,255,0.06);
+            }
+            .pitch3d-bench-label {
+                font-size: 0.6rem;
+                font-weight: 800;
+                letter-spacing: 0.1em;
+                color: rgba(255,255,255,0.3);
+                text-transform: uppercase;
+                text-align: center;
+                padding: 4px 0 0;
+                margin-bottom: 4px;
+            }
+
+            /* Wildcard/swap hints */
+            .pitch3d-hint {
+                font-size: 0.7rem;
+                color: rgba(255,255,255,0.45);
+                text-align: center;
+                padding: 4px 12px;
+                min-height: 20px;
+            }
+            .pitch3d-hint.swap-active { color: #f5c842; }
+            .pitch3d-hint.wc-hint { color: rgba(0,212,170,0.7); }
+
+            .formation-locked-hint {
+                margin: 0 12px 12px;
+                padding: 10px 14px;
+                background: rgba(255,200,0,0.07);
+                border: 1px solid rgba(255,200,0,0.2);
+                border-radius: 10px;
+                font-size: 0.76rem;
+                color: rgba(255,200,80,0.75);
+                text-align: center;
+                font-weight: 600;
+            }
+
+            @media (max-width: 768px) {
+
+                .pitch3d-field {
+                    width: 98vw;
+                    height: 58vh;
+
+                    transform: perspective(700px);
+
+                    padding: 3.5rem 0.7rem 1.5rem;
+                }
+
+                .pitch3d-banner {
+                    margin: 0 3px;
+                }
+
+                .pitch3d-banner-text {
+                    font-size: 0.48rem;
+                }
+
+                .pitch3d-row {
+                    gap: 6px;
+                }
+            }
         </style>
     </head>
     <body>
@@ -335,6 +753,247 @@
 
         <!-- ══════════ PITCH TAB ══════════ -->
         <div class="tab-content" x-show="activeTab==='field'">
+
+            <!-- ── View Toggle ── -->
+            <div class="pitch-view-toggle">
+                <button
+                    class="pv-btn"
+                    :class="pitchView==='squad' && 'active'"
+                    @click="pitchView='squad'"
+                >
+                    <span class="pv-icon">📋</span> Plantilla
+                </button>
+                <button
+                    class="pv-btn"
+                    :class="pitchView==='formation' && 'active'"
+                    :disabled="selectedPlayers.length < 15"
+                    @click="selectedPlayers.length >= 15 && (pitchView='formation')"
+                    :title="selectedPlayers.length < 15 ? 'Completa los 15 jugadores para ver la formación' : 'Ver en el campo'"
+                >
+                    <span class="pv-icon">🏟️</span> Formación
+                    <span x-show="selectedPlayers.length < 15" style="font-size:0.65rem;opacity:0.6;margin-left:2px" x-text="'('+selectedPlayers.length+'/15)'"></span>
+                </button>
+            </div>
+
+            <!-- ══ SQUAD 3D PITCH VIEW (Plantilla) ══ -->
+            <div x-show="pitchView==='squad'" x-data="pitch3D()">
+                <div class="pitch3d-scene">
+
+                    <!-- Tilted 3D field -->
+                    <div class="pitch3d-field" id="pitch3d-field">
+                        <!-- Pitch markings -->
+                        <div class="pitch3d-midline"></div>
+                        <div class="pitch3d-midcircle"></div>
+
+                        <!-- Sponsor banners (configurable from backend via data-banner-* attributes or global config) -->
+                        <div class="pitch3d-banners">
+                            <div class="pitch3d-banner" id="sponsor-left">
+                                <template x-if="sponsorLeft && sponsorLeft.type==='image'">
+                                    <img :src="sponsorLeft.src" :alt="sponsorLeft.alt||'Sponsor'" />
+                                </template>
+                                <template x-if="!sponsorLeft || sponsorLeft.type==='text'">
+                                    <span class="pitch3d-banner-text" x-text="sponsorLeft ? sponsorLeft.text : 'SPONSOR'"></span>
+                                </template>
+                            </div>
+                            <div class="pitch3d-banner" id="sponsor-right">
+                                <template x-if="sponsorRight && sponsorRight.type==='image'">
+                                    <img :src="sponsorRight.src" :alt="sponsorRight.alt||'Sponsor'" />
+                                </template>
+                                <template x-if="!sponsorRight || sponsorRight.type==='text'">
+                                    <span class="pitch3d-banner-text" x-text="sponsorRight ? sponsorRight.text : 'SPONSOR'"></span>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- FW row -->
+                        <div class="pitch3d-row">
+                            <template x-for="slot in getRosterSlotsByPos('FW')" :key="slot.id">
+                                <div class="pitch3d-slot"
+                                    :class="swapSource && slot.player ? (swapSource.player.id===slot.player.id ? 'swap-src' : (!swapSource.isOnBench && swapSource.player.pos===slot.player.pos ? 'swap-tgt' : '')) : ''"
+                                    @click="handlePitchClick(slot)">
+                                    <template x-if="slot.player">
+                                        <div class="jersey3d">
+                                            <div class="jersey3d-shape">
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+                                                    <!-- sleeve highlight -->
+                                                    <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                    <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                </svg>
+                                                <div class="jersey3d-gloss"></div>
+                                                <span class="jersey3d-wildcard" x-show="wildcardPlayerId===slot.player.id">★</span>
+                                                <span class="jersey3d-remove" @click.stop="removePlayer(slot.player)" x-show="!isLocked">✕</span>
+                                            </div>
+                                            <div class="jersey3d-nameplate">
+                                                <span class="jersey3d-name" x-text="slot.player.name.split(' ').pop()"></span>
+                                                <span class="jersey3d-pos" x-text="slot.player.pos"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!slot.player">
+                                        <div class="jersey3d">
+                                            <div class="jersey3d-empty" @click="openPlayerPickerForSlot(slot.pos)">
+                                                <svg viewBox="0 0 60 55">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.07)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                                                </svg>
+                                            </div>
+                                            <div class="jersey3d-nameplate" style="opacity:0.45">
+                                                <span class="jersey3d-name">+</span>
+                                                <span class="jersey3d-pos" x-text="slot.pos"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- MF row -->
+                        <div class="pitch3d-row">
+                            <template x-for="slot in getRosterSlotsByPos('MF')" :key="slot.id">
+                                <div class="pitch3d-slot"
+                                    :class="swapSource && slot.player ? (swapSource.player.id===slot.player.id ? 'swap-src' : (!swapSource.isOnBench && swapSource.player.pos===slot.player.pos ? 'swap-tgt' : '')) : ''"
+                                    @click="handlePitchClick(slot)">
+                                    <template x-if="slot.player">
+                                        <div class="jersey3d">
+                                            <div class="jersey3d-shape">
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke-width="1.2"/>
+                                                    <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                    <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                </svg>
+                                                <div class="jersey3d-gloss"></div>
+                                                <span class="jersey3d-wildcard" x-show="wildcardPlayerId===slot.player.id">★</span>
+                                                <span class="jersey3d-remove" @click.stop="removePlayer(slot.player)" x-show="!isLocked">✕</span>
+                                            </div>
+                                            <div class="jersey3d-nameplate">
+                                                <span class="jersey3d-name" x-text="slot.player.name.split(' ').pop()"></span>
+                                                <span class="jersey3d-pos" x-text="slot.player.pos"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!slot.player">
+                                        <div class="jersey3d">
+                                            <div class="jersey3d-empty" @click="openPlayerPickerForSlot(slot.pos)">
+                                                <svg viewBox="0 0 60 55">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.07)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                                                </svg>
+                                            </div>
+                                            <div class="jersey3d-nameplate" style="opacity:0.45">
+                                                <span class="jersey3d-name">+</span>
+                                                <span class="jersey3d-pos" x-text="slot.pos"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- DF row -->
+                        <div class="pitch3d-row">
+                            <template x-for="slot in getRosterSlotsByPos('DF')" :key="slot.id">
+                                <div class="pitch3d-slot"
+                                    :class="swapSource && slot.player ? (swapSource.player.id===slot.player.id ? 'swap-src' : (!swapSource.isOnBench && swapSource.player.pos===slot.player.pos ? 'swap-tgt' : '')) : ''"
+                                    @click="handlePitchClick(slot)">
+                                    <template x-if="slot.player">
+                                        <div class="jersey3d">
+                                            <div class="jersey3d-shape">
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke-width="1.2"/>
+                                                    <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                    <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                </svg>
+                                                <div class="jersey3d-gloss"></div>
+                                                <span class="jersey3d-wildcard" x-show="wildcardPlayerId===slot.player.id">★</span>
+                                                <span class="jersey3d-remove" @click.stop="removePlayer(slot.player)" x-show="!isLocked">✕</span>
+                                            </div>
+                                            <div class="jersey3d-nameplate">
+                                                <span class="jersey3d-name" x-text="slot.player.name.split(' ').pop()"></span>
+                                                <span class="jersey3d-pos" x-text="slot.player.pos"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!slot.player">
+                                        <div class="jersey3d">
+                                            <div class="jersey3d-empty" @click="openPlayerPickerForSlot(slot.pos)">
+                                                <svg viewBox="0 0 60 55">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.07)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                                                </svg>
+                                            </div>
+                                            <div class="jersey3d-nameplate" style="opacity:0.45">
+                                                <span class="jersey3d-name">+</span>
+                                                <span class="jersey3d-pos" x-text="slot.pos"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- GK row -->
+                        <div class="pitch3d-row">
+                            <template x-for="slot in getRosterSlotsByPos('GK')" :key="slot.id">
+                                <div class="pitch3d-slot"
+                                    :class="swapSource && slot.player ? (swapSource.player.id===slot.player.id ? 'swap-src' : (!swapSource.isOnBench && swapSource.player.pos===slot.player.pos ? 'swap-tgt' : '')) : ''"
+                                    @click="handlePitchClick(slot)">
+                                    <template x-if="slot.player">
+                                        <div class="jersey3d">
+                                            <div class="jersey3d-shape">
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke-width="1.2"/>
+                                                    <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                    <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                </svg>
+                                                <div class="jersey3d-gloss"></div>
+                                                <span class="jersey3d-wildcard" x-show="wildcardPlayerId===slot.player.id">★</span>
+                                                <span class="jersey3d-remove" @click.stop="removePlayer(slot.player)" x-show="!isLocked">✕</span>
+                                            </div>
+                                            <div class="jersey3d-nameplate">
+                                                <span class="jersey3d-name" x-text="slot.player.name.split(' ').pop()"></span>
+                                                <span class="jersey3d-pos" x-text="slot.player.pos"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template x-if="!slot.player">
+                                        <div class="jersey3d">
+                                            <div class="jersey3d-empty" @click="openPlayerPickerForSlot(slot.pos)">
+                                                <svg viewBox="0 0 60 55">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="rgba(255,255,255,0.07)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                                                </svg>
+                                            </div>
+                                            <div class="jersey3d-nameplate" style="opacity:0.45">
+                                                <span class="jersey3d-name">+</span>
+                                                <span class="jersey3d-pos" x-text="slot.pos"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div><!-- /pitch3d-field -->
+
+                    <!-- Swap / wildcard hint -->
+                    <div class="pitch3d-hint"
+                        :class="swapSource ? 'swap-active' : (!isDeadlinePassed && !wildcardPlayerId && starterCount >= 11 ? 'wc-hint' : '')"
+                    >
+                        <template x-if="swapSource">
+                            <span>🔄 Toca otro jugador del mismo puesto para intercambiar · toca de nuevo para cancelar</span>
+                        </template>
+                        <template x-if="!swapSource && !isDeadlinePassed && !wildcardPlayerId && starterCount >= 11">
+                            <span>☆ Toca ★ en un titular para elegir tu comodín</span>
+                        </template>
+                        <template x-if="!swapSource && (isDeadlinePassed || wildcardPlayerId || starterCount < 11)">
+                            <span></span>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ FORMATION VIEW ══ -->
+            <div x-show="pitchView==='formation'">
+                <div x-show="selectedPlayers.length < 15" class="formation-locked-hint">
+                    ⚠️ Completa los 15 jugadores para activar la vista de formación
+                </div>
+
             <!-- Formation bar -->
             <div
                 class="formation-bar"
@@ -386,7 +1045,6 @@
                                                     <path
                                                         d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                                         fill="currentColor"
-                                                        stroke="rgba(255,255,255,0.3)"
                                                         stroke-width="1"
                                                     />
                                                 </svg>
@@ -399,7 +1057,6 @@
                                                 class="jersey-pos"
                                                 x-text="slot.player.pos"
                                             ></span>
-                                            <div class="remove-hint">✕</div>
                                             <div
                                                 class="wildcard-toggle-btn"
                                                 x-show="!isDeadlinePassed"
@@ -426,7 +1083,6 @@
                                                     <path
                                                         d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                                         fill="rgba(255,255,255,0.06)"
-                                                        stroke="rgba(255,255,255,0.2)"
                                                         stroke-width="1.5"
                                                         stroke-dasharray="4 3"
                                                     />
@@ -468,7 +1124,6 @@
                                                     <path
                                                         d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                                         fill="currentColor"
-                                                        stroke="rgba(255,255,255,0.3)"
                                                         stroke-width="1"
                                                     />
                                                 </svg>
@@ -481,7 +1136,6 @@
                                                 class="jersey-pos"
                                                 x-text="slot.player.pos"
                                             ></span>
-                                            <div class="remove-hint">✕</div>
                                             <div
                                                 class="wildcard-toggle-btn"
                                                 x-show="!isDeadlinePassed"
@@ -508,7 +1162,6 @@
                                                     <path
                                                         d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                                         fill="rgba(255,255,255,0.06)"
-                                                        stroke="rgba(255,255,255,0.2)"
                                                         stroke-width="1.5"
                                                         stroke-dasharray="4 3"
                                                     />
@@ -550,7 +1203,6 @@
                                                     <path
                                                         d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                                         fill="currentColor"
-                                                        stroke="rgba(255,255,255,0.3)"
                                                         stroke-width="1"
                                                     />
                                                 </svg>
@@ -563,7 +1215,6 @@
                                                 class="jersey-pos"
                                                 x-text="slot.player.pos"
                                             ></span>
-                                            <div class="remove-hint">✕</div>
                                             <div
                                                 class="wildcard-toggle-btn"
                                                 x-show="!isDeadlinePassed"
@@ -590,7 +1241,7 @@
                                                     <path
                                                         d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                                         fill="rgba(255,255,255,0.06)"
-                                                        stroke="rgba(255,255,255,0.2)"
+                                                        "rgba(255,255,255,0.2)"
                                                         stroke-width="1.5"
                                                         stroke-dasharray="4 3"
                                                     />
@@ -632,7 +1283,6 @@
                                                     <path
                                                         d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                                         fill="currentColor"
-                                                        stroke="rgba(255,255,255,0.3)"
                                                         stroke-width="1"
                                                     />
                                                 </svg>
@@ -645,7 +1295,6 @@
                                                 class="jersey-pos"
                                                 x-text="slot.player.pos"
                                             ></span>
-                                            <div class="remove-hint">✕</div>
                                             <div
                                                 class="wildcard-toggle-btn"
                                                 x-show="!isDeadlinePassed"
@@ -672,7 +1321,6 @@
                                                     <path
                                                         d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                                         fill="rgba(255,255,255,0.06)"
-                                                        stroke="rgba(255,255,255,0.2)"
                                                         stroke-width="1.5"
                                                         stroke-dasharray="4 3"
                                                     />
@@ -735,7 +1383,6 @@
                                         <path
                                             d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                             fill="currentColor"
-                                            stroke="rgba(255,255,255,0.3)"
                                             stroke-width="1"
                                         />
                                     </svg>
@@ -758,7 +1405,6 @@
                                         <path
                                             d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
                                             fill="rgba(255,255,255,0.05)"
-                                            stroke="rgba(255,255,255,0.15)"
                                             stroke-width="1.5"
                                             stroke-dasharray="4 3"
                                         />
@@ -880,11 +1526,18 @@
                     ></span>
                 </button>
             </div>
+            </div>
+            <!-- /formation view -->
         </div>
         <!-- /pitch tab -->
 
         <!-- ══════════ PLAYERS TAB ══════════ -->
         <div class="tab-content" x-show="activeTab==='pool'">
+            <!-- Back to squad hint when coming from slot picker -->
+            <div x-show="pendingSlot !== null" style="display:flex;align-items:center;gap:10px;padding:10px 14px 4px;background:rgba(0,212,170,0.07);border-bottom:1px solid rgba(0,212,170,0.15);">
+                <button @click="pendingSlot=null; activeTab='field'; pitchView='squad'; filterPos='ALL'" style="background:rgba(0,212,170,0.15);border:none;color:#00d4aa;font-weight:800;font-size:0.8rem;padding:5px 12px;border-radius:8px;cursor:pointer;font-family:inherit;">← Volver</button>
+                <span style="font-size:0.78rem;color:rgba(0,212,170,0.8);font-weight:600;" x-text="'Elige un ' + (pendingSlot ? pendingSlot.pos : '') + ' para tu plantilla'"></span>
+            </div>
             <div class="pool-header">
                 <h2 class="pool-title">Seleccionar Jugadores</h2>
                 <p class="pool-sub">
@@ -1187,6 +1840,20 @@
 
         <script>
             requireRole('user')
+
+            // ─── PITCH 3D ALPINE COMPONENT ───────────────────────────────────────────────
+            function pitch3D() {
+                return {
+                    // Sponsor banners — configure from backend by setting window.fantasySV_sponsors
+                    // e.g. window.fantasySV_sponsors = {
+                    //   left:  { type:'image', src:'/img/sponsor-left.png', alt:'Sponsor Name' },
+                    //   right: { type:'text',  text:'MY BRAND' }
+                    // }
+                    sponsorLeft:  (window.fantasySV_sponsors && window.fantasySV_sponsors.left)  || null,
+                    sponsorRight: (window.fantasySV_sponsors && window.fantasySV_sponsors.right) || null,
+                };
+            }
+
             // ─── THREE.JS FIELD ──────────────────────────────────────────────────────────
             function initField() {
                 const canvas = document.getElementById("field-canvas");
@@ -1204,21 +1871,25 @@
 
                 const scene = new THREE.Scene();
                 scene.background = null;
-                scene.fog = new THREE.FogExp2(0x0a1628, 0.018);
+                scene.fog = new THREE.FogExp2(0x0a1628, 0.008);
 
                 const camera = new THREE.PerspectiveCamera(52, W / H, 0.1, 100);
                 camera.position.set(0, 11, 16);
                 camera.lookAt(0, 0, 0);
 
                 // Lighting
-                scene.add(new THREE.AmbientLight(0x224466, 1.5));
-                const sun = new THREE.DirectionalLight(0xfff5e0, 2.2);
+                scene.add(new THREE.AmbientLight(0x88aaff, 1.2));
+                const sun = new THREE.DirectionalLight(0xffeedd, 2.8);
                 sun.position.set(6, 14, 5);
                 sun.castShadow = true;
                 scene.add(sun);
-                const fill = new THREE.DirectionalLight(0x88aaff, 0.9);
+                const fill = new THREE.DirectionalLight(0xaaccff, 1.4);
                 fill.position.set(-5, 8, -4);
                 scene.add(fill);
+
+                const rim = new THREE.DirectionalLight(0xffcc99, 1.2);
+                rim.position.set(-3, 5, -8);
+                scene.add(rim);
 
                 // Ground base
                 const basePlate = new THREE.Mesh(
@@ -1234,8 +1905,9 @@
 
                 // Pitch surface
                 const pitchMat = new THREE.MeshStandardMaterial({
-                    color: 0x2d8a4e,
-                    roughness: 0.8,
+                    color: 0x4db86e,
+                    roughness: 0.6,
+                    metalness: 0.1,
                 });
                 const pitchPlane = new THREE.Mesh(
                     new THREE.PlaneGeometry(22, 30),
@@ -1382,6 +2054,8 @@
             function squadBuilder() {
                 return {
                     activeTab: "field",
+                    pitchView: "squad", // 'squad' | 'formation'
+                    pendingSlot: null,  // { pos, slotIndex } when navigating from squad view
 
                     // points tab
                     pointsLoading: false,
@@ -1420,9 +2094,9 @@
                     ],
 
                     compositionRules: [
-                        { pos: "GK", min: 1, max: 1 },
+                        { pos: "GK", min: 1, max: 2 },
                         { pos: "DF", min: 3, max: 5 },
-                        { pos: "MF", min: 2, max: 6 },
+                        { pos: "MF", min: 2, max: 5 },
                         { pos: "FW", min: 1, max: 3 },
                     ],
 
@@ -1645,6 +2319,22 @@
                         return false;
                     },
 
+                    // ── SQUAD LIST SLOT → PLAYER PICKER ──────────────────────────────────────
+                    openPlayerPickerForSlot(pos) {
+                        if (this.isLocked) {
+                            this.toast(this.lockMessage);
+                            return;
+                        }
+                        // Store only the target position, not the specific slot index
+                        this.pendingSlot = { pos };
+                        this.filterPos = pos;
+                        this.filterTier = 'ALL';
+                        this.filterTeam = 'ALL';
+                        this.searchQuery = '';
+                        this.activeTab = 'pool';
+                        this.toast(`Elige un ${pos} para añadir al equipo`);
+                    },
+
                     // ── PITCH SLOT HELPERS ───────────────────────────────────────────────────
                     getSlotsByPos(pos) {
                         const f = this.currentFormation;
@@ -1663,6 +2353,26 @@
                             id: `${pos}-${i}`,
                             pos,
                             player: filled[i] || null,
+                        }));
+                    },
+
+                    // Helpers for Team roster
+                    getRosterSlotsByPos(pos) {
+                        // Fixed maximum slots per position for Plantilla view
+                        const maxSlots = {
+                            GK: 2,
+                            DF: 5,
+                            MF: 5,
+                            FW: 3
+                        };
+                        const limit = maxSlots[pos] || 0;
+                        // Get all selected players (starters + bench) of this position
+                        const playersOfPos = this.selectedPlayers.filter(p => p.pos === pos);
+                        // Create slots, filling with players in the order they appear in selectedPlayers
+                        return Array.from({ length: limit }, (_, i) => ({
+                            id: `${pos}-${i}`,
+                            pos: pos,
+                            player: playersOfPos[i] || null
                         }));
                     },
 
@@ -1827,6 +2537,7 @@
                         this.toast(
                             `↔ Swapped ${src.player.name.split(" ").pop()} ↔ ${tgt.player.name.split(" ").pop()}`,
                         );
+                        this.normalizeSquad()
                         this.saveToLocalStorage();
                     },
 
@@ -1836,9 +2547,18 @@
                             this.toast(this.lockMessage);
                             return;
                         }
-                        this.isSelected(player.id)
-                            ? this.removePlayer(player)
-                            : this.addPlayer(player);
+                        if (this.isSelected(player.id)) {
+                            this.removePlayer(player);
+                        } else {
+                            this.addPlayer(player);
+                            // If we came from the squad list view, go back
+                            if (this.pendingSlot) {
+                                this.pendingSlot = null;
+                                this.activeTab = 'field';
+                                this.pitchView = 'squad';
+                                this.filterPos = 'ALL';
+                            }
+                        }
                     },
 
                     addPlayer(player) {
@@ -1890,7 +2610,13 @@
                             );
                             return;
                         }
-
+                        if (this.pendingSlot) {
+                            this.pendingSlot = null;
+                            this.activeTab = 'field';
+                            this.pitchView = 'squad';
+                            this.filterPos = 'ALL';
+                        }
+                        this.normalizeSquad();
                         this.saveToLocalStorage();
                     },
 
@@ -1906,6 +2632,10 @@
                         );
                         if (this.wildcardPlayerId === player.id)
                             this.wildcardPlayerId = null;
+                        
+                        if (this.pendingSlot) this.pendingSlot = null;
+                        
+                        this.normalizeSquad()
                         this.saveToLocalStorage();
                     },
 
@@ -1919,6 +2649,55 @@
                         this.validateAndTrimSquad();
                     },
 
+                    normalizeSquad() {
+                        if (!this.selectedPlayers.length) return;
+                        
+                        // Starter limits per position (from current formation)
+                        const starterLimits = {
+                            GK: 1,
+                            DF: this.currentFormation.df,
+                            MF: this.currentFormation.mf,
+                            FW: this.currentFormation.fw
+                        };
+                        
+                        // Group players by position, preserving original relative order within each group
+                        const posGroups = { GK: [], DF: [], MF: [], FW: [] };
+                        for (const p of this.selectedPlayers) {
+                            posGroups[p.pos].push(p);
+                        }
+                        
+                        // Build new starters array (first 11) according to starterLimits
+                        const newStarters = [];
+                        for (const pos of ['GK', 'DF', 'MF', 'FW']) {
+                            const limit = starterLimits[pos];
+                            const available = posGroups[pos];
+                            // Take up to 'limit' players as starters
+                            const toStart = available.slice(0, limit);
+                            newStarters.push(...toStart);
+                            // Remaining players of this position go to bench (if any)
+                            posGroups[pos] = available.slice(limit);
+                        }
+                        
+                        // Collect all remaining players (those not used as starters)
+                        const remaining = [];
+                        for (const pos of ['GK', 'DF', 'MF', 'FW']) {
+                            remaining.push(...posGroups[pos]);
+                        }
+                        
+                        // Bench can hold max 4 players (the rest are never removed, but we cap at 4 because squad max is 15)
+                        const newBench = remaining.slice(0, 4);
+                        
+                        // Rebuild selectedPlayers: starters first (exactly 11, possibly with nulls? we keep only actual players)
+                        // If we have fewer than 11 starters (incomplete squad), fill with undefined? No, just keep as many as we have.
+                        // The important part is that the first N players are the correct starters.
+                        this.selectedPlayers = [...newStarters, ...newBench];
+                        
+                        // If total players exceed 15, the extra ones are dropped (should not happen with proper UI constraints)
+                        if (this.selectedPlayers.length > 15) {
+                            this.selectedPlayers = this.selectedPlayers.slice(0, 15);
+                        }
+                    },
+
                     validateAndTrimSquad() {
                         const limits = {
                             GK: 1,
@@ -1926,40 +2705,54 @@
                             MF: this.currentFormation.mf,
                             FW: this.currentFormation.fw,
                         };
-                        const newStarters = [];
-                        const newBench = [];
-                        for (const pos of ["GK", "DF", "MF", "FW"]) {
-                            const posPlayers = this.starters.filter(
-                                (p) => p.pos === pos,
-                            );
-                            const allowed = limits[pos];
-                            if (posPlayers.length > allowed) {
-                                this.toast(
-                                    `Eliminado ${posPlayers.length - allowed} extra ${pos}(s) debido al cambio de formación.`,
-                                );
-                                newStarters.push(
-                                    ...posPlayers.slice(0, allowed),
-                                );
-                                // extras go to bench if room
-                                posPlayers.slice(allowed).forEach((p) => {
-                                    if (newBench.length < 4) newBench.push(p);
-                                });
+                        
+                        // 1. Collect all current players (full squad)
+                        const allPlayers = [...this.selectedPlayers];
+                        if (allPlayers.length === 0) return;
+                        
+                        // 2. Prepare groups: we will fill starters per position respecting limits
+                        const newStarters = { GK: [], DF: [], MF: [], FW: [] };
+                        const leftoverPool = []; // players who didn't get a starter slot
+                        
+                        // 3. First pass: assign players to starters up to the limit, preserving original order
+                        for (const player of allPlayers) {
+                            const pos = player.pos;
+                            if (newStarters[pos].length < limits[pos]) {
+                                newStarters[pos].push(player);
                             } else {
-                                newStarters.push(...posPlayers);
+                                leftoverPool.push(player);
                             }
                         }
-                        // Keep existing bench players (minus any moved there above)
-                        const existingBenchIds = new Set([
-                            ...newBench.map((p) => p.id),
-                        ]);
-                        this.benchPlayers.forEach((p) => {
-                            if (
-                                !existingBenchIds.has(p.id) &&
-                                newBench.length < 4
-                            )
-                                newBench.push(p);
-                        });
-                        this.selectedPlayers = [...newStarters, ...newBench];
+                        
+                        // 4. Build the final starters array (order: GK, DF, MF, FW – same as formation display)
+                        const orderedStarters = [
+                            ...newStarters.GK,
+                            ...newStarters.DF,
+                            ...newStarters.MF,
+                            ...newStarters.FW
+                        ];
+                        
+                        // 5. Bench: take up to 4 players from leftoverPool (in the order they appear)
+                        const bench = leftoverPool.slice(0, 4);
+                        
+                        // 6. Log any players that were moved from starter to bench due to limit changes
+                        const previousStarters = this.starters;
+                        const previousStarterIds = new Set(previousStarters.map(p => p.id));
+                        const movedToBench = orderedStarters.filter(p => !previousStarterIds.has(p.id));
+                        if (movedToBench.length > 0) {
+                            const posMsg = [...new Set(movedToBench.map(p => p.pos))].join(', ');
+                            this.toast(`Formación cambiada: ${movedToBench.length} jugador(es) de ${posMsg} movido(s) al banco.`);
+                        }
+                        
+                        // 7. Update selectedPlayers (starters first, then bench)
+                        this.selectedPlayers = [...orderedStarters, ...bench];
+                        
+                        // 8. Ensure we don't exceed 15 players (should not happen, but safe)
+                        if (this.selectedPlayers.length > 15) {
+                            this.selectedPlayers = this.selectedPlayers.slice(0, 15);
+                        }
+                        
+                        this.normalizeSquad(); // optional, but ensures consistency
                         this.saveToLocalStorage();
                     },
 
@@ -2006,21 +2799,18 @@
                     get validationErrors() {
                         const e = [];
                         if (this.selectedPlayers.length < 15)
-                            e.push(
-                                `Necesitas ${15 - this.selectedPlayers.length} jugadores más`,
-                            );
+                            e.push(`Necesitas ${15 - this.selectedPlayers.length} jugadores más`);
                         if (this.remainingCredits < 0)
-                            e.push(
-                                `Presupuesto excedido por ${-this.remainingCredits} $`,
-                            );
-                        if (this.countInSquad("GK") !== 1)
-                            e.push("Se requiere exactamente 1 portero");
-                        if (this.countInSquad("DF") < 3)
-                            e.push("Se necesitan al menos 3 defensores");
-                        if (this.countInSquad("MF") < 2)
-                            e.push("Se necesitan al menos 2 mediocampistas");
-                        if (this.countInSquad("FW") < 1)
-                            e.push("Se necesita al menos 1 delantero");
+                            e.push(`Presupuesto excedido por ${-this.remainingCredits} $`);
+                        // Check only starters (first 11 players)
+                        if (this.starters.filter(p => p.pos === "GK").length !== 1)
+                            e.push("Se requiere exactamente 1 portero titular");
+                        if (this.starters.filter(p => p.pos === "DF").length < 3)
+                            e.push("Se necesitan al menos 3 defensores titulares");
+                        if (this.starters.filter(p => p.pos === "MF").length < 2)
+                            e.push("Se necesitan al menos 2 mediocampistas titulares");
+                        if (this.starters.filter(p => p.pos === "FW").length < 1)
+                            e.push("Se necesita al menos 1 delantero titular");
                         if (this.isLocked)
                             e.push("🔒 La jornada está bloqueada");
                         return e;

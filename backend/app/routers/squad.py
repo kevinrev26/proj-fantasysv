@@ -224,7 +224,6 @@ def _earliest_non_finished_fixture_match(
         .order_by(models.Fixture.kickoff_utc.asc())
         .first()
     )
-    print(fixture.kickoff_utc)
     return fixture.kickoff_utc if fixture else None
 
 
