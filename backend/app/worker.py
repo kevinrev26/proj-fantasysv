@@ -304,8 +304,9 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
             db.add(team_score)
             logger.debug("Team score updated", team_score_id=team_score.id, points=total_points)
 
-        # 4. Mark matchday as closed (all matches processed)
-        matchday.status = MatchdayStatus.closed
+        # Removing closing matchday state here, because we are keep updating the scores per fixtures.
+        # So matchday is not closed until we manually close from admin dashboard UI.
+
         matchday.task_status = "done"
         db.commit()
         logger.info("Matchday score recalculation completed successfully", matchday_id=matchday_id)
