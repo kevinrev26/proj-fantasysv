@@ -10,6 +10,7 @@ from .database import get_db, Base, engine
 from .worker import add_numbers_task
 from .config import settings
 from .logger import setup_logging
+from .models import FixtureResult  # Import FixtureResult model
 
 setup_logging()
 logger = structlog.get_logger()
@@ -101,7 +102,6 @@ def test_celery(a: int = 1, b: int = 2):
     task = add_numbers_task.delay(a, b)
     return {"task_id": task.id}
 
-
 @app.get("/matchday/{matchday_id}/fixtures")
 def get_fixtures(matchday_id: int, db: Session = Depends(get_db)):
     """Return all fixtures for a matchday."""
@@ -180,4 +180,29 @@ def get_matchday(matchday_id: int, db: Session = Depends(get_db)):
         "locked_at": md.locked_at.isoformat() if md.locked_at else None,
         "task_status": md.task_status,
         "fixture_count": len(md.fixtures),
+    }
+
+# New endpoint to retrieve FixtureResult
+@app.get("/matchday/{matchday_id}/fixture/{fixture_id}/result")
+def get_fixture_result(matchday_id: int, fixture_id: int, db: Session = Depends(get_db)):
+    """Return the FixtureResult for a given matchday and fixture."""
+    fixture_result = db.query(models.FixtureResult).filter(
+        models.FixtureResult.fixture_id == fixture_id
+    ).first()
+    if not fixture_result:
+        raise HTTPException(status_code=404, detail="FixtureResult not found")
+    return {
+        "id": fixture_result.id,
+        "fixture_id": fixture_result.fixture_id,
+        "home_goals": fixture_result.home_goals,
+        "away_goals": fixture_result.away_goals,
+        "extra_time_played": fixture_result.extra_time_played,
+        "home_extra_goals": fixture_result.home_extra_goals,
+        "away_extra_goals": fixture_result.away_extra_goals,
+        "penalty_shootout": fixture_result.penalty_shootout,
+        "home_penalties": fixture_result.home_penalties,
+        "away_penalties": fixture_result.away_penalties,
+        "winner_team_id": fixture_result.winner_team_id,
+        "verified_at": fixture_result.verified_at.isoformat() if fixture_result.verified_at else None,
+        "source": fixture_result.source,
     }

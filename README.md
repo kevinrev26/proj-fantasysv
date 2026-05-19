@@ -14,3 +14,19 @@ find backend | grep -E "__pycache__|\.pytest_cache|\.pyc"
 sudo find backend -type d \( -name "__pycache__" -o -name ".pytest_cache" \) -exec rm -rf {} +
 sudo find backend -type f -name "*.pyc" -delete
 ```
+
+### Apply migrations and alembic stuff
+Generate a new migration:
+```
+docker exec -it proj-fantasysv-fastapi-1 alembic revision --autogenerate -m "add_fixture_result"
+```
+
+Apply migration to database:
+```
+docker exec -it proj-fantasysv-fastapi-1 alembic upgrade head
+```
+
+Check current status/migration version:
+```
+docker exec -it proj-fantasysv-fastapi-1 alembic current
+```

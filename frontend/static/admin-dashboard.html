@@ -272,6 +272,7 @@
         <div class="nav-item" data-target="players-sec">🏃 Players (Create)</div>
         <div class="nav-item" data-target="players-update-sec">⚙️ Players (Update)</div>
         <div class="nav-item" data-target="phases-sec">🏆 Tournament Phases</div>
+        <div class="nav-item" data-target="fixture-results-sec">🥅 Fixture Results</div>
         <div class="nav-item" data-target="export-sec">📤 Export Players</div>
     </aside>
 
@@ -474,6 +475,125 @@
                 <button onclick="processCSV('csv-phases', '/admin/seasons/{season_id}/phases', ['name'])">Run
                     Import</button>
                 <div class="console" id="log-phases"></div>
+            </div>
+        </section>
+
+        <!-- FIXTURE RESULTS -->
+        <section id="fixture-results-sec" class="section">
+            <div class="card">
+                <h2>🥅 Fixture Results</h2>
+                <div class="instructions">
+                    Select a season and matchday to view all fixtures. Create, edit, or delete results for each fixture.
+                </div>
+
+                <!-- Selectors -->
+                <div class="form-group" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1.2rem;">
+                    <div>
+                        <label for="fr-season">Season</label>
+                        <select id="fr-season" onchange="frLoadMatchdays()" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:200px;outline:none;">
+                            <option value="">— select season —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="fr-matchday">Matchday</label>
+                        <select id="fr-matchday" onchange="frLoadFixtures()" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:200px;outline:none;">
+                            <option value="">— select matchday —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Fixtures table -->
+                <div id="fr-table-wrap" style="display:none;overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.87rem;">
+                        <thead>
+                            <tr style="background:var(--surface-color-light);">
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">Fixture</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">Kickoff (UTC)</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);">Score</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);">AET</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);">Pens</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);">Status</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fr-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="fr-empty" style="display:none;color:var(--text-muted);padding:1rem 0;font-size:0.9rem;">No fixtures found for this matchday.</div>
+                <div id="fr-error" style="display:none;margin-top:1rem;background:rgba(255,51,102,0.08);border-left:4px solid var(--danger-color);padding:.8rem 1.2rem;border-radius:0 8px 8px 0;color:var(--danger-color);font-size:0.9rem;"></div>
+            </div>
+
+            <!-- Create / Edit modal -->
+            <div id="fr-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)frCloseModal()">
+                <div style="background:var(--surface-color);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;">
+                    <h3 id="fr-modal-title" style="margin:0 0 1.5rem;font-size:1.1rem;">Create Fixture Result</h3>
+
+                    <input type="hidden" id="fr-modal-fixture-id">
+                    <input type="hidden" id="fr-modal-result-id">
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                        <div>
+                            <label id="fr-modal-home-label" style="display:block;font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;">Home Goals</label>
+                            <input id="fr-home-goals" type="number" min="0" value="0" style="width:100%;background:var(--bg-color);border:1px solid rgba(255,255,255,0.12);color:var(--text-color);padding:0.65rem 0.9rem;border-radius:8px;font-size:0.9rem;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label id="fr-modal-away-label" style="display:block;font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;">Away Goals</label>
+                            <input id="fr-away-goals" type="number" min="0" value="0" style="width:100%;background:var(--bg-color);border:1px solid rgba(255,255,255,0.12);color:var(--text-color);padding:0.65rem 0.9rem;border-radius:8px;font-size:0.9rem;outline:none;box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <!-- Extra time toggle -->
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding:.75rem 1rem;background:var(--bg-color);border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
+                        <input type="checkbox" id="fr-extra-time" onchange="frToggleExtraTime()" style="width:16px;height:16px;cursor:pointer;">
+                        <label for="fr-extra-time" style="font-size:0.9rem;cursor:pointer;">Extra Time Played</label>
+                    </div>
+
+                    <div id="fr-extra-time-fields" style="display:none;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                        <div>
+                            <label style="display:block;font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;">Home AET Goals</label>
+                            <input id="fr-home-extra" type="number" min="0" value="0" style="width:100%;background:var(--bg-color);border:1px solid rgba(255,255,255,0.12);color:var(--text-color);padding:0.65rem 0.9rem;border-radius:8px;font-size:0.9rem;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;">Away AET Goals</label>
+                            <input id="fr-away-extra" type="number" min="0" value="0" style="width:100%;background:var(--bg-color);border:1px solid rgba(255,255,255,0.12);color:var(--text-color);padding:0.65rem 0.9rem;border-radius:8px;font-size:0.9rem;outline:none;box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <!-- Penalties toggle -->
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding:.75rem 1rem;background:var(--bg-color);border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
+                        <input type="checkbox" id="fr-penalties" onchange="frTogglePenalties()" style="width:16px;height:16px;cursor:pointer;">
+                        <label for="fr-penalties" style="font-size:0.9rem;cursor:pointer;">Penalty Shootout</label>
+                    </div>
+
+                    <div id="fr-penalties-fields" style="display:none;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                        <div>
+                            <label style="display:block;font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;">Home Penalties</label>
+                            <input id="fr-home-pens" type="number" min="0" value="0" style="width:100%;background:var(--bg-color);border:1px solid rgba(255,255,255,0.12);color:var(--text-color);padding:0.65rem 0.9rem;border-radius:8px;font-size:0.9rem;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;">Away Penalties</label>
+                            <input id="fr-away-pens" type="number" min="0" value="0" style="width:100%;background:var(--bg-color);border:1px solid rgba(255,255,255,0.12);color:var(--text-color);padding:0.65rem 0.9rem;border-radius:8px;font-size:0.9rem;outline:none;box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:1.5rem;">
+                        <label style="display:block;font-size:0.82rem;color:var(--text-muted);margin-bottom:4px;">Source</label>
+                        <input id="fr-source" type="text" value="admin" style="width:100%;background:var(--bg-color);border:1px solid rgba(255,255,255,0.12);color:var(--text-color);padding:0.65rem 0.9rem;border-radius:8px;font-size:0.9rem;outline:none;box-sizing:border-box;">
+                    </div>
+
+                    <div id="fr-modal-error" style="display:none;background:rgba(255,51,102,0.08);border-left:4px solid var(--danger-color);padding:.7rem 1rem;border-radius:0 8px 8px 0;color:var(--danger-color);font-size:0.85rem;margin-bottom:1rem;"></div>
+
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <button onclick="frCloseModal()" style="background:rgba(255,255,255,0.07);color:var(--text-muted);border:none;border-radius:8px;padding:0.65rem 1.4rem;cursor:pointer;font-size:0.9rem;">Cancel</button>
+                        <button id="fr-modal-save-btn" onclick="frSaveResult()" style="background:var(--primary-color);color:#fff;border:none;border-radius:8px;padding:0.65rem 1.6rem;cursor:pointer;font-size:0.9rem;font-weight:700;">Save</button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -924,6 +1044,272 @@
             }
         }
 
+        // ── Fixture Results ───────────────────────────────────────────────────────
+        let _frFixtures = [];
+
+        async function frLoadSeasons() {
+            try {
+                const res = await authFetch('/seasons/');
+                if (!res.ok) return;
+                const data = await res.json();
+                const sel = document.getElementById('fr-season');
+                sel.innerHTML = '<option value="">— select season —</option>';
+                (data.seasons || []).forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.id; o.textContent = s.name;
+                    sel.appendChild(o);
+                });
+            } catch (_) {}
+        }
+
+        async function frLoadMatchdays() {
+            const seasonId = document.getElementById('fr-season').value;
+            const mdSel = document.getElementById('fr-matchday');
+            mdSel.innerHTML = '<option value="">— select matchday —</option>';
+            frHideTable();
+            if (!seasonId) return;
+            try {
+                const res = await authFetch(`/seasons/${seasonId}/matchdays`);
+                if (!res.ok) return;
+                const data = await res.json();
+                (data.matchdays || []).forEach(m => {
+                    const o = document.createElement('option');
+                    o.value = m.id; o.textContent = m.name;
+                    mdSel.appendChild(o);
+                });
+            } catch (_) {}
+        }
+
+        function frHideTable() {
+            document.getElementById('fr-table-wrap').style.display = 'none';
+            document.getElementById('fr-empty').style.display = 'none';
+            document.getElementById('fr-error').style.display = 'none';
+        }
+
+        async function frLoadFixtures() {
+            const matchdayId = document.getElementById('fr-matchday').value;
+            frHideTable();
+            if (!matchdayId) return;
+            const errEl = document.getElementById('fr-error');
+            try {
+                const res = await authFetch(`/admin/matchday/${matchdayId}/fixture-results`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                _frFixtures = data.fixtures || [];
+                frRenderTable();
+            } catch (e) {
+                errEl.textContent = `Error loading fixtures: ${e.message}`;
+                errEl.style.display = 'block';
+            }
+        }
+
+        function frRenderTable() {
+            const tbody = document.getElementById('fr-tbody');
+            const tableWrap = document.getElementById('fr-table-wrap');
+            const emptyEl = document.getElementById('fr-empty');
+            tbody.innerHTML = '';
+
+            if (!_frFixtures.length) { emptyEl.style.display = 'block'; return; }
+            tableWrap.style.display = 'block';
+
+            _frFixtures.forEach(f => {
+                const tr = document.createElement('tr');
+                tr.id = `fr-row-${f.fixture_id}`;
+                tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                tr.innerHTML = frRowHtml(f);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function frRowHtml(f) {
+            const kickoff = new Date(f.kickoff_utc).toLocaleString();
+            const r = f.result;
+
+            let scoreCell, aetCell, pensCell, statusCell, actionsCell;
+
+            if (r) {
+                const homeScore = r.home_goals;
+                const awayScore = r.away_goals;
+                scoreCell = `<span style="font-weight:700;font-size:1rem;letter-spacing:2px;">${homeScore} — ${awayScore}</span>`;
+                aetCell = r.extra_time_played
+                    ? `<span style="color:var(--secondary-color);font-size:0.8rem;">AET ${r.home_extra_goals}–${r.away_extra_goals}</span>`
+                    : `<span style="color:var(--text-muted);font-size:0.8rem;">—</span>`;
+                pensCell = r.penalty_shootout
+                    ? `<span style="color:#ffc800;font-size:0.8rem;">${r.home_penalties}–${r.away_penalties}</span>`
+                    : `<span style="color:var(--text-muted);font-size:0.8rem;">—</span>`;
+                statusCell = `<span style="background:rgba(0,200,100,0.12);color:#00e676;border:1px solid rgba(0,200,100,0.3);padding:3px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;">✓ Result</span>`;
+                actionsCell = `
+                    <button onclick="frOpenEditModal(${f.fixture_id})"
+                        style="background:rgba(255,200,80,.12);color:#ffc850;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:0.82rem;">✏️ Edit</button>
+                    <button onclick="frDeleteResult(${r.id}, ${f.fixture_id})"
+                        style="background:rgba(255,80,80,.12);color:#ff5050;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:0.82rem;">✕</button>`;
+            } else {
+                scoreCell = `<span style="color:var(--text-muted);font-size:0.85rem;">—</span>`;
+                aetCell = `<span style="color:var(--text-muted);font-size:0.8rem;">—</span>`;
+                pensCell = `<span style="color:var(--text-muted);font-size:0.8rem;">—</span>`;
+                statusCell = `<span style="background:rgba(80,150,255,0.1);color:#5096ff;border:1px solid rgba(80,150,255,0.3);padding:3px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;">Pending</span>`;
+                actionsCell = `
+                    <button onclick="frOpenCreateModal(${f.fixture_id})"
+                        style="background:rgba(0,240,255,0.1);color:var(--secondary-color);border:1px solid rgba(0,240,255,0.2);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:0.82rem;">+ Add Result</button>`;
+            }
+
+            return `
+                <td style="padding:.65rem 1rem;font-weight:600;">
+                    <span>${escHtml(f.home_team_name)}</span>
+                    <span style="color:var(--text-muted);font-size:0.8rem;margin:0 6px;">vs</span>
+                    <span>${escHtml(f.away_team_name)}</span>
+                </td>
+                <td style="padding:.65rem 1rem;color:var(--text-muted);font-size:0.82rem;">${kickoff}</td>
+                <td style="padding:.65rem 1rem;text-align:center;">${scoreCell}</td>
+                <td style="padding:.65rem 1rem;text-align:center;">${aetCell}</td>
+                <td style="padding:.65rem 1rem;text-align:center;">${pensCell}</td>
+                <td style="padding:.65rem 1rem;text-align:center;">${statusCell}</td>
+                <td style="padding:.65rem 1rem;text-align:center;display:flex;gap:6px;justify-content:center;">${actionsCell}</td>`;
+        }
+
+        function frOpenCreateModal(fixtureId) {
+            const f = _frFixtures.find(x => x.fixture_id === fixtureId);
+            document.getElementById('fr-modal-title').textContent =
+                f ? `Add Result: ${f.home_team_name} vs ${f.away_team_name}` : 'Create Fixture Result';
+            document.getElementById('fr-modal-fixture-id').value = fixtureId;
+            document.getElementById('fr-modal-result-id').value = '';
+            document.getElementById('fr-home-goals').value = 0;
+            document.getElementById('fr-away-goals').value = 0;
+            document.getElementById('fr-extra-time').checked = false;
+            document.getElementById('fr-home-extra').value = 0;
+            document.getElementById('fr-away-extra').value = 0;
+            document.getElementById('fr-penalties').checked = false;
+            document.getElementById('fr-home-pens').value = 0;
+            document.getElementById('fr-away-pens').value = 0;
+            document.getElementById('fr-source').value = 'admin';
+            document.getElementById('fr-modal-error').style.display = 'none';
+            document.getElementById('fr-modal-save-btn').textContent = 'Create';
+            frToggleExtraTime();
+            frTogglePenalties();
+            document.getElementById('fr-modal-overlay').style.display = 'flex';
+        }
+
+        function frOpenEditModal(fixtureId) {
+            const f = _frFixtures.find(x => x.fixture_id === fixtureId);
+            if (!f || !f.result) return;
+            const r = f.result;
+            document.getElementById('fr-modal-title').textContent =
+                `Edit Result: ${f.home_team_name} vs ${f.away_team_name}`;
+            document.getElementById('fr-modal-fixture-id').value = fixtureId;
+            document.getElementById('fr-modal-result-id').value = r.id;
+            document.getElementById('fr-home-goals').value = r.home_goals;
+            document.getElementById('fr-away-goals').value = r.away_goals;
+            document.getElementById('fr-extra-time').checked = r.extra_time_played;
+            document.getElementById('fr-home-extra').value = r.home_extra_goals;
+            document.getElementById('fr-away-extra').value = r.away_extra_goals;
+            document.getElementById('fr-penalties').checked = r.penalty_shootout;
+            document.getElementById('fr-home-pens').value = r.home_penalties;
+            document.getElementById('fr-away-pens').value = r.away_penalties;
+            document.getElementById('fr-source').value = r.source || 'admin';
+            document.getElementById('fr-modal-error').style.display = 'none';
+            document.getElementById('fr-modal-save-btn').textContent = 'Update';
+            frToggleExtraTime();
+            frTogglePenalties();
+            document.getElementById('fr-modal-overlay').style.display = 'flex';
+        }
+
+        function frCloseModal() {
+            document.getElementById('fr-modal-overlay').style.display = 'none';
+        }
+
+        function frToggleExtraTime() {
+            const checked = document.getElementById('fr-extra-time').checked;
+            const fields = document.getElementById('fr-extra-time-fields');
+            fields.style.display = checked ? 'grid' : 'none';
+        }
+
+        function frTogglePenalties() {
+            const checked = document.getElementById('fr-penalties').checked;
+            const fields = document.getElementById('fr-penalties-fields');
+            fields.style.display = checked ? 'grid' : 'none';
+        }
+
+        async function frSaveResult() {
+            const fixtureId = parseInt(document.getElementById('fr-modal-fixture-id').value);
+            const resultId  = document.getElementById('fr-modal-result-id').value;
+            const errEl     = document.getElementById('fr-modal-error');
+            const saveBtn   = document.getElementById('fr-modal-save-btn');
+
+            errEl.style.display = 'none';
+            saveBtn.disabled    = true;
+            saveBtn.textContent = '⏳ Saving…';
+
+            const body = {
+                home_goals:        parseInt(document.getElementById('fr-home-goals').value) || 0,
+                away_goals:        parseInt(document.getElementById('fr-away-goals').value) || 0,
+                extra_time_played: document.getElementById('fr-extra-time').checked,
+                home_extra_goals:  parseInt(document.getElementById('fr-home-extra').value) || 0,
+                away_extra_goals:  parseInt(document.getElementById('fr-away-extra').value) || 0,
+                penalty_shootout:  document.getElementById('fr-penalties').checked,
+                home_penalties:    parseInt(document.getElementById('fr-home-pens').value) || 0,
+                away_penalties:    parseInt(document.getElementById('fr-away-pens').value) || 0,
+                source:            document.getElementById('fr-source').value || 'admin',
+            };
+
+            try {
+                let res;
+                if (resultId) {
+                    res = await authFetch(`/admin/fixture-results/${resultId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                    });
+                } else {
+                    res = await authFetch(`/admin/fixtures/${fixtureId}/result`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                    });
+                }
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `HTTP ${res.status}`);
+                }
+
+                const saved = await res.json();
+                // Update local state
+                const idx = _frFixtures.findIndex(f => f.fixture_id === fixtureId);
+                if (idx !== -1) {
+                    _frFixtures[idx].result   = saved;
+                    _frFixtures[idx].finished = true;
+                    const tr = document.getElementById(`fr-row-${fixtureId}`);
+                    if (tr) tr.innerHTML = frRowHtml(_frFixtures[idx]);
+                }
+                frCloseModal();
+            } catch (e) {
+                errEl.textContent   = e.message;
+                errEl.style.display = 'block';
+            } finally {
+                saveBtn.disabled    = false;
+                saveBtn.textContent = resultId ? 'Update' : 'Create';
+            }
+        }
+
+        async function frDeleteResult(resultId, fixtureId) {
+            const f = _frFixtures.find(x => x.fixture_id === fixtureId);
+            const label = f ? `${f.home_team_name} vs ${f.away_team_name}` : `fixture #${fixtureId}`;
+            if (!confirm(`Delete result for ${label}?`)) return;
+            try {
+                const res = await authFetch(`/admin/fixture-results/${resultId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || `HTTP ${res.status}`);
+                const idx = _frFixtures.findIndex(f => f.fixture_id === fixtureId);
+                if (idx !== -1) {
+                    _frFixtures[idx].result   = null;
+                    _frFixtures[idx].finished = false;
+                    const tr = document.getElementById(`fr-row-${fixtureId}`);
+                    if (tr) tr.innerHTML = frRowHtml(_frFixtures[idx]);
+                }
+            } catch (e) {
+                alert(`Delete failed: ${e.message}`);
+            }
+        }
+
         // ── Init: auth gate + tab switching + lazy loaders ────────────────────────
         (async () => {
             await requireRole('admin');
@@ -939,6 +1325,10 @@
 
             document.querySelector('[data-target="matchday-crud-sec"]').addEventListener('click', () => {
                 if (document.getElementById('md-crud-season').options.length === 1) mdLoadSeasons();
+            });
+
+            document.querySelector('[data-target="fixture-results-sec"]').addEventListener('click', () => {
+                if (document.getElementById('fr-season').options.length === 1) frLoadSeasons();
             });
 
             document.querySelector('[data-target="export-sec"]').addEventListener('click', () => {

@@ -750,6 +750,196 @@ def delete_fixture(fixture_id: int, db: Session = Depends(get_db)):
     }
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# FIXTURE RESULT endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+class FixtureResultIn(BaseModel):
+    home_goals: int
+    away_goals: int
+    extra_time_played: bool = False
+    home_extra_goals: int = 0
+    away_extra_goals: int = 0
+    penalty_shootout: bool = False
+    home_penalties: int = 0
+    away_penalties: int = 0
+    winner_team_id: Optional[int] = None
+    source: str = "admin"
+
+
+class FixtureResultUpdate(BaseModel):
+    home_goals: Optional[int] = None
+    away_goals: Optional[int] = None
+    extra_time_played: Optional[bool] = None
+    home_extra_goals: Optional[int] = None
+    away_extra_goals: Optional[int] = None
+    penalty_shootout: Optional[bool] = None
+    home_penalties: Optional[int] = None
+    away_penalties: Optional[int] = None
+    winner_team_id: Optional[int] = None
+    source: Optional[str] = None
+
+
+def _fixture_result_dict(fr: models.FixtureResult) -> dict:
+    return {
+        "id": fr.id,
+        "fixture_id": fr.fixture_id,
+        "home_goals": fr.home_goals,
+        "away_goals": fr.away_goals,
+        "extra_time_played": fr.extra_time_played,
+        "home_extra_goals": fr.home_extra_goals,
+        "away_extra_goals": fr.away_extra_goals,
+        "penalty_shootout": fr.penalty_shootout,
+        "home_penalties": fr.home_penalties,
+        "away_penalties": fr.away_penalties,
+        "winner_team_id": fr.winner_team_id,
+        "verified_at": fr.verified_at.isoformat() if fr.verified_at else None,
+        "source": fr.source,
+    }
+
+
+@router.get("/matchday/{matchday_id}/fixture-results", status_code=200)
+def list_matchday_fixture_results(matchday_id: int, db: Session = Depends(get_db)):
+    """
+    Return all fixtures for a matchday, each with their FixtureResult (if any).
+    """
+    matchday = db.query(models.Matchday).filter(models.Matchday.id == matchday_id).first()
+    if not matchday:
+        raise HTTPException(status_code=404, detail="Matchday not found")
+
+    fixtures = (
+        db.query(models.Fixture)
+        .filter(models.Fixture.matchday_id == matchday_id)
+        .all()
+    )
+
+    result = []
+    for f in fixtures:
+        result.append({
+            "fixture_id": f.id,
+            "home_team_id": f.home_team_id,
+            "home_team_name": f.home_team.name,
+            "away_team_id": f.away_team_id,
+            "away_team_name": f.away_team.name,
+            "kickoff_utc": f.kickoff_utc.isoformat(),
+            "finished": f.finished,
+            "result": _fixture_result_dict(f.result) if f.result else None,
+        })
+
+    return {"matchday_id": matchday_id, "fixtures": result}
+
+
+@router.post("/fixtures/{fixture_id}/result", status_code=201)
+def create_fixture_result(
+    fixture_id: int,
+    payload: FixtureResultIn,
+    db: Session = Depends(get_db),
+):
+    """Create a FixtureResult for a fixture. Each fixture can have at most one result."""
+    fixture = db.query(models.Fixture).filter(models.Fixture.id == fixture_id).first()
+    if not fixture:
+        raise HTTPException(status_code=404, detail="Fixture not found")
+    if fixture.result:
+        raise HTTPException(
+            status_code=409,
+            detail="A result already exists for this fixture. Use PATCH to update it.",
+        )
+
+    if payload.winner_team_id is not None:
+        if not db.query(models.Team).filter(models.Team.id == payload.winner_team_id).first():
+            raise HTTPException(status_code=400, detail=f"Winner team {payload.winner_team_id} not found")
+
+    from datetime import timezone
+    fr = models.FixtureResult(
+        fixture_id=fixture_id,
+        home_goals=payload.home_goals,
+        away_goals=payload.away_goals,
+        extra_time_played=payload.extra_time_played,
+        home_extra_goals=payload.home_extra_goals,
+        away_extra_goals=payload.away_extra_goals,
+        penalty_shootout=payload.penalty_shootout,
+        home_penalties=payload.home_penalties,
+        away_penalties=payload.away_penalties,
+        winner_team_id=payload.winner_team_id,
+        source=payload.source,
+        verified_at=datetime.now(timezone.utc),
+    )
+    db.add(fr)
+    fixture.finished = True
+    db.commit()
+    db.refresh(fr)
+    return _fixture_result_dict(fr)
+
+
+@router.get("/fixture-results/{result_id}", status_code=200)
+def get_fixture_result(result_id: int, db: Session = Depends(get_db)):
+    """Get a single FixtureResult by its ID."""
+    fr = db.query(models.FixtureResult).filter(models.FixtureResult.id == result_id).first()
+    if not fr:
+        raise HTTPException(status_code=404, detail="FixtureResult not found")
+    return _fixture_result_dict(fr)
+
+
+@router.patch("/fixture-results/{result_id}", status_code=200)
+def update_fixture_result(
+    result_id: int,
+    payload: FixtureResultUpdate,
+    db: Session = Depends(get_db),
+):
+    """Partially update an existing FixtureResult."""
+    fr = db.query(models.FixtureResult).filter(models.FixtureResult.id == result_id).first()
+    if not fr:
+        raise HTTPException(status_code=404, detail="FixtureResult not found")
+
+    if payload.home_goals is not None:
+        fr.home_goals = payload.home_goals
+    if payload.away_goals is not None:
+        fr.away_goals = payload.away_goals
+    if payload.extra_time_played is not None:
+        fr.extra_time_played = payload.extra_time_played
+    if payload.home_extra_goals is not None:
+        fr.home_extra_goals = payload.home_extra_goals
+    if payload.away_extra_goals is not None:
+        fr.away_extra_goals = payload.away_extra_goals
+    if payload.penalty_shootout is not None:
+        fr.penalty_shootout = payload.penalty_shootout
+    if payload.home_penalties is not None:
+        fr.home_penalties = payload.home_penalties
+    if payload.away_penalties is not None:
+        fr.away_penalties = payload.away_penalties
+    if payload.winner_team_id is not None:
+        if not db.query(models.Team).filter(models.Team.id == payload.winner_team_id).first():
+            raise HTTPException(status_code=400, detail=f"Winner team {payload.winner_team_id} not found")
+        fr.winner_team_id = payload.winner_team_id
+    if payload.source is not None:
+        fr.source = payload.source
+
+    from datetime import timezone
+    fr.verified_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(fr)
+    return _fixture_result_dict(fr)
+
+
+@router.delete("/fixture-results/{result_id}", status_code=200)
+def delete_fixture_result(result_id: int, db: Session = Depends(get_db)):
+    """Delete a FixtureResult and mark the linked fixture as not finished."""
+    fr = db.query(models.FixtureResult).filter(models.FixtureResult.id == result_id).first()
+    if not fr:
+        raise HTTPException(status_code=404, detail="FixtureResult not found")
+
+    fixture_id = fr.fixture_id
+    fixture = db.query(models.Fixture).filter(models.Fixture.id == fixture_id).first()
+
+    db.delete(fr)
+    if fixture:
+        fixture.finished = False
+    db.commit()
+
+    return {"deleted": result_id, "fixture_id": fixture_id}
+
+
 @router.get("/export/players")
 def export_players(season_id: Optional[int] = None, db: Session = Depends(get_db)):
     """

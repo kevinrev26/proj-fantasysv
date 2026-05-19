@@ -213,6 +213,7 @@ class Fixture(Base):
     matchday = relationship("Matchday", back_populates="fixtures")
     home_team = relationship("Team", foreign_keys=[home_team_id])
     away_team = relationship("Team", foreign_keys=[away_team_id])
+    result = relationship("FixtureResult", uselist=False, back_populates="fixture")
 
 
 class League(Base):
@@ -383,3 +384,50 @@ class Transfer(Base):
     matchday = relationship("Matchday")
     player_in = relationship("Player", foreign_keys=[player_in_id])
     player_out = relationship("Player", foreign_keys=[player_out_id])
+
+class FixtureResult(Base):
+    __tablename__ = "fixture_result"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fixture_id = Column(Integer, ForeignKey("fixture.id"), nullable=False, unique=True)
+
+    # Core result – total goals after any extra time (regulation + extra)
+    home_goals = Column(Integer, default=0, nullable=False)
+    away_goals = Column(Integer, default=0, nullable=False)
+
+    # Extra time details (only relevant for knockout matches)
+    extra_time_played = Column(Boolean, default=False)
+    home_extra_goals = Column(Integer, default=0)
+    away_extra_goals = Column(Integer, default=0)
+
+    # Penalty shootout details
+    penalty_shootout = Column(Boolean, default=False)
+    home_penalties = Column(Integer, default=0)
+    away_penalties = Column(Integer, default=0)
+
+    # Optional: pre‑computed winner (avoid repeated logic)
+    winner_team_id = Column(Integer, ForeignKey("team.id"), nullable=True)
+
+    # Audit & data quality
+    verified_at = Column(DateTime(timezone=True), nullable=True)
+    source = Column(String, default="admin")  # e.g., "admin", "csv_import", "api"
+
+    # Relationships
+    fixture = relationship("Fixture", back_populates="result")
+    winner_team = relationship("Team", foreign_keys=[winner_team_id])
+
+    @property
+    def is_knockout_match(self) -> bool:
+        """Return True if extra time or penalties are meaningful."""
+        return self.extra_time_played or self.penalty_shootout
+
+    @property
+    def winner(self):
+        """Return 'home', 'away', or None if draw (no penalties)."""
+        if self.penalty_shootout:
+            return "home" if self.home_penalties > self.away_penalties else "away"
+        if self.home_goals > self.away_goals:
+            return "home"
+        if self.away_goals > self.home_goals:
+            return "away"
+        return None  # draw after regulation + extra time
