@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Ligas Privadas — Fantasy SV</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="/js/auth.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    :root {
+      --navy:        #0a1628;
+      --navy-mid:    #0f2040;
+      --navy-light:  #162a50;
+      --navy-card:   #1a3260;
+      --teal:        #00d4aa;
+      --teal-dark:   #00a88a;
+      --teal-glow:   rgba(0, 212, 170, 0.18);
+      --gold:        #f5c842;
+      --blue-accent: #00a8e8;
+      --red-accent:  #ff5f6d;
+      --text-white:  #ffffff;
+      --text-dim:    rgba(255,255,255,0.55);
+      --text-muted:  rgba(255,255,255,0.3);
+      --radius:      14px;
+      --radius-sm:   8px;
+      --shadow-card: 0 8px 32px rgba(0,0,0,0.45);
+      --font: 'Nunito', sans-serif;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font);
+      background: var(--navy);
+      color: var(--text-white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── PAGE WRAPPER ── */
+    .page-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      margin-bottom: 2rem;
+    }
+    .page-header h1 {
+      font-size: 1.9rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--teal), var(--blue-accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.01em;
+    }
+    .page-header p {
+      color: var(--text-dim);
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-top: 5px;
+    }
+    .page-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .meta-pill {
+      background: rgba(0,212,170,0.10);
+      border: 1px solid rgba(0,212,170,0.28);
+      border-radius: 40px;
+      padding: 5px 14px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--teal);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .meta-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+    .refresh-btn {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 40px;
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 5px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover { color: var(--teal); border-color: var(--teal); }
+
+    /* ── TABS ── */
+    .tabs-bar {
+      display: flex;
+      gap: 4px;
+      background: rgba(0,0,0,0.3);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 1.75rem;
+      border: 1px solid rgba(255,255,255,0.07);
+      width: fit-content;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 9px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+    .tab-btn.active {
+      background: var(--teal);
+      color: var(--navy);
+    }
+    .tab-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.07);
+      color: var(--text-white);
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--navy-mid);
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-white);
+      letter-spacing: 0.01em;
+    }
+    .card-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    /* ── TWO-COL LAYOUT ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 640px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group:last-of-type { margin-bottom: 0; }
+    .form-label {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: var(--radius-sm);
+      padding: 10px 13px;
+      color: var(--text-white);
+      font-family: var(--font);
+      font-weight: 600;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .form-control::placeholder { color: var(--text-muted); font-weight: 500; }
+    .form-control:focus {
+      border-color: var(--teal);
+      background: rgba(0,212,170,0.04);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--teal);
+      color: var(--navy);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 0.88rem;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      letter-spacing: 0.01em;
+      margin-top: 1.1rem;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--teal-dark);
+      transform: translateY(-1px);
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-ghost {
+      background: rgba(255,255,255,0.07);
+      color: var(--text-dim);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      background: rgba(255,255,255,0.13);
+      color: var(--text-white);
+      transform: translateY(-1px);
+    }
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 0.8rem;
+      margin-top: 0;
+    }
+
+    /* ── MESSAGES ── */
+    .msg {
+      margin-top: 1rem;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.83rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .msg-success {
+      background: rgba(0,212,170,0.12);
+      border-left: 3px solid var(--teal);
+      color: var(--teal);
+    }
+    .msg-error {
+      background: rgba(255,95,109,0.12);
+      border-left: 3px solid var(--red-accent);
+      color: var(--red-accent);
+    }
+
+    /* ── SPINNER ── */
+    .spinner {
+      display: inline-block;
+      width: 15px; height: 15px;
+      border: 2px solid rgba(0,212,170,0.3);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 2.5rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      font-size: 0.88rem;
+    }
+
+    /* ── LEAGUE LIST ── */
+    .league-list { display: flex; flex-direction: column; }
+    .league-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.18s;
+      cursor: pointer;
+    }
+    .league-row:last-child { border-bottom: none; }
+    .league-row:hover { background: rgba(0,212,170,0.04); }
+    .league-row.selected { background: rgba(0,212,170,0.08); border-left: 3px solid var(--teal); }
+    .league-row-info { flex: 1; min-width: 0; }
+    .league-row-name {
+      font-weight: 800;
+      font-size: 0.97rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .league-row-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 3px;
+    }
+    .league-row-date {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .season-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: rgba(0,168,232,0.15);
+      color: var(--blue-accent);
+      border-radius: 4px;
+      padding: 2px 7px;
+    }
+    .league-row-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .arrow-icon {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .league-row:hover .arrow-icon,
+    .league-row.selected .arrow-icon { color: var(--teal); transform: translateX(3px); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+    .empty-icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.4;
+    }
+
+    /* ── LEAGUE DETAIL PANEL ── */
+    .detail-panel {
+      margin-top: 1.25rem;
+    }
+    .detail-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .detail-title {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: var(--text-white);
+    }
+    .detail-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      margin-top: 3px;
+    }
+    .code-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      margin-top: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .code-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+    .code-value {
+      font-family: 'Courier New', monospace;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      color: var(--teal);
+      flex: 1;
+    }
+    .copy-btn {
+      background: rgba(0,212,170,0.12);
+      border: 1px solid rgba(0,212,170,0.3);
+      border-radius: 6px;
+      color: var(--teal);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { background: rgba(0,212,170,0.22); }
+    .copy-btn.copied { color: var(--navy); background: var(--teal); border-color: var(--teal); }
+
+    /* ── LEADERBOARD TABLE ── */
+    .table-wrap {
+      background: rgba(0,0,0,0.15);
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .lb-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      min-width: 380px;
+    }
+    .lb-table th {
+      text-align: left;
+      padding: 0.85rem 1rem;
+      background: rgba(0,0,0,0.3);
+      color: var(--text-dim);
+      font-weight: 700;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .lb-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-weight: 600;
+    }
+    .lb-table tr:last-child td { border-bottom: none; }
+    .lb-table tr:hover td { background: rgba(0,212,170,0.04); }
+    .rank-cell { font-weight: 800; color: var(--gold); width: 60px; }
+    .rank-1 { color: #FFD700; }
+    .rank-2 { color: #C0C0C0; }
+    .rank-3 { color: #CD7F32; }
+    .team-col { display: flex; flex-direction: column; gap: 2px; }
+    .team-nm { font-weight: 800; font-size: 0.9rem; }
+    .team-usr { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; }
+    .pts-cell { font-weight: 800; color: var(--teal); }
+    .you-badge {
+      display: inline-block;
+      background: var(--teal);
+      color: var(--navy);
+      font-size: 0.6rem;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 50px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .current-user-row td { background: rgba(0,212,170,0.07) !important; }
+    .current-user-row { border-left: 3px solid var(--teal); }
+
+    @media (max-width: 600px) {
+      .tabs-bar { width: 100%; }
+      .tab-btn { flex: 1; text-align: center; padding: 9px 10px; }
+      .code-value { font-size: 1.1rem; }
+      .detail-header { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="main-nav">
+  <div class="nav-container">
+    <a href="/" class="nav-brand">
+      <span class="nav-logo-icon">⚽</span>
+      Fantasy SV
+    </a>
+    <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-links" id="nav-links">
+      <a href="squad-builder" class="nav-link">Mi Equipo</a>
+      <a href="leaderboard" class="nav-link">Clasificación</a>
+      <a href="profile" class="nav-link">Perfil</a>
+      <a href="private_leagues" class="nav-link" style="color:var(--teal);">Ligas Privadas</a>
+      <button class="sign-out-btn">Cerrar Sesión</button>
+    </div>
+  </div>
+</nav>
+
+<main x-data="privateLeaguesApp()" x-init="init()">
+  <div class="page-wrap">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <h1>Ligas Privadas</h1>
+      <p>Crea tu propia liga, invita a amigos con un código y compite</p>
+      <div class="page-meta">
+        <div class="meta-pill">
+          <span class="meta-dot"></span>
+          <span x-text="myLeagues.length + ' liga' + (myLeagues.length !== 1 ? 's' : '') + ' activa' + (myLeagues.length !== 1 ? 's' : '')"></span>
+        </div>
+        <button class="refresh-btn" @click="refreshAll()">Actualizar</button>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-bar">
+      <button class="tab-btn" :class="{ active: activeTab === 'mis-ligas' }" @click="activeTab = 'mis-ligas'">Mis Ligas</button>
+      <button class="tab-btn" :class="{ active: activeTab === 'crear' }" @click="activeTab = 'crear'">Crear Liga</button>
+      <button class="tab-btn" :class="{ active: activeTab === 'unirse' }" @click="activeTab = 'unirse'">Unirse</button>
+    </div>
+
+    <!-- ══ TAB: MIS LIGAS ══ -->
+    <div x-show="activeTab === 'mis-ligas'" x-transition>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Mis Ligas Privadas</div>
+            <div class="card-sub">Selecciona una liga para ver su clasificación y código de invitación</div>
+          </div>
+        </div>
+
+        <!-- loading -->
+        <div x-show="loadingMyLeagues" class="loading-center">
+          <span class="spinner"></span> Cargando ligas...
+        </div>
+
+        <!-- empty -->
+        <div x-show="!loadingMyLeagues && myLeagues.length === 0" class="empty-state">
+          <div class="empty-icon">▦</div>
+          Aún no perteneces a ninguna liga privada.<br>
+          Crea una nueva o únete con un código de invitación.
+        </div>
+
+        <!-- list -->
+        <div class="league-list" x-show="!loadingMyLeagues && myLeagues.length > 0">
+          <template x-for="league in myLeagues" :key="league.private_league_id">
+            <div
+              class="league-row"
+              :class="{ selected: selectedLeagueId === league.private_league_id }"
+              @click="openLeague(league)"
+            >
+              <div class="league-row-info">
+                <div class="league-row-name" x-text="league.private_league_name"></div>
+                <div class="league-row-meta">
+                  <span class="league-row-date" x-text="'Unido el ' + formatDate(league.joined_at)"></span>
+                  <span class="season-tag" x-text="'Temporada ' + league.season_id"></span>
+                </div>
+              </div>
+              <div class="league-row-actions">
+                <span class="arrow-icon">›</span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- DETAIL PANEL (shown when a league is selected) -->
+      <div class="detail-panel" x-show="selectedLeagueId !== null" x-transition>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title" x-text="selectedLeagueName"></div>
+              <div class="card-sub">Clasificación de la liga · Puntos acumulados</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" @click="closeLeague()">Cerrar</button>
+          </div>
+
+          <!-- Invite Code -->
+          <div style="padding: 0 1.5rem;">
+            <div class="code-block" x-show="selectedJoinCode">
+              <div>
+                <div class="code-label">Código de invitación</div>
+                <div class="code-value" x-text="selectedJoinCode"></div>
+              </div>
+              <button
+                class="copy-btn"
+                :class="{ copied: codeCopied }"
+                @click="copyCode()"
+                x-text="codeCopied ? 'Copiado' : 'Copiar'"
+              ></button>
+            </div>
+          </div>
+
+          <!-- Leaderboard loading -->
+          <div x-show="loadingLeaderboard" class="loading-center">
+            <span class="spinner"></span> Cargando clasificación...
+          </div>
+
+          <!-- Leaderboard empty -->
+          <div x-show="!loadingLeaderboard && leaderboardData.length === 0" class="empty-state">
+            <div class="empty-icon">◷</div>
+            Sin puntuaciones registradas todavía.<br>
+            Los equipos aparecerán aquí tras la primera jornada cerrada.
+          </div>
+
+          <!-- Leaderboard table -->
+          <div style="padding: 0 1.5rem 1.5rem;" x-show="!loadingLeaderboard && leaderboardData.length > 0">
+            <div class="table-wrap">
+              <table class="lb-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Equipo</th>
+                    <th>Puntos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(team, idx) in leaderboardData" :key="idx">
+                    <tr :class="team.is_current_user ? 'current-user-row' : ''">
+                      <td class="rank-cell">
+                        <span :class="'rank-' + (idx + 1)" x-text="idx + 1"></span>
+                      </td>
+                      <td>
+                        <div class="team-col">
+                          <div class="team-nm">
+                            <span x-text="team.fantasy_team_name"></span>
+                            <span x-show="team.is_current_user" class="you-badge">Tú</span>
+                          </div>
+                          <div class="team-usr" x-text="'@' + team.username"></div>
+                        </div>
+                      </td>
+                      <td class="pts-cell" x-text="team.total_points + ' pts'"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: CREAR ══ -->
+    <div x-show="activeTab === 'crear'" x-transition>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Crear nueva liga</div>
+            <div class="card-sub">Se generará un código de 5 dígitos para invitar a otros participantes</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Nombre de la liga</label>
+            <input type="text" class="form-control" x-model="newLeagueName" placeholder="Ej: Amigos Cup 2026" maxlength="60">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Capacidad máxima de equipos <span style="color:var(--text-muted);font-weight:600;">(opcional)</span></label>
+            <input type="number" class="form-control" x-model="newLeagueMaxTeams" placeholder="Sin límite" min="2" max="500">
+          </div>
+          <button class="btn" @click="createLeague()" :disabled="creatingLeague">
+            <span x-show="creatingLeague" class="spinner" style="border-top-color:var(--navy);border-color:rgba(10,22,40,0.3);border-top-color:var(--navy);"></span>
+            <span x-text="creatingLeague ? 'Creando...' : 'Crear liga'"></span>
+          </button>
+          <div x-show="createMessage" class="msg" :class="createMsgClass" x-text="createMessage"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: UNIRSE ══ -->
+    <div x-show="activeTab === 'unirse'" x-transition>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Unirse con código</div>
+            <div class="card-sub">Ingresa el código de 5 dígitos que te compartió el administrador de la liga</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Código de 5 dígitos</label>
+            <input
+              type="text"
+              class="form-control"
+              x-model="joinCode"
+              placeholder="12345"
+              maxlength="5"
+              inputmode="numeric"
+              style="letter-spacing: 0.25em; font-size: 1.2rem; font-weight: 800;"
+              @keyup.enter="joinLeague()"
+            >
+          </div>
+          <button class="btn" @click="joinLeague()" :disabled="joiningLeague">
+            <span x-show="joiningLeague" class="spinner" style="border-color:rgba(10,22,40,0.3);border-top-color:var(--navy);"></span>
+            <span x-text="joiningLeague ? 'Uniéndose...' : 'Unirse a la liga'"></span>
+          </button>
+          <div x-show="joinMessage" class="msg" :class="joinMsgClass" x-text="joinMessage"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-wrap -->
+</main>
+
+<script>
+function privateLeaguesApp() {
+  return {
+    activeTab: 'mis-ligas',
+
+    // Create
+    newLeagueName: '',
+    newLeagueMaxTeams: null,
+    creatingLeague: false,
+    createMessage: '',
+    createMsgClass: '',
+
+    // Join
+    joinCode: '',
+    joiningLeague: false,
+    joinMessage: '',
+    joinMsgClass: '',
+
+    // My leagues
+    myLeagues: [],
+    loadingMyLeagues: false,
+
+    // Selected league detail
+    selectedLeagueId: null,
+    selectedLeagueName: '',
+    selectedJoinCode: '',
+    codeCopied: false,
+
+    // Leaderboard
+    leaderboardData: [],
+    loadingLeaderboard: false,
+
+    async init() {
+      await requireRole('user');
+      await this.loadMyLeagues();
+    },
+
+    async refreshAll() {
+      await this.loadMyLeagues();
+      if (this.selectedLeagueId !== null) {
+        await this.fetchLeaderboard(this.selectedLeagueId);
+      }
+    },
+
+    // ── MY LEAGUES ──
+    async loadMyLeagues() {
+      this.loadingMyLeagues = true;
+      try {
+        const r = await authFetch('/league/private/my-leagues');
+        if (r.ok) {
+          this.myLeagues = await r.json();
+        }
+      } catch(e) {
+        console.error('Error loading leagues', e);
+      } finally {
+        this.loadingMyLeagues = false;
+      }
+    },
+
+    // ── OPEN LEAGUE DETAIL ──
+    async openLeague(league) {
+      // If already selected, toggle off
+      if (this.selectedLeagueId === league.private_league_id) {
+        this.closeLeague();
+        return;
+      }
+      this.selectedLeagueId = league.private_league_id;
+      this.selectedLeagueName = league.private_league_name;
+      this.selectedJoinCode = league.join_code || '';
+      this.leaderboardData = [];
+      this.codeCopied = false;
+
+      // If no join_code in my-leagues response, try fetching it
+      // (the backend my-leagues endpoint returns the fields from MembershipResponse)
+      // join_code isn't in MembershipResponse so we fetch via leaderboard call
+      // and code must be retrieved via a separate detail endpoint if available.
+      // Since there's no GET /league/private/{id} endpoint, we skip code for now
+      // unless it was returned. We still show leaderboard.
+      await this.fetchLeaderboard(league.private_league_id);
+    },
+
+    closeLeague() {
+      this.selectedLeagueId = null;
+      this.selectedLeagueName = '';
+      this.selectedJoinCode = '';
+      this.leaderboardData = [];
+      this.codeCopied = false;
+    },
+
+    async fetchLeaderboard(leagueId) {
+      this.loadingLeaderboard = true;
+      this.leaderboardData = [];
+      try {
+        const r = await authFetch(`/league/private/${leagueId}/leaderboard`);
+        if (r.ok) {
+          const data = await r.json(); // [{fantasy_team_name, username, total_points}]
+          this.leaderboardData = data.map(entry => ({
+            ...entry
+          }));
+        }
+      } catch(e) {
+        console.error('Error loading leaderboard', e);
+      } finally {
+        this.loadingLeaderboard = false;
+      }
+    },
+
+    async copyCode() {
+      if (!this.selectedJoinCode) return;
+      try {
+        await navigator.clipboard.writeText(this.selectedJoinCode);
+        this.codeCopied = true;
+        setTimeout(() => { this.codeCopied = false; }, 2000);
+      } catch(e) {
+        // fallback
+        const el = document.createElement('textarea');
+        el.value = this.selectedJoinCode;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        this.codeCopied = true;
+        setTimeout(() => { this.codeCopied = false; }, 2000);
+      }
+    },
+
+    // ── CREATE ──
+    async createLeague() {
+      if (!this.newLeagueName.trim()) {
+        this.createMessage = 'El nombre de la liga es obligatorio';
+        this.createMsgClass = 'msg-error';
+        return;
+      }
+      this.creatingLeague = true;
+      this.createMessage = '';
+      try {
+        // Get active season
+        const sr = await fetch('/seasons');
+        if (!sr.ok) throw new Error('No se pudo obtener la temporada activa');
+        const sd = await sr.json();
+        const seasons = sd.seasons || [];
+        const active = seasons.find(s => s.status === 'active') || seasons[seasons.length - 1];
+        if (!active) throw new Error('No hay temporada activa disponible');
+
+        const payload = {
+          name: this.newLeagueName.trim(),
+          season_id: active.id,
+          max_teams: this.newLeagueMaxTeams ? parseInt(this.newLeagueMaxTeams) : null
+        };
+        const r = await authFetch('/league/private', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (r.ok) {
+          const created = await r.json();
+          this.createMessage = `Liga "${created.name}" creada. Código: ${created.join_code}`;
+          this.createMsgClass = 'msg-success';
+          this.newLeagueName = '';
+          this.newLeagueMaxTeams = null;
+          await this.loadMyLeagues();
+          // Auto-switch to my leagues after 1.5s
+          setTimeout(() => { this.activeTab = 'mis-ligas'; this.createMessage = ''; }, 2000);
+        } else {
+          const err = await r.json();
+          this.createMessage = err.detail || 'Error al crear la liga';
+          this.createMsgClass = 'msg-error';
+        }
+      } catch(err) {
+        this.createMessage = err.message || 'Error de conexión';
+        this.createMsgClass = 'msg-error';
+      } finally {
+        this.creatingLeague = false;
+        if (this.createMsgClass === 'msg-error') {
+          setTimeout(() => { this.createMessage = ''; }, 5000);
+        }
+      }
+    },
+
+    // ── JOIN ──
+    async joinLeague() {
+      const code = this.joinCode.trim();
+      if (!code || code.length !== 5 || !/^\d+$/.test(code)) {
+        this.joinMessage = 'El código debe ser exactamente 5 dígitos numéricos';
+        this.joinMsgClass = 'msg-error';
+        return;
+      }
+      this.joiningLeague = true;
+      this.joinMessage = '';
+      try {
+        const r = await authFetch('/league/private/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ join_code: code })
+        });
+        if (r.ok) {
+          const data = await r.json();
+          this.joinMessage = data.message || 'Te has unido a la liga correctamente';
+          this.joinMsgClass = 'msg-success';
+          this.joinCode = '';
+          await this.loadMyLeagues();
+          setTimeout(() => { this.activeTab = 'mis-ligas'; this.joinMessage = ''; }, 2000);
+        } else {
+          const err = await r.json();
+          this.joinMessage = err.detail || 'Código inválido o liga no disponible';
+          this.joinMsgClass = 'msg-error';
+        }
+      } catch(err) {
+        this.joinMessage = 'Error de conexión al unirse';
+        this.joinMsgClass = 'msg-error';
+      } finally {
+        this.joiningLeague = false;
+        if (this.joinMsgClass === 'msg-error') {
+          setTimeout(() => { this.joinMessage = ''; }, 5000);
+        }
+      }
+    },
+
+    // ── UTILS ──
+    formatDate(iso) {
+      if (!iso) return '';
+      return new Date(iso).toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+  };
+}
+</script>
+</body>
+</html>

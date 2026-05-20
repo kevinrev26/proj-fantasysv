@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     String,
     func,
+    UniqueConstraint,
 )
 from sqlalchemy import (
     Enum as SQLEnum,
@@ -75,6 +76,23 @@ class UserRole(enum.Enum):
 # Models
 # ---------------------------------------------------------------------------
 
+class PrivateLeague(Base):
+    """A user-created private league (group of fantasy teams)."""
+    __tablename__ = "private_league"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, index=True)
+    season_id = Column(Integer, ForeignKey("season.id"), nullable=False)
+    created_by_user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    join_code = Column(String(5), unique=True, nullable=False, index=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    max_teams = Column(Integer, nullable=True)  # optional limit
+
+    # Relationships
+    season = relationship("Season", back_populates="private_leagues")
+    created_by = relationship("User", foreign_keys=[created_by_user_id])
+    memberships = relationship("PrivateLeagueMembership", back_populates="private_league", cascade="all, delete-orphan")
 
 class User(Base):
     __tablename__ = "user"
@@ -91,6 +109,8 @@ class User(Base):
     fantasy_teams = relationship(
         "FantasyTeam", back_populates="user", cascade="all, delete-orphan"
     )
+
+    created_private_leagues = relationship("PrivateLeague", foreign_keys=[PrivateLeague.created_by_user_id])
 
 
 class Season(Base):
@@ -114,6 +134,8 @@ class Season(Base):
     tournament_phases = relationship(
         "TournamentPhase", back_populates="season", cascade="all, delete-orphan"
     )
+
+    private_leagues = relationship("PrivateLeague", back_populates="season")
 
 
 class Matchday(Base):
@@ -293,6 +315,9 @@ class FantasyTeam(Base):
         "LeaderboardWeeklyEntry", back_populates="fantasy_team", cascade="all, delete-orphan"
     )
 
+    private_league_memberships = relationship("PrivateLeagueMembership", back_populates="fantasy_team")
+
+
 
 class FantasyPlayer(Base):
     __tablename__ = "fantasy_player"
@@ -444,3 +469,21 @@ class LeaderboardWeeklyEntry(Base):
     total_points = Column(Integer, default=0, nullable=False)
 
     fantasy_team = relationship("FantasyTeam", back_populates="leaderboard_weekly_entries")
+
+class PrivateLeagueMembership(Base):
+    """Links a fantasy team to a private league."""
+    __tablename__ = "private_league_membership"
+
+    id = Column(Integer, primary_key=True, index=True)
+    private_league_id = Column(Integer, ForeignKey("private_league.id"), nullable=False)
+    fantasy_team_id = Column(Integer, ForeignKey("fantasy_team.id"), nullable=False)
+    joined_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    # Relationships
+    private_league = relationship("PrivateLeague", back_populates="memberships")
+    fantasy_team = relationship("FantasyTeam")
+
+    # Ensure a fantasy team can join a given private league only once
+    __table_args__ = (
+        UniqueConstraint('private_league_id', 'fantasy_team_id', name='uq_private_league_fantasy_team'),
+    )

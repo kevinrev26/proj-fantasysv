@@ -10,7 +10,6 @@ from .database import get_db, Base, engine
 from .worker import add_numbers_task
 from .config import settings
 from .logger import setup_logging
-from .models import FixtureResult  # Import FixtureResult model
 
 setup_logging()
 logger = structlog.get_logger()
@@ -23,7 +22,7 @@ if settings.SENTRY_DSN:
         profiles_sample_rate=1.0,
     )
 
-from .routers import auth, squad, admin
+from .routers import auth, squad, admin, league
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Fantasy Football API")
@@ -40,6 +39,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(squad.router)
 app.include_router(admin.router)
+app.include_router(league.router)
+
 
 @app.middleware("http")
 async def logging_middleware(request: Request, call_next):
