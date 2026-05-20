@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Sistema de Puntuación — Fantasy SV</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy:        #0a1628;
+      --navy-mid:    #0f2040;
+      --navy-light:  #162a50;
+      --navy-card:   #1a3260;
+      --teal:        #00d4aa;
+      --teal-dark:   #00a88a;
+      --teal-glow:   rgba(0, 212, 170, 0.18);
+      --gold:        #f5c842;
+      --blue-accent: #00a8e8;
+      --red-accent:  #ff5f6d;
+      --red-glow:    rgba(255, 95, 109, 0.18);
+      --text-white:  #ffffff;
+      --text-dim:    rgba(255,255,255,0.55);
+      --text-muted:  rgba(255,255,255,0.28);
+      --font:        'Nunito', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font);
+      background: var(--navy);
+      color: var(--text-white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Ambient background blobs ── */
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.18;
+      pointer-events: none;
+      animation: drift 10s ease-in-out infinite alternate;
+    }
+    .bg-blob-1 {
+      width: 520px; height: 520px;
+      background: var(--red-accent);
+      top: -160px; left: -160px;
+      animation-delay: 0s;
+    }
+    .bg-blob-2 {
+      width: 400px; height: 400px;
+      background: var(--teal);
+      bottom: -120px; right: -160px;
+      animation-delay: -4s;
+    }
+    .bg-blob-3 {
+      width: 260px; height: 260px;
+      background: var(--blue-accent);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation-delay: -2s;
+    }
+
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+
+    /* ── Grid overlay ── */
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%);
+    }
+
+    /* ── Card (now scrollable) ── */
+    .card {
+      position: relative;
+      z-index: 10;
+      background: rgba(15, 32, 64, 0.82);
+      border: 1px solid rgba(255, 95, 109, 0.25);
+      border-radius: 28px;
+      padding: 2rem 2rem 2rem;
+      max-width: 680px;
+      width: 100%;
+      backdrop-filter: blur(20px);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255,0.04) inset,
+        0 24px 64px rgba(0,0,0,0.5),
+        0 0 80px var(--red-glow);
+      animation: card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+      max-height: 90vh;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--red-accent) rgba(255,255,255,0.08);
+    }
+    .card::-webkit-scrollbar {
+      width: 6px;
+    }
+    .card::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+    }
+    .card::-webkit-scrollbar-thumb {
+      background: var(--red-accent);
+      border-radius: 10px;
+    }
+
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(32px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Icon ── */
+    .icon-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: var(--red-glow);
+      border: 1.5px solid rgba(255, 95, 109, 0.45);
+      margin-bottom: 1rem;
+      animation: pulse-ring 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-ring {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 95, 109, 0.35); }
+      50%       { box-shadow: 0 0 0 14px rgba(255, 95, 109, 0); }
+    }
+
+    .icon-wrap svg {
+      width: 36px; height: 36px;
+    }
+
+    /* ── Code badge ── */
+    .code-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--red-accent);
+      background: var(--red-glow);
+      border: 1px solid rgba(255, 95, 109, 0.3);
+      border-radius: 6px;
+      padding: 3px 10px;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Heading ── */
+    h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #ffffff 30%, rgba(255,255,255,0.55));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.5;
+      margin-bottom: 1.8rem;
+    }
+
+    /* ── Scoring sections ── */
+    .scoring-section {
+      text-align: left;
+      margin-top: 0.5rem;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin: 1.2rem 0 0.6rem 0;
+      padding-bottom: 4px;
+      border-bottom: 2px solid var(--teal);
+      display: inline-block;
+      letter-spacing: -0.2px;
+    }
+
+    .points-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(0,0,0,0.25);
+      border-radius: 14px;
+      margin: 0.8rem 0;
+      font-size: 0.85rem;
+    }
+    .points-table th, .points-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .points-table th {
+      text-align: left;
+      color: var(--teal);
+      font-weight: 800;
+      width: 48%;
+    }
+    .points-table td {
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+    .highlight {
+      color: var(--gold);
+      font-weight: 800;
+    }
+    .badge-pos {
+      background: rgba(0,212,170,0.15);
+      padding: 2px 8px;
+      border-radius: 30px;
+      font-weight: 800;
+      font-size: 0.7rem;
+      color: var(--teal);
+      display: inline-block;
+    }
+    .divider-light {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      margin: 1rem 0;
+    }
+    ul {
+      margin: 0.5rem 0 0.5rem 1.5rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      font-size: 0.85rem;
+      list-style: none;
+    }
+    li {
+      margin: 8px 0;
+      position: relative;
+      padding-left: 20px;
+    }
+    li::before {
+      content: "⚡";
+      position: absolute;
+      left: 0;
+      color: var(--teal);
+      font-size: 0.8rem;
+    }
+    .note {
+      background: rgba(0,0,0,0.3);
+      border-left: 3px solid var(--red-accent);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      margin: 1rem 0;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+    /* ── Buttons ── */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 2rem;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border-radius: 14px;
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--teal);
+      color: var(--navy);
+    }
+    .btn-primary:hover {
+      background: var(--teal-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--teal-glow);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .btn-ghost:hover {
+      color: var(--text-white);
+      border-color: rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.04);
+      transform: translateY(-2px);
+    }
+    .footer-note {
+      margin-top: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .footer-note a {
+      color: var(--teal);
+      text-decoration: none;
+    }
+    .footer-note a:hover { text-decoration: underline; }
+
+    @media (max-width: 540px) {
+      .card { padding: 1.5rem; }
+      h1 { font-size: 1.7rem; }
+      .points-table th, .points-table td { font-size: 0.75rem; padding: 6px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
+  <div class="bg-blob bg-blob-3"></div>
+  <div class="grid-overlay"></div>
+
+  <div class="card">
+    <div style="text-align: center;">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ff5f6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div class="code-badge">Reglamento Fantasy SV</div>
+      <h1>Sistema de Puntuación</h1>
+      <p class="subtitle">
+        Cada jugador real suma puntos según sus estadísticas en el partido. Aquí te explicamos cómo se calculan.
+      </p>
+    </div>
+
+    <div class="scoring-section">
+      <!-- Base points -->
+      <div class="section-title">⚽ Puntos base</div>
+      <table class="points-table">
+        <tr><th>Minutos jugados</th><td>1 punto por entrar al campo → +1<br>Si juega <span class="highlight">≥ 60 min</span> → +2 adicionales (total 3 puntos)</td></tr>
+        <tr><th>Goles (multiplicador por posición)</th><td><span class="badge-pos">DEL</span> +6 pts · <span class="badge-pos">MED</span> +5 pts · <span class="badge-pos">DEF</span> +4 pts · <span class="badge-pos">POR</span> +4 pts</td></tr>
+        <tr><th>Asistencias</th><td>+4 puntos cada una</td></tr>
+        <tr><th>Portería a cero (clean sheet)</th><td>Si <span class="highlight">≥ 60 min</span> y <span class="highlight">0 goles recibidos</span>: <span class="badge-pos">POR</span> +8 · <span class="badge-pos">DEF</span> +4</td></tr>
+        <tr><th>Penaltis parados (solo POR)</th><td>+8 puntos por cada penalti atajado</td></tr>
+      </table>
+
+      <!-- Penalizaciones -->
+      <div class="section-title">⚠️ Penalizaciones</div>
+      <table class="points-table">
+        <tr><th>Goles encajados</th><td><span class="badge-pos">POR</span> –1 punto por cada gol recibido<br><span class="badge-pos">DEF</span> –1 punto si recibe 2 o más goles (una sola vez)</td></tr>
+        <tr><th>Tarjetas</th><td>Amarilla –1 · Roja –3</td></tr>
+        <tr><th>Penalti fallado</th><td>–2 puntos</td></tr>
+        <tr><th>Autogol</th><td>–2 puntos</td></tr>
+      </table>
+
+      <!-- Bonus -->
+      <div class="section-title">✨ Puntos de bonificación</div>
+      <ul>
+        <li><strong>Hat trick (3+ goles)</strong> → +5 puntos extra</li>
+        <li><strong>Gol + asistencia en el mismo partido</strong> → +2 puntos extra</li>
+      </ul>
+
+      <!-- Reglas adicionales -->
+      <div class="section-title">📌 Reglas clave</div>
+      <div class="note">
+        💡 Si un jugador juega <strong>0 minutos</strong> → <strong>0 puntos</strong> (no suma nada).<br>
+        💡 Los multiplicadores de goles se aplican según la posición del jugador.<br>
+        💡 La "portería a cero" solo aplica si juega al menos 60 minutos y no encaja ningún gol.<br>
+        💡 Los puntos base + bonos se suman para obtener la puntuación final del jugador en esa jornada.
+      </div>
+
+      <!-- Ejemplo resumen -->
+      <div class="divider-light"></div>
+      <div style="background: rgba(0,212,170,0.05); border-radius: 14px; padding: 12px; margin-top: 8px;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span style="font-size: 1.4rem;">📊</span>
+          <span style="font-weight: 800;">Ejemplo rápido:</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 6px;">
+          <strong>Delantero</strong> · 70 min jugados · 2 goles · 1 asistencia · 0 tarjetas<br>
+          → <strong>Puntos base</strong>: 3 (minutos) + 12 (goles: 2×6) + 4 (asistencia) = 19<br>
+          → <strong>Bonos</strong>: gol+asistencia = +2 → <strong>Total final = 21 puntos</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="/" class="btn btn-primary">Volver al inicio</a>
+      <a href="/login" class="btn btn-ghost">Iniciar sesión con otra cuenta</a>
+    </div>
+
+    <p class="footer-note">
+      ¿Necesitas ayuda? <a href="https://www.instagram.com/devoleasv/">Contáctanos</a>
+    </p>
+  </div>
+
+</body>
+</html>
