@@ -30,6 +30,9 @@
       --radius-sm:   8px;
       --shadow-card: 0 8px 32px rgba(0,0,0,0.45);
       --font: 'Nunito', sans-serif;
+      --delta-up:    #00d4aa;
+      --delta-down:  #ff5f6d;
+      --delta-equal: rgba(255,255,255,0.6);
     }
     * { margin:0; padding:0; box-sizing: border-box; }
     body {
@@ -226,6 +229,22 @@
     .rank-2 { color: #C0C0C0; }
     .rank-3 { color: #CD7F32; }
 
+    /* delta cell */
+    .delta-cell {
+      width: 70px;
+      font-weight: 800;
+      text-align: center;
+    }
+    .delta-up {
+      color: var(--delta-up);
+    }
+    .delta-down {
+      color: var(--delta-down);
+    }
+    .delta-equal {
+      color: var(--delta-equal);
+    }
+
     .team-name {
       font-weight: 800;
       display: flex;
@@ -383,6 +402,7 @@
         font-size: 0.8rem;
       }
       .rank-cell { width: 55px; }
+      .delta-cell { width: 55px; }
       .user-badge { font-size: 0.55rem; margin-left: 4px; }
       .leaderboard-header { flex-direction: column; align-items: flex-start; }
       .tabs-nav { width: 100%; }
@@ -438,7 +458,7 @@
       </div>
     </div>
 
-    <!-- ── TAB: GLOBAL ── -->
+    <!-- ── TAB: GLOBAL (with rank change) ── -->
     <div x-show="activeTab === 'global'" x-transition>
       <div class="table-wrapper">
         <table class="leaderboard-table">
@@ -446,11 +466,12 @@
             <tr>
               <th>Rango</th>
               <th>Equipo / Usuario</th>
+              <th>Δ</th>
               <th>Puntos Totales</th>
             </tr>
           </thead>
           <tbody>
-            <tr x-show="loading" class="loading-row"><td colspan="3"><span class="spinner"></span> Cargando...</td></tr>
+            <tr x-show="loading" class="loading-row"><td colspan="4"><span class="spinner"></span> Cargando...</td></tr>
             <template x-if="!loading">
               <template x-for="team in paginatedGlobal" :key="team.id">
                 <tr :class="team.is_current_user ? 'current-user-row' : ''">
@@ -467,12 +488,30 @@
                       <div class="username-sub" x-text="'@' + team.user_username"></div>
                     </div>
                   </td>
+                  <td class="delta-cell">
+                    <template x-if="team.previous_rank !== null && team.previous_rank !== undefined">
+                      <div>
+                        <template x-if="team.previous_rank > team.rank">
+                          <span class="delta-up">▲ <span x-text="team.previous_rank - team.rank"></span></span>
+                        </template>
+                        <template x-if="team.previous_rank < team.rank">
+                          <span class="delta-down">▼ <span x-text="team.rank - team.previous_rank"></span></span>
+                        </template>
+                        <template x-if="team.previous_rank === team.rank">
+                          <span class="delta-equal">=</span>
+                        </template>
+                      </div>
+                    </template>
+                    <template x-if="team.previous_rank === null || team.previous_rank === undefined">
+                      <span class="delta-equal">–</span>
+                    </template>
+                  </td>
                   <td class="points-val" x-text="team.total_points + ' pts'"></td>
                 </tr>
               </template>
             </template>
             <tr x-show="!loading && paginatedGlobal.length === 0" class="empty-row">
-              <td colspan="3">🏟️ Sin datos disponibles todavía</td>
+              <td colspan="4">🏟️ Sin datos disponibles todavía</td>
             </tr>
           </tbody>
         </table>
@@ -488,7 +527,7 @@
       </div>
     </div>
 
-    <!-- ── TAB: MATCHDAY ── -->
+    <!-- ── TAB: MATCHDAY (unchanged) ── -->
     <div x-show="activeTab === 'matchday'" x-transition>
       <!-- Matchday pills -->
       <div x-show="matchdays.length > 0" class="matchday-pills">
@@ -556,7 +595,7 @@
       </div>
     </div>
 
-    <!-- ── TAB: DATE RANGE ── -->
+    <!-- ── TAB: DATE RANGE (unchanged) ── -->
     <div x-show="activeTab === 'dates'" x-transition>
       <div class="tab-controls">
         <span class="control-label">Desde</span>

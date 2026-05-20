@@ -33,6 +33,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import models
+from .auth import get_redis
 from ..database import get_db
 from ..services.lock_guard import assert_matchday_unlocked
 from ..services.matchday_lock_service import process_matchday_lock
@@ -791,8 +792,10 @@ def get_global_leaderboard(
     db: Session = Depends(get_db)
 ):
     """
-    Return the global leaderboard based on cumulative points across all matchdays.
+    Return the global leaderboard based on cumulative points across all matchdays,
+    including each team's previous rank (from Redis) to compute rank changes.
     """
+    redis = get_redis()
     user_id = current_user.id
     season = (
         db.query(models.Season)
@@ -802,12 +805,14 @@ def get_global_leaderboard(
     if not season:
         return {"leaderboard": []}
 
+    # Get all team scores (filter out null matchday_id if needed)
     team_scores = (
         db.query(models.TeamScore)
         .filter(models.TeamScore.matchday_id != None)
         .all()
     )
 
+    # Build leaderboard entries with current points
     leaderboard = []
     for ts in team_scores:
         ft = ts.fantasy_team
@@ -820,6 +825,11 @@ def get_global_leaderboard(
             .scalar()
         ) or 0
 
+        # Retrieve previous rank from Redis (if exists)
+        redis_key = f"leaderboard_rank:{ft.id}"
+        previous_rank_raw = redis.get(redis_key)
+        previous_rank = int(previous_rank_raw) if previous_rank_raw else None
+
         leaderboard.append(
             {
                 "id": ft.id,
@@ -828,15 +838,23 @@ def get_global_leaderboard(
                 "user_id": ft.user_id,
                 "total_points": ts.cumulative_points - total_penalty,
                 "is_current_user": ft.user_id == user_id,
+                "previous_rank": previous_rank,  # None means no previous data
             }
         )
 
+    # Sort by total_points descending to assign new ranks
     leaderboard.sort(key=lambda x: x["total_points"], reverse=True)
+
+    # Assign new ranks and update Redis with the new rank
     for idx, entry in enumerate(leaderboard):
-        entry["rank"] = idx + 1
+        new_rank = idx + 1
+        entry["rank"] = new_rank
+
+        # Store the new rank in Redis for next time
+        redis_key = f"leaderboard_rank:{entry['id']}"
+        redis.set(redis_key, new_rank)
 
     return {"leaderboard": leaderboard}
-
 
 @router.get("/matchday_leaderboard")
 def get_matchday_leaderboard(
