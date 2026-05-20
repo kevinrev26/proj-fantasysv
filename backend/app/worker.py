@@ -13,10 +13,10 @@ from .models import (
     FantasyPlayer,
     FantasyTeam,
     Matchday,
-    MatchdayStatus,
     Player,
     PlayerScore,
     TeamScore,
+    LeaderboardWeeklyEntry,
 )
 from .scoring import (
     apply_wildcard_multiplier,
@@ -118,7 +118,7 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
             red_cards=player_stats.red_card,
             own_goals=player_stats.own_goal,
             penalties_missed=player_stats.penalty_missed,
-            penalties_saved=player_stats.penalty_saved,
+            penalties_saved=player_stats.penalties_saved,
         )
 
         # 5. Apply wildcard multiplier
@@ -256,7 +256,7 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                     red_cards=ps.red_card,
                     own_goals=ps.own_goal,
                     penalties_missed=ps.penalty_missed,
-                    penalties_saved=ps.penalty_saved,
+                    penalties_saved=ps.penalties_saved,
                 )
 
                 # Apply wildcard multiplier (if this fantasy player is the joker)
@@ -284,6 +284,7 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                     fantasy_team_id=fantasy_team.id, matchday_id=matchday_id
                 )
                 logger.info("Creating new team score", team_score_id=team_score.id)
+
             team_score.points_this_matchday = total_points
             # Cumulative points: we could compute by summing previous + current
             previous_total = (
@@ -301,7 +302,11 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
             else:
                 team_score.cumulative_points = total_points
 
-            db.add(team_score)
+            leaderboard_entry = LeaderboardWeeklyEntry(
+                fantasy_team_id = fantasy_team.id,
+                total_points = total_points,
+            )
+            db.add(leaderboard_entry, team_score)
             logger.debug("Team score updated", team_score_id=team_score.id, points=total_points)
 
         # Removing closing matchday state here, because we are keep updating the scores per fixtures.

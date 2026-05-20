@@ -24,10 +24,10 @@ Inter-matchday transfer rules
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, date
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -782,3 +782,172 @@ def bench_swap(
 
     db.commit()
     return {"status": "success"}
+
+
+@router.get("/global_leaderboard")
+def get_global_leaderboard(
+    request: Request, 
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Return the global leaderboard based on cumulative points across all matchdays.
+    """
+    user_id = current_user.id
+    season = (
+        db.query(models.Season)
+        .filter(models.Season.status == models.SeasonStatus.active)
+        .first()
+    )
+    if not season:
+        return {"leaderboard": []}
+
+    team_scores = (
+        db.query(models.TeamScore)
+        .filter(models.TeamScore.matchday_id != None)
+        .all()
+    )
+
+    leaderboard = []
+    for ts in team_scores:
+        ft = ts.fantasy_team
+        total_penalty = (
+            db.query(func.sum(models.TeamScore.transfer_penalty))
+            .filter(
+                models.TeamScore.fantasy_team_id == ft.id,
+                models.TeamScore.matchday_id <= ts.matchday_id,
+            )
+            .scalar()
+        ) or 0
+
+        leaderboard.append(
+            {
+                "id": ft.id,
+                "name": ft.name,
+                "user_username": ft.user.username if ft.user else "User",
+                "user_id": ft.user_id,
+                "total_points": ts.cumulative_points - total_penalty,
+                "is_current_user": ft.user_id == user_id,
+            }
+        )
+
+    leaderboard.sort(key=lambda x: x["total_points"], reverse=True)
+    for idx, entry in enumerate(leaderboard):
+        entry["rank"] = idx + 1
+
+    return {"leaderboard": leaderboard}
+
+
+@router.get("/matchday_leaderboard")
+def get_matchday_leaderboard(
+    request: Request, 
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Return the leaderboard for each matchday and aggregate for each one of them.
+    """
+    user_id = current_user.id
+    season = (
+        db.query(models.Season)
+        .filter(models.Season.status == models.SeasonStatus.active)
+        .first()
+    )
+    if not season:
+        return {"leaderboard": {}}
+
+    matchdays = (
+        db.query(models.Matchday)
+        .filter(models.Matchday.season_id == season.id)
+        .order_by(models.Matchday.id.asc())
+        .all()
+    )
+
+    leaderboard = {}
+    for md in matchdays:
+        team_scores = (
+            db.query(models.TeamScore)
+            .filter(models.TeamScore.matchday_id == md.id)
+            .all()
+        )
+
+        matchday_leaderboard = []
+        for ts in team_scores:
+            ft = ts.fantasy_team
+            total_penalty = (
+                db.query(func.sum(models.TeamScore.transfer_penalty))
+                .filter(
+                    models.TeamScore.fantasy_team_id == ft.id,
+                    models.TeamScore.matchday_id <= ts.matchday_id,
+                )
+                .scalar()
+            ) or 0
+
+            matchday_leaderboard.append(
+                {
+                    "id": ft.id,
+                    "name": ft.name,
+                    "user_username": ft.user.username if ft.user else "User",
+                    "user_id": ft.user_id,
+                    "total_points": ts.points_this_matchday - total_penalty,
+                    "is_current_user": ft.user_id == user_id,
+                }
+            )
+
+        matchday_leaderboard.sort(key=lambda x: x["total_points"], reverse=True)
+        for idx, entry in enumerate(matchday_leaderboard):
+            entry["rank"] = idx + 1
+
+        leaderboard[md.id] = matchday_leaderboard
+
+    return {"leaderboard": leaderboard}
+
+
+@router.get("/weekly_leaderboard")
+def get_weekly_leaderboard(
+    request: Request, 
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    start_date: date = Query(None),
+    end_date: date = Query(None)
+):
+    user_id = current_user.id
+    season = (
+        db.query(models.Season)
+        .filter(models.Season.status == models.SeasonStatus.active)
+        .first()
+    )
+    if not season:
+        return {"leaderboard": []}
+
+    if not start_date or not end_date:
+        return {"leaderboard": []}
+
+    leaderboard_entries = (
+        db.query(models.LeaderboardWeeklyEntry)
+        .filter(
+            models.LeaderboardWeeklyEntry.date.between(start_date, end_date)
+        )
+        .all()
+    )
+
+    leaderboard = []
+    for entry in leaderboard_entries:
+        ft = entry.fantasy_team
+
+        leaderboard.append(
+            {
+                "id": ft.id,
+                "name": ft.name,
+                "user_username": ft.user.username if ft.user else "User",
+                "user_id": ft.user_id,
+                "total_points": entry.total_points,
+                "is_current_user": ft.user_id == user_id,
+            }
+        )
+
+    leaderboard.sort(key=lambda x: x["total_points"], reverse=True)
+    for idx, entry in enumerate(leaderboard):
+        entry["rank"] = idx + 1
+
+    return {"leaderboard": leaderboard}

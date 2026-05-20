@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Clasificación — EA FC Fantasy</title>
+  <title>Clasificación — Fantasy SV</title>
   <link rel="stylesheet" href="style.css"/>
+  <script src="/js/auth.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
-    /* ========== GLOBAL & VARIABLES (same aesthetic as squad builder) ========== */
+    /* ========== GLOBAL & VARIABLES ========== */
     :root {
       --navy:        #0a1628;
       --navy-mid:    #0f2040;
@@ -38,49 +39,6 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
-    /* header (compact) */
-    .app-header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(10,22,40,0.96);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .header-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 18px;
-    }
-    .header-logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .logo-icon { font-size: 1.5rem; }
-    .logo-label {
-      font-size: 1.25rem;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-    }
-    .nav-links {
-      display: flex;
-      gap: 20px;
-    }
-    .nav-link {
-      color: var(--text-dim);
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 0.9rem;
-      transition: color 0.2s;
-    }
-    .nav-link.active {
-      color: var(--teal);
-      border-bottom: 2px solid var(--teal);
-      padding-bottom: 4px;
-    }
-    .nav-link:hover { color: var(--teal); }
 
     /* main container */
     .leaderboard-container {
@@ -124,7 +82,106 @@
     }
     .refresh-info span:first-child { font-size: 1rem; }
 
-    /* TABLE WRAPPER (responsive) */
+    /* ── TABS ── */
+    .tabs-wrapper {
+      margin-bottom: 1.5rem;
+    }
+    .tabs-nav {
+      display: flex;
+      gap: 4px;
+      background: rgba(0,0,0,0.3);
+      border-radius: var(--radius);
+      padding: 4px;
+      width: fit-content;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 9px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: var(--teal);
+      color: var(--navy);
+    }
+    .tab-btn:hover:not(.active) {
+      background: rgba(255,255,255,0.07);
+      color: var(--text-white);
+    }
+
+    /* ── TAB-SPECIFIC CONTROLS ── */
+    .tab-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    .control-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .select-control {
+      background: var(--navy-mid);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-sm);
+      color: var(--text-white);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .select-control:focus {
+      border-color: var(--teal);
+    }
+    .date-input {
+      background: var(--navy-mid);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-sm);
+      color: var(--text-white);
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      color-scheme: dark;
+    }
+    .date-input:focus {
+      border-color: var(--teal);
+    }
+    .apply-btn {
+      background: var(--teal);
+      color: var(--navy);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 9px 18px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .apply-btn:hover {
+      background: var(--teal-dark);
+      transform: translateY(-1px);
+    }
+
+    /* TABLE WRAPPER */
     .table-wrapper {
       background: var(--navy-mid);
       border-radius: var(--radius);
@@ -136,7 +193,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 0.9rem;
-      min-width: 600px;
+      min-width: 560px;
     }
     .leaderboard-table th {
       text-align: left;
@@ -158,12 +215,17 @@
     .leaderboard-table tr:hover td {
       background: rgba(0,212,170,0.05);
     }
-    /* rank style */
+
+    /* rank */
     .rank-cell {
       font-weight: 800;
       color: var(--gold);
       width: 70px;
     }
+    .rank-1 { color: #FFD700; font-size: 1.1em; }
+    .rank-2 { color: #C0C0C0; }
+    .rank-3 { color: #CD7F32; }
+
     .team-name {
       font-weight: 800;
       display: flex;
@@ -179,25 +241,23 @@
       align-items: center;
       justify-content: center;
       font-size: 0.7rem;
+      flex-shrink: 0;
     }
-    .points-md, .points-total {
+    .username-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .points-val {
       font-weight: 800;
       color: var(--teal);
     }
+
     /* highlighted row (current user) */
     .current-user-row {
       background: linear-gradient(90deg, rgba(0,212,170,0.12), rgba(0,168,232,0.08));
       border-left: 4px solid var(--teal);
       box-shadow: inset 0 0 0 1px rgba(0,212,170,0.2);
-      position: relative;
-    }
-    .current-user-row td:first-child {
-      border-top-left-radius: 8px;
-      border-bottom-left-radius: 8px;
-    }
-    .current-user-row td:last-child {
-      border-top-right-radius: 8px;
-      border-bottom-right-radius: 8px;
     }
     .user-badge {
       background: var(--teal);
@@ -207,6 +267,7 @@
       padding: 2px 8px;
       border-radius: 50px;
       margin-left: 8px;
+      flex-shrink: 0;
     }
 
     /* pagination */
@@ -227,6 +288,7 @@
       color: var(--text-dim);
       transition: all 0.2s;
       cursor: pointer;
+      font-family: var(--font);
     }
     .page-btn.active {
       background: var(--teal);
@@ -250,15 +312,71 @@
       border-radius: 50px;
     }
 
-    /* empty / loading state */
+    /* empty / loading */
     .empty-row td {
       text-align: center;
       padding: 3rem;
       color: var(--text-muted);
       font-weight: 600;
     }
+    .loading-row td {
+      text-align: center;
+      padding: 3rem;
+      color: var(--teal);
+      font-weight: 700;
+    }
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(0,212,170,0.3);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* mobile card fallback (table is already scrollable, but fine) */
+    /* matchday pills (for matchday tab selector) */
+    .matchday-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 1.25rem;
+    }
+    .md-pill {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font);
+    }
+    .md-pill.active {
+      background: var(--teal);
+      color: var(--navy);
+      border-color: var(--teal);
+    }
+    .md-pill:hover:not(.active) {
+      background: rgba(0,212,170,0.15);
+      color: var(--teal);
+    }
+    .md-pill.no-data {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
     @media (max-width: 680px) {
       .leaderboard-table th, .leaderboard-table td {
         padding: 0.7rem 0.8rem;
@@ -266,21 +384,9 @@
       }
       .rank-cell { width: 55px; }
       .user-badge { font-size: 0.55rem; margin-left: 4px; }
-      .leaderboard-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-
-    /* footer or subtle */
-    .footer-note {
-      text-align: center;
-      margin-top: 2rem;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-    .highlight-gold {
-      color: var(--gold);
+      .leaderboard-header { flex-direction: column; align-items: flex-start; }
+      .tabs-nav { width: 100%; }
+      .tab-btn { flex: 1; text-align: center; padding: 9px 10px; }
     }
   </style>
 </head>
@@ -309,174 +415,421 @@
 
 <main x-data="leaderboardApp()" x-init="init()">
   <div class="leaderboard-container">
+
+    <!-- Header -->
     <div class="leaderboard-header">
       <div class="leaderboard-title">
         <h1>🏆 Clasificación</h1>
-        <p>Temporada 2026 · Clasificaciones globales actualizadas después de cada jornada</p>
+        <p x-text="headerSubtitle"></p>
       </div>
       <div class="refresh-info">
         <span>🔄</span>
-        <span>Última actualización: <span x-text="lastUpdatedText"></span></span>
-        <button @click="refreshData" style="background: none; border: none; color: inherit; cursor: pointer; font-weight: bold;">⟳</button>
+        <span>Actualizado: <span x-text="lastUpdatedText"></span></span>
+        <button @click="refreshData()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">⟳</button>
       </div>
     </div>
 
-    <!-- TABLE (responsive wrapper) -->
-    <div class="table-wrapper">
-      <table class="leaderboard-table">
-        <thead>
-          <tr>
-            <th>Rango</th>
-            <th>Nombre del Equipo</th>
-            <th>Puntos de Jornada</th>
-            <th>Puntos Totales</th>
-          </tr>
-        </thead>
-        <tbody>
-          <template x-for="(team, idx) in paginatedTeams" :key="team.id">
-            <tr :class="team.is_current_user ? 'current-user-row' : ''">
-              <td class="rank-cell">
-                <span x-text="team.rank"></span>
-                <span x-show="team.is_current_user" class="user-badge">Tú</span>
-              </td>
-              <td class="team-name">
-                <span class="team-badge">⚡</span>
-                <span x-text="team.name"></span>
-              </td>
-              <td class="points-md" x-text="team.matchday_points + ' pts'"></td>
-              <td class="points-total" x-text="team.total_points + ' pts'"></td>
-            </tr>
-          </template>
-          <tr x-show="paginatedTeams.length === 0">
-            <td colspan="4" class="empty-row">🏟️ No hay equipos disponibles – vuelve a comprobar después de que comience la jornada</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Tab Navigation -->
+    <div class="tabs-wrapper">
+      <div class="tabs-nav">
+        <button class="tab-btn" :class="{ active: activeTab === 'global' }" @click="switchTab('global')">🌍 Global</button>
+        <button class="tab-btn" :class="{ active: activeTab === 'matchday' }" @click="switchTab('matchday')">📅 Por Jornada</button>
+        <button class="tab-btn" :class="{ active: activeTab === 'dates' }" @click="switchTab('dates')">📆 Por Fechas</button>
+      </div>
     </div>
 
-    <!-- Pagination -->
-    <div class="pagination" x-show="totalPages > 1">
-      <button class="page-btn" :class="{ disabled: currentPage === 1 }" @click="prevPage" :disabled="currentPage === 1">← Anterior</button>
-      <template x-for="page in visiblePages" :key="page">
-        <button class="page-btn" :class="{ active: currentPage === page }" @click="goToPage(page)" x-text="page"></button>
-      </template>
-      <button class="page-btn" :class="{ disabled: currentPage === totalPages }" @click="nextPage" :disabled="currentPage === totalPages">Siguiente →</button>
-      <span class="page-indicator" x-text="`Página ${currentPage} de ${totalPages}`"></span>
+    <!-- ── TAB: GLOBAL ── -->
+    <div x-show="activeTab === 'global'" x-transition>
+      <div class="table-wrapper">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rango</th>
+              <th>Equipo / Usuario</th>
+              <th>Puntos Totales</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr x-show="loading" class="loading-row"><td colspan="3"><span class="spinner"></span> Cargando...</td></tr>
+            <template x-if="!loading">
+              <template x-for="team in paginatedGlobal" :key="team.id">
+                <tr :class="team.is_current_user ? 'current-user-row' : ''">
+                  <td class="rank-cell">
+                    <span :class="'rank-' + team.rank" x-text="team.rank"></span>
+                  </td>
+                  <td class="team-name">
+                    <span class="team-badge">⚡</span>
+                    <div>
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span x-text="team.name"></span>
+                        <span x-show="team.is_current_user" class="user-badge">Tú</span>
+                      </div>
+                      <div class="username-sub" x-text="'@' + team.user_username"></div>
+                    </div>
+                  </td>
+                  <td class="points-val" x-text="team.total_points + ' pts'"></td>
+                </tr>
+              </template>
+            </template>
+            <tr x-show="!loading && paginatedGlobal.length === 0" class="empty-row">
+              <td colspan="3">🏟️ Sin datos disponibles todavía</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination Global -->
+      <div class="pagination" x-show="totalPagesGlobal > 1">
+        <button class="page-btn" :class="{ disabled: currentPageGlobal === 1 }" @click="prevPageGlobal()" :disabled="currentPageGlobal === 1">← Anterior</button>
+        <template x-for="page in visiblePagesGlobal" :key="page">
+          <button class="page-btn" :class="{ active: currentPageGlobal === page }" @click="goToPageGlobal(page)" x-text="page"></button>
+        </template>
+        <button class="page-btn" :class="{ disabled: currentPageGlobal === totalPagesGlobal }" @click="nextPageGlobal()" :disabled="currentPageGlobal === totalPagesGlobal">Siguiente →</button>
+        <span class="page-indicator" x-text="`Página ${currentPageGlobal} de ${totalPagesGlobal}`"></span>
+      </div>
     </div>
+
+    <!-- ── TAB: MATCHDAY ── -->
+    <div x-show="activeTab === 'matchday'" x-transition>
+      <!-- Matchday pills -->
+      <div x-show="matchdays.length > 0" class="matchday-pills">
+        <template x-for="md in matchdays" :key="md.id">
+          <button
+            class="md-pill"
+            :class="{ active: selectedMatchdayId === md.id, 'no-data': !matchdayLeaderboard[md.id] || matchdayLeaderboard[md.id].length === 0 }"
+            @click="selectMatchday(md.id)"
+            x-text="md.name"
+          ></button>
+        </template>
+      </div>
+      <div x-show="matchdays.length === 0 && !loading" style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">
+        Cargando jornadas...
+      </div>
+
+      <div class="table-wrapper">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rango</th>
+              <th>Equipo / Usuario</th>
+              <th>Pts Jornada</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr x-show="loading" class="loading-row"><td colspan="3"><span class="spinner"></span> Cargando...</td></tr>
+            <template x-if="!loading">
+              <template x-for="team in paginatedMatchday" :key="team.id">
+                <tr :class="team.is_current_user ? 'current-user-row' : ''">
+                  <td class="rank-cell">
+                    <span :class="'rank-' + team.rank" x-text="team.rank"></span>
+                  </td>
+                  <td class="team-name">
+                    <span class="team-badge">⚡</span>
+                    <div>
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span x-text="team.name"></span>
+                        <span x-show="team.is_current_user" class="user-badge">Tú</span>
+                      </div>
+                      <div class="username-sub" x-text="'@' + team.user_username"></div>
+                    </div>
+                  </td>
+                  <td class="points-val" x-text="team.total_points + ' pts'"></td>
+                </tr>
+              </template>
+            </template>
+            <tr x-show="!loading && paginatedMatchday.length === 0" class="empty-row">
+              <td colspan="3">
+                <span x-show="selectedMatchdayId === null">Selecciona una jornada arriba</span>
+                <span x-show="selectedMatchdayId !== null">Sin resultados para esta jornada todavía</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination Matchday -->
+      <div class="pagination" x-show="totalPagesMatchday > 1">
+        <button class="page-btn" :class="{ disabled: currentPageMatchday === 1 }" @click="prevPageMatchday()" :disabled="currentPageMatchday === 1">← Anterior</button>
+        <template x-for="page in visiblePagesMatchday" :key="page">
+          <button class="page-btn" :class="{ active: currentPageMatchday === page }" @click="goToPageMatchday(page)" x-text="page"></button>
+        </template>
+        <button class="page-btn" :class="{ disabled: currentPageMatchday === totalPagesMatchday }" @click="nextPageMatchday()" :disabled="currentPageMatchday === totalPagesMatchday">Siguiente →</button>
+        <span class="page-indicator" x-text="`Página ${currentPageMatchday} de ${totalPagesMatchday}`"></span>
+      </div>
+    </div>
+
+    <!-- ── TAB: DATE RANGE ── -->
+    <div x-show="activeTab === 'dates'" x-transition>
+      <div class="tab-controls">
+        <span class="control-label">Desde</span>
+        <input type="date" class="date-input" x-model="dateFrom" />
+        <span class="control-label">Hasta</span>
+        <input type="date" class="date-input" x-model="dateTo" />
+        <button class="apply-btn" @click="loadDatesLeaderboard()">Buscar</button>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>Rango</th>
+              <th>Equipo / Usuario</th>
+              <th>Puntos (Período)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr x-show="loadingDates" class="loading-row"><td colspan="3"><span class="spinner"></span> Cargando...</td></tr>
+            <template x-if="!loadingDates">
+              <template x-for="team in paginatedDates" :key="team.id">
+                <tr :class="team.is_current_user ? 'current-user-row' : ''">
+                  <td class="rank-cell">
+                    <span :class="'rank-' + team.rank" x-text="team.rank"></span>
+                  </td>
+                  <td class="team-name">
+                    <span class="team-badge">⚡</span>
+                    <div>
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span x-text="team.name"></span>
+                        <span x-show="team.is_current_user" class="user-badge">Tú</span>
+                      </div>
+                      <div class="username-sub" x-text="'@' + team.user_username"></div>
+                    </div>
+                  </td>
+                  <td class="points-val" x-text="team.total_points + ' pts'"></td>
+                </tr>
+              </template>
+            </template>
+            <tr x-show="!loadingDates && datesSearched && paginatedDates.length === 0" class="empty-row">
+              <td colspan="3">📭 Sin resultados para ese rango de fechas</td>
+            </tr>
+            <tr x-show="!loadingDates && !datesSearched" class="empty-row">
+              <td colspan="3">📅 Selecciona un rango de fechas y presiona Buscar</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination Dates -->
+      <div class="pagination" x-show="totalPagesDates > 1">
+        <button class="page-btn" :class="{ disabled: currentPageDates === 1 }" @click="prevPageDates()" :disabled="currentPageDates === 1">← Anterior</button>
+        <template x-for="page in visiblePagesDates" :key="page">
+          <button class="page-btn" :class="{ active: currentPageDates === page }" @click="goToPageDates(page)" x-text="page"></button>
+        </template>
+        <button class="page-btn" :class="{ disabled: currentPageDates === totalPagesDates }" @click="nextPageDates()" :disabled="currentPageDates === totalPagesDates">Siguiente →</button>
+        <span class="page-indicator" x-text="`Página ${currentPageDates} de ${totalPagesDates}`"></span>
+      </div>
+    </div>
+
     <div class="footer-note">
-      * Los puntos se actualizan automáticamente después de cada cálculo de jornada. Fila resaltada = tu equipo.
+      * Los puntos se actualizan automáticamente tras cada cálculo de jornada. Fila resaltada = tu equipo.
     </div>
   </div>
 </main>
 
 <script>
-  // ------------------------------
-  // GENERATE PLACEHOLDER DATA (50 fantasy teams)
-  // ------------------------------
-  const generateMockTeams = () => {
-    const firstNames = ["Elite", "Thunder", "Phoenix", "Legend", "Vortex", "Apex", "Fury", "Shadow", "Blazers", "Dynamo"];
-    const secondNames = ["FC", "United", "City", "Warriors", "Stars", "XI", "Academy", "Wolves", "Knights", "Gladiators"];
-    const teamList = [];
-    // current user will be team with id = 5 (simulate logged-in user's team)
-    for (let i = 1; i <= 50; i++) {
-      const rand1 = firstNames[Math.floor(Math.random() * firstNames.length)];
-      const rand2 = secondNames[Math.floor(Math.random() * secondNames.length)];
-      let name = `${rand1} ${rand2}`;
-      if (i % 7 === 0) name = "Invincible XI";
-      if (i === 5) name = "★ Mi Equipo Fantástico ★";  // current user's team
-      const totalPoints = Math.floor(Math.random() * 450) + 120;
-      const matchdayPoints = Math.floor(Math.random() * 85) + 15;
-      teamList.push({
-        id: i,
-        name: name,
-        total_points: totalPoints,
-        matchday_points: matchdayPoints,
-        is_current_user: (i === 5),   // simulate logged-in user's team id = 5
-      });
-    }
-    // sort by total points descending to assign ranks
-    teamList.sort((a,b) => b.total_points - a.total_points);
-    // assign ranks (handle ties not needed)
-    teamList.forEach((team, idx) => { team.rank = idx + 1; });
-    // re-sort by rank ascending for display
-    teamList.sort((a,b) => a.rank - b.rank);
-    return teamList;
-  };
-
   function leaderboardApp() {
     return {
-      allTeams: [],
-      paginatedTeams: [],
-      currentPage: 1,
+      // ── STATE ──
+      activeTab: 'global',
+      loading: false,
+      loadingDates: false,
+
+      // Global
+      globalLeaderboard: [],
+      currentPageGlobal: 1,
+
+      // Matchday
+      matchdays: [],
+      matchdayLeaderboard: {},     // { [matchdayId]: [...] }
+      selectedMatchdayId: null,
+      currentPageMatchday: 1,
+
+      // Dates
+      datesLeaderboard: [],
+      dateFrom: '',
+      dateTo: '',
+      datesSearched: false,
+      currentPageDates: 1,
+
+      // Shared
       itemsPerPage: 10,
       lastUpdated: new Date(),
       lastUpdatedText: '',
 
-      init() {
-        this.loadTeams();
+      // ── INIT ──
+      async init() {
+        await requireRole('user');
         this.updateTimestamp();
-        // auto refresh every 30 seconds? simulate "after scoring task", but user can manually refresh.
-        // For demo we set interval for placeholder only (but not required)
-        setInterval(() => {
-          // dummy: just update timestamp to simulate "new calculation"
-          this.lastUpdated = new Date();
-          this.updateTimestamp();
-        }, 30000);
+        await this.loadGlobal();
+        await this.loadMatchdayData();
+        // default dates to current month
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        this.dateFrom = `${y}-${m}-01`;
+        this.dateTo = today.toISOString().slice(0, 10);
       },
 
-      async loadTeams() {
-        try {
-          const resp = await fetch('/squad/leaderboard');
-          if (resp.ok) {
-            const data = await resp.json();
-            this.allTeams = data.leaderboard || [];
-          } else {
-            console.warn("Failed to load real leaderboard data", resp.statusText);
-          }
-        } catch (e) {
-          console.warn("Failed to fetch leaderboard API", e);
+      get headerSubtitle() {
+        if (this.activeTab === 'global') return 'Temporada 2026 · Clasificación global acumulada';
+        if (this.activeTab === 'matchday') {
+          const md = this.matchdays.find(m => m.id === this.selectedMatchdayId);
+          return md ? `Jornada: ${md.name}` : 'Selecciona una jornada';
         }
-        this.updatePaginated();
+        if (this.activeTab === 'dates') {
+          return this.datesSearched ? `Período: ${this.dateFrom} → ${this.dateTo}` : 'Clasificación por rango de fechas';
+        }
+        return '';
       },
 
+      // ── TAB SWITCH ──
+      switchTab(tab) {
+        this.activeTab = tab;
+      },
+
+      // ── REFRESH ──
       async refreshData() {
-        await this.loadTeams();
+        if (this.activeTab === 'global') await this.loadGlobal();
+        else if (this.activeTab === 'matchday') await this.loadMatchdayData();
+        else if (this.activeTab === 'dates' && this.datesSearched) await this.loadDatesLeaderboard();
         this.lastUpdated = new Date();
         this.updateTimestamp();
       },
 
-      updatePaginated() {
-        const start = (this.currentPage - 1) * this.itemsPerPage;
-        const end = start + this.itemsPerPage;
-        this.paginatedTeams = this.allTeams.slice(start, end);
+      // ── GLOBAL ──
+      async loadGlobal() {
+        this.loading = true;
+        this.globalLeaderboard = [];
+        this.currentPageGlobal = 1;
+        try {
+          const resp = await authFetch('/squad/global_leaderboard');
+          if (resp.ok) {
+            const data = await resp.json();
+            this.globalLeaderboard = data.leaderboard || [];
+          }
+        } catch (e) {
+          console.warn('Error loading global leaderboard', e);
+        }
+        this.loading = false;
       },
 
-      updateTimestamp() {
-        this.lastUpdatedText = this.lastUpdated.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      get paginatedGlobal() {
+        const s = (this.currentPageGlobal - 1) * this.itemsPerPage;
+        return this.globalLeaderboard.slice(s, s + this.itemsPerPage);
+      },
+      get totalPagesGlobal() { return Math.ceil(this.globalLeaderboard.length / this.itemsPerPage); },
+      get visiblePagesGlobal() { return this._visiblePages(this.currentPageGlobal, this.totalPagesGlobal); },
+      goToPageGlobal(p) { if (p >= 1 && p <= this.totalPagesGlobal) this.currentPageGlobal = p; },
+      prevPageGlobal() { this.goToPageGlobal(this.currentPageGlobal - 1); },
+      nextPageGlobal() { this.goToPageGlobal(this.currentPageGlobal + 1); },
+
+      // ── MATCHDAY ──
+      async loadMatchdayData() {
+        this.loading = true;
+        try {
+          // 1. Get active season
+          const seasonsResp = await fetch('/seasons');
+          if (!seasonsResp.ok) throw new Error('seasons failed');
+          const seasonsData = await seasonsResp.json();
+          const seasons = seasonsData.seasons || [];
+          const activeSeason = seasons.find(s => s.status === 'active') || seasons[seasons.length - 1];
+          if (!activeSeason) { this.loading = false; return; }
+
+          // 2. Get matchdays for that season
+          const mdsResp = await fetch(`/seasons/${activeSeason.id}/matchdays`);
+          if (!mdsResp.ok) throw new Error('matchdays failed');
+          const mdsData = await mdsResp.json();
+          this.matchdays = mdsData.matchdays || [];
+
+          // 3. Load matchday leaderboard (all matchdays in one call)
+          const lbResp = await authFetch('/squad/matchday_leaderboard');
+          if (lbResp.ok) {
+            const lbData = await lbResp.json();
+            // API returns { leaderboard: { "1": [...], "2": [...] } }
+            const raw = lbData.leaderboard || {};
+            // Normalize keys to integers
+            this.matchdayLeaderboard = {};
+            for (const [k, v] of Object.entries(raw)) {
+              this.matchdayLeaderboard[parseInt(k)] = v;
+            }
+          }
+
+          // Auto-select latest matchday that has data
+          const withData = this.matchdays.filter(md => {
+            const d = this.matchdayLeaderboard[md.id];
+            return d && d.length > 0;
+          });
+          if (withData.length > 0) {
+            this.selectedMatchdayId = withData[withData.length - 1].id;
+          } else if (this.matchdays.length > 0) {
+            this.selectedMatchdayId = this.matchdays[0].id;
+          }
+        } catch (e) {
+          console.warn('Error loading matchday data', e);
+        }
+        this.loading = false;
       },
 
-      goToPage(page) {
-        if (page < 1 || page > this.totalPages) return;
-        this.currentPage = page;
-        this.updatePaginated();
-      },
-      prevPage() { this.goToPage(this.currentPage - 1); },
-      nextPage() { this.goToPage(this.currentPage + 1); },
-
-      get totalPages() {
-        return Math.ceil(this.allTeams.length / this.itemsPerPage);
+      selectMatchday(id) {
+        this.selectedMatchdayId = id;
+        this.currentPageMatchday = 1;
       },
 
-      get visiblePages() {
-        const total = this.totalPages;
-        const current = this.currentPage;
+      get currentMatchdayTeams() {
+        if (this.selectedMatchdayId === null) return [];
+        return this.matchdayLeaderboard[this.selectedMatchdayId] || [];
+      },
+      get paginatedMatchday() {
+        const s = (this.currentPageMatchday - 1) * this.itemsPerPage;
+        return this.currentMatchdayTeams.slice(s, s + this.itemsPerPage);
+      },
+      get totalPagesMatchday() { return Math.ceil(this.currentMatchdayTeams.length / this.itemsPerPage); },
+      get visiblePagesMatchday() { return this._visiblePages(this.currentPageMatchday, this.totalPagesMatchday); },
+      goToPageMatchday(p) { if (p >= 1 && p <= this.totalPagesMatchday) this.currentPageMatchday = p; },
+      prevPageMatchday() { this.goToPageMatchday(this.currentPageMatchday - 1); },
+      nextPageMatchday() { this.goToPageMatchday(this.currentPageMatchday + 1); },
+
+      // ── DATES ──
+      async loadDatesLeaderboard() {
+        if (!this.dateFrom || !this.dateTo) return;
+        this.loadingDates = true;
+        this.datesLeaderboard = [];
+        this.currentPageDates = 1;
+        this.datesSearched = false;
+        try {
+          const url = `/squad/weekly_leaderboard?start_date=${this.dateFrom}&end_date=${this.dateTo}`;
+          const resp = await authFetch(url);
+          if (resp.ok) {
+            const data = await resp.json();
+            this.datesLeaderboard = data.leaderboard || [];
+          }
+        } catch (e) {
+          console.warn('Error loading dates leaderboard', e);
+        }
+        this.datesSearched = true;
+        this.loadingDates = false;
+      },
+
+      get paginatedDates() {
+        const s = (this.currentPageDates - 1) * this.itemsPerPage;
+        return this.datesLeaderboard.slice(s, s + this.itemsPerPage);
+      },
+      get totalPagesDates() { return Math.ceil(this.datesLeaderboard.length / this.itemsPerPage); },
+      get visiblePagesDates() { return this._visiblePages(this.currentPageDates, this.totalPagesDates); },
+      goToPageDates(p) { if (p >= 1 && p <= this.totalPagesDates) this.currentPageDates = p; },
+      prevPageDates() { this.goToPageDates(this.currentPageDates - 1); },
+      nextPageDates() { this.goToPageDates(this.currentPageDates + 1); },
+
+      // ── HELPERS ──
+      _visiblePages(current, total) {
         let start = Math.max(1, current - 2);
         let end = Math.min(total, start + 4);
         if (end - start < 4) start = Math.max(1, end - 4);
         const pages = [];
         for (let i = start; i <= end; i++) pages.push(i);
         return pages;
-      }
+      },
+
+      updateTimestamp() {
+        this.lastUpdatedText = this.lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      },
     };
   }
 </script>

@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime, timezone
+from datetime import date
 
 import structlog
 from sqlalchemy import (
@@ -289,6 +289,9 @@ class FantasyTeam(Base):
     team_scores = relationship(
         "TeamScore", back_populates="fantasy_team", cascade="all, delete-orphan"
     )
+    leaderboard_weekly_entries = relationship(
+        "LeaderboardWeeklyEntry", back_populates="fantasy_team", cascade="all, delete-orphan"
+    )
 
 
 class FantasyPlayer(Base):
@@ -431,3 +434,13 @@ class FixtureResult(Base):
         if self.away_goals > self.home_goals:
             return "away"
         return None  # draw after regulation + extra time
+
+class LeaderboardWeeklyEntry(Base):
+    __tablename__ = "leaderboard_weekly_entry"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, nullable=False, index=True, default=date.today)
+    fantasy_team_id = Column(Integer, ForeignKey("fantasy_team.id"), nullable=False)
+    total_points = Column(Integer, default=0, nullable=False)
+
+    fantasy_team = relationship("FantasyTeam", back_populates="leaderboard_weekly_entries")
