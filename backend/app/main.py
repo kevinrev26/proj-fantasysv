@@ -22,7 +22,7 @@ if settings.SENTRY_DSN:
         profiles_sample_rate=1.0,
     )
 
-from .routers import auth, squad, admin, league
+from .routers import auth, squad, admin, league, prediction
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Fantasy Football API")
@@ -40,6 +40,7 @@ app.include_router(auth.router)
 app.include_router(squad.router)
 app.include_router(admin.router)
 app.include_router(league.router)
+app.include_router(prediction.router)
 
 
 @app.middleware("http")

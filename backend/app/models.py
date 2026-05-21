@@ -111,6 +111,7 @@ class User(Base):
     )
 
     created_private_leagues = relationship("PrivateLeague", foreign_keys=[PrivateLeague.created_by_user_id])
+    predictions = relationship("Prediction", back_populates="user", cascade="all, delete-orphan")
 
 
 class Season(Base):
@@ -236,6 +237,8 @@ class Fixture(Base):
     home_team = relationship("Team", foreign_keys=[home_team_id])
     away_team = relationship("Team", foreign_keys=[away_team_id])
     result = relationship("FixtureResult", uselist=False, back_populates="fixture")
+    predictions = relationship("Prediction", back_populates="fixture", cascade="all, delete-orphan")
+
 
 
 class League(Base):
@@ -487,3 +490,68 @@ class PrivateLeagueMembership(Base):
     __table_args__ = (
         UniqueConstraint('private_league_id', 'fantasy_team_id', name='uq_private_league_fantasy_team'),
     )
+
+class Prediction(Base):
+    __tablename__ = "prediction"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    fixture_id = Column(Integer, ForeignKey("fixture.id"), nullable=False)
+
+    predicted_home_goals = Column(Integer, nullable=False)
+    predicted_away_goals = Column(Integer, nullable=False)
+
+    # If True, this prediction earns double points for its matchday (only one per user per matchday)
+    is_joker = Column(Boolean, default=False, nullable=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User", back_populates="predictions")
+    fixture = relationship("Fixture", back_populates="predictions")
+    score = relationship("PredictionScore", uselist=False, back_populates="prediction", cascade="all, delete-orphan")
+
+    # Ensure a user can predict a fixture only once
+    __table_args__ = (
+        UniqueConstraint("user_id", "fixture_id", name="uq_user_fixture_prediction"),
+    )
+class PredictionScore(Base):
+    '''
+    Once a fixture result is known, you calculate how many points the user gets for their prediction. Storing the result separately allows:
+        Recalculation if scoring rules change.
+        Audit trail of when points were awarded.
+    '''
+    __tablename__ = "prediction_score"
+
+    id = Column(Integer, primary_key=True, index=True)
+    prediction_id = Column(Integer, ForeignKey("prediction.id"), nullable=False, unique=True)
+    points_earned = Column(Integer, default=0, nullable=False)
+    calculated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Optional: breakdown for transparency
+    exact_score_points = Column(Integer, default=0)
+    correct_outcome_points = Column(Integer, default=0)
+    joker_multiplier_applied = Column(Boolean, default=False)
+
+    prediction = relationship("Prediction", back_populates="score")
+
+class PredictionMatchdayStats(Base):
+    __tablename__ = "prediction_matchday_stats"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    matchday_id = Column(Integer, ForeignKey("matchday.id"), nullable=False)
+
+    total_points = Column(Integer, default=0, nullable=False)
+    joker_used = Column(Boolean, default=False, nullable=False)
+    joker_applied_to_fixture_id = Column(Integer, ForeignKey("fixture.id"), nullable=True)
+
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User")
+    matchday = relationship("Matchday")
+    joker_fixture = relationship("Fixture")
+
+    __table_args__ = (UniqueConstraint("user_id", "matchday_id", name="uq_user_matchday_stats"),)

@@ -30,3 +30,12 @@ Check current status/migration version:
 ```
 docker exec -it proj-fantasysv-fastapi-1 alembic current
 ```
+
+### Check registered routes in the fast api container:
+```
+docker compose exec fastapi python -c "
+from app.main import app
+for route in app.routes:
+    print(getattr(route, 'methods', '   '), route.path)
+"
+```
