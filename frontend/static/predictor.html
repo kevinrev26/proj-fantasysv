@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/nav.js"></script>
 
   <style>
     /* ── Variables ── */
@@ -679,7 +680,8 @@
       <a href="/predictor" class="nav-link active">Predicciones</a>
       <a href="/leaderboard" class="nav-link">Clasificación</a>
       <a href="/profile" class="nav-link">Perfil</a>
-      <button class="nav-logout-btn" onclick="logout()">Salir</button>
+      <a href="/leagues" class="nav-link">Ligas Privadas</a>
+      <span id="nav-auth"></span>
     </div>
   </div>
 </nav>
@@ -954,6 +956,7 @@ function predictorApp() {
     // ── INIT ──
     async init() {
       await requireRole('user');
+      setupNavAuth();
       await this.loadFixtures();
     },
 

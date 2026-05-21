@@ -6,6 +6,7 @@
   <title>Clasificación — Fantasy SV</title>
   <link rel="stylesheet" href="style.css"/>
   <script src="/js/auth.js"></script>
+  <script src="/js/nav.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
@@ -425,10 +426,13 @@
     </button>
 
     <div class="nav-links" id="nav-links">
-      <a href="squad-builder" class="nav-link">Mi Equipo</a>
-      <a href="leaderboard" class="nav-link">Clasificación</a>
-      <a href="profile" class="nav-link">Perfil</a>
-      <button class="sign-out-btn">Cerrar Sesión</button>
+      <a href="/squad-builder" class="nav-link">Mi Equipo</a>
+      <a href="/schedule" class="nav-link">Calendario</a>
+      <a href="/predictor" class="nav-link active">Predicciones</a>
+      <a href="/leaderboard" class="nav-link">Clasificación</a>
+      <a href="/profile" class="nav-link">Perfil</a>
+      <a href="/leagues" class="nav-link">Ligas Privadas</a>
+      <span id="nav-auth"></span>
     </div>
   </div>
 </nav>
@@ -695,6 +699,7 @@
       // ── INIT ──
       async init() {
         await requireRole('user');
+        setupNavAuth();
         this.updateTimestamp();
         await this.loadGlobal();
         await this.loadMatchdayData();

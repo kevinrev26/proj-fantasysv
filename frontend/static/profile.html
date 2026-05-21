@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/nav.js"></script>
   <style>
     .profile-page { max-width: 520px; margin: 0 auto; padding: 24px 16px 80px; }
     .profile-card {
@@ -68,10 +69,13 @@
       <span></span><span></span><span></span>
     </button>
     <div class="nav-links" id="nav-links">
-      <a href="squad-builder" class="nav-link">My Squad</a>
-      <a href="leaderboard" class="nav-link">Leaderboard</a>
-      <a href="profile" class="nav-link">Profile</a>
-      <button class="sign-out-btn" @click="signOut()">Sign Out</button>
+      <a href="/squad-builder" class="nav-link">Mi Equipo</a>
+      <a href="/schedule" class="nav-link">Calendario</a>
+      <a href="/predictor" class="nav-link active">Predicciones</a>
+      <a href="/leaderboard" class="nav-link">Clasificación</a>
+      <a href="/profile" class="nav-link">Perfil</a>
+      <a href="/leagues" class="nav-link">Ligas Privadas</a>
+      <span id="nav-auth"></span>
     </div>
   </div>
 </nav>
@@ -175,6 +179,8 @@ function profileApp() {
     teamNameSuccess: false,
 
     async init() {
+      await requireRole('user')
+      setupNavAuth();
       await this.loadProfile();
       await this.loadLeaderboard();
     },
