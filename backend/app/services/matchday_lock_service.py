@@ -30,7 +30,7 @@ from ..models import Fixture, Matchday, MatchdayStatus, SystemConfig
 
 logger = structlog.get_logger()
 
-_DEFAULT_OFFSET_MINUTES = 60
+_DEFAULT_OFFSET_MINUTES = 15
 _CONFIG_KEY = "MATCHDAY_LOCK_OFFSET_MINUTES"
 
 

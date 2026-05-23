@@ -308,14 +308,8 @@ def get_squad(
         "squad": players,
         "budget": 100 - total_cost,
         "free_transfers_remaining": free_remaining,
-        # "is_locked": matchday.is_locked if matchday else False,
-        # Since we are moving to fixture locking match, matchday locked is deprecated.
-        "is_locked": False,
-        "deadline": (
-            _earliest_non_finished_fixture_match(db, matchday.id).isoformat()
-            if matchday and _earliest_non_finished_fixture_match(db, matchday.id)
-            else None
-        ),
+        "is_locked": matchday.is_locked if matchday else False,
+        "deadline": matchday.lock_at_utc if matchday else False
     }
 
 

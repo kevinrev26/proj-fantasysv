@@ -256,7 +256,7 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                     red_cards=ps.red_card,
                     own_goals=ps.own_goal,
                     penalties_missed=ps.penalty_missed,
-                    penalties_saved=ps.penalties_saved,
+                    penalties_saved=ps.penalty_saved,
                 )
 
                 # Apply wildcard multiplier (if this fantasy player is the joker)

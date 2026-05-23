@@ -10,6 +10,7 @@ from ..dependencies import get_current_user
 from ..database import get_db
 from .. import models
 from pydantic import BaseModel, Field
+from datetime import datetime, timezone
 
 logger = structlog.get_logger(__name__)
 
@@ -105,7 +106,7 @@ def check_prediction_deadline(db: Session, fixture_id: int, raise_exception: boo
         if raise_exception:
             raise HTTPException(status_code=404, detail="Fixture not found")
         return False
-    if fixture.kickoff_utc <= datetime.utcnow():
+    if fixture.kickoff_utc <= datetime.now(timezone.utc):
         if raise_exception:
             raise HTTPException(
                 status_code=400,
@@ -225,10 +226,6 @@ def create_prediction(
     db.add(new_pred)
     db.commit()
     db.refresh(new_pred)
-
-    # Update matchday stats (now includes joker flag)
-    update_matchday_stats(db, current_user.id, matchday_id)
-
     # Build response with joined data
     return _build_prediction_response(db, new_pred)
 
@@ -266,10 +263,6 @@ def update_prediction(
     pred.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(pred)
-
-    # Update stats (joker may have changed)
-    matchday_id = get_fixture_matchday(db, pred.fixture_id)
-    update_matchday_stats(db, current_user.id, matchday_id)
 
     return _build_prediction_response(db, pred)
 
@@ -355,10 +348,6 @@ def upsert_predictions_batch(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Batch commit failed: {str(e)}")
-
-    # Refresh and update stats for each affected matchday
-    for matchday_id in updated_matchdays:
-        update_matchday_stats(db, current_user.id, matchday_id)
 
     # Build responses
     final_responses = []
@@ -537,10 +526,8 @@ def delete_prediction(
         raise HTTPException(status_code=404, detail="Prediction not found")
 
     check_prediction_deadline(db, pred.fixture_id)
-    matchday_id = get_fixture_matchday(db, pred.fixture_id)
     db.delete(pred)
     db.commit()
-    update_matchday_stats(db, current_user.id, matchday_id)
     return None
 
 # ---------------------------------------------------------------------------
