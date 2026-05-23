@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models, schemas
-from ..worker import recalculate_matchday_scores_task, deactivate_players_for_teams_task, reactivate_players_for_teams_task
+from ..worker import recalculate_matchday_scores_task, deactivate_players_for_teams_task, reactivate_players_for_teams_task, calculate_prediction_points_task
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -868,6 +868,7 @@ def create_fixture_result(
     fixture.finished = True
     db.commit()
     db.refresh(fr)
+    calculate_prediction_points_task.delay(fixture_id)
     return _fixture_result_dict(fr)
 
 

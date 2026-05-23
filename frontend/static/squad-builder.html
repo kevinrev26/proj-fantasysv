@@ -27,6 +27,32 @@
                 }
             }
 
+            /* ── HEADER mobile fix ── */
+            @media (max-width: 600px) {
+                .header-inner {
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    padding: 10px 14px !important;
+                }
+                .header-logo {
+                    flex: 1 1 100%;
+                }
+                .header-right {
+                    flex: 1 1 100%;
+                    justify-content: space-between;
+                }
+                .countdown-timer {
+                    font-size: 0.75rem;
+                    padding: 5px 10px;
+                }
+                .budget-pill {
+                    padding: 5px 10px;
+                }
+                .budget-pill-value {
+                    font-size: 0.9rem;
+                }
+            }
+
             /* ── Pitch grid: FW top → GK bottom ── */
             .pitch-grid {
                 display: flex;
@@ -72,17 +98,17 @@
             .field-wrapper {
                 position: relative;
                 width: 100%;
-                /* enough height for pitch without overlapping bench */
-                height: 58vw;
-                min-height: 270px;
-                max-height: 430px;
+                /* enough height for all 4 rows: FW MF DF GK */
+                height: 72vw;
+                min-height: 340px;
+                max-height: 480px;
                 overflow: hidden;
                 background: linear-gradient(180deg, #1a4a2c 0%, #2c8c4a 100%);
             }
             @media (min-width: 768px) {
                 .field-wrapper {
-                    height: 52vw;
-                    max-height: 520px;
+                    height: 54vw;
+                    max-height: 560px;
                 }
             }
 
@@ -1477,7 +1503,16 @@
                         </text>
                         <text
                             x="80"
-                            y="110"
+                            y="92"
+                            text-anchor="middle"
+                            font-size="22"
+                            font-weight="800"
+                            :fill="remainingCredits < 0 ? '#ff6b6b' : '#00d4aa'"
+                            x-text="totalCost.toFixed(1)"
+                        ></text>
+                        <text
+                            x="80"
+                            y="112"
                             text-anchor="middle"
                             font-size="11"
                             fill="rgba(255,255,255,0.4)"

@@ -24,6 +24,7 @@
       --blue-accent: #00a8e8;
       --red-accent:  #ff5f6d;
       --orange:      #ff9f43;
+      --purple:      #a78bfa;
       --text-white:  #ffffff;
       --text-dim:    rgba(255,255,255,0.55);
       --text-muted:  rgba(255,255,255,0.3);
@@ -87,9 +88,7 @@
     .refresh-info span:first-child { font-size: 1rem; }
 
     /* ── TABS ── */
-    .tabs-wrapper {
-      margin-bottom: 1.5rem;
-    }
+    .tabs-wrapper { margin-bottom: 1.5rem; }
     .tabs-nav {
       display: flex;
       gap: 4px;
@@ -112,14 +111,8 @@
       transition: all 0.2s;
       white-space: nowrap;
     }
-    .tab-btn.active {
-      background: var(--teal);
-      color: var(--navy);
-    }
-    .tab-btn:hover:not(.active) {
-      background: rgba(255,255,255,0.07);
-      color: var(--text-white);
-    }
+    .tab-btn.active { background: var(--teal); color: var(--navy); }
+    .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.07); color: var(--text-white); }
 
     /* ── TAB-SPECIFIC CONTROLS ── */
     .tab-controls {
@@ -149,9 +142,7 @@
       outline: none;
       transition: border-color 0.2s;
     }
-    .select-control:focus {
-      border-color: var(--teal);
-    }
+    .select-control:focus { border-color: var(--teal); }
     .date-input {
       background: var(--navy-mid);
       border: 1px solid rgba(255,255,255,0.15);
@@ -165,9 +156,7 @@
       transition: border-color 0.2s;
       color-scheme: dark;
     }
-    .date-input:focus {
-      border-color: var(--teal);
-    }
+    .date-input:focus { border-color: var(--teal); }
     .apply-btn {
       background: var(--teal);
       color: var(--navy);
@@ -180,10 +169,7 @@
       cursor: pointer;
       transition: background 0.2s, transform 0.15s;
     }
-    .apply-btn:hover {
-      background: var(--teal-dark);
-      transform: translateY(-1px);
-    }
+    .apply-btn:hover { background: var(--teal-dark); transform: translateY(-1px); }
 
     /* TABLE WRAPPER */
     .table-wrapper {
@@ -197,7 +183,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 0.9rem;
-      min-width: 560px;
+      min-width: 620px;
     }
     .leaderboard-table th {
       text-align: left;
@@ -216,35 +202,19 @@
       font-weight: 600;
       transition: background 0.2s;
     }
-    .leaderboard-table tr:hover td {
-      background: rgba(0,212,170,0.05);
-    }
+    .leaderboard-table tr:hover td { background: rgba(0,212,170,0.05); }
 
     /* rank */
-    .rank-cell {
-      font-weight: 800;
-      color: var(--gold);
-      width: 70px;
-    }
+    .rank-cell { font-weight: 800; color: var(--gold); width: 70px; }
     .rank-1 { color: #FFD700; font-size: 1.1em; }
     .rank-2 { color: #C0C0C0; }
     .rank-3 { color: #CD7F32; }
 
     /* delta cell */
-    .delta-cell {
-      width: 70px;
-      font-weight: 800;
-      text-align: center;
-    }
-    .delta-up {
-      color: var(--delta-up);
-    }
-    .delta-down {
-      color: var(--delta-down);
-    }
-    .delta-equal {
-      color: var(--delta-equal);
-    }
+    .delta-cell { width: 70px; font-weight: 800; text-align: center; }
+    .delta-up   { color: var(--delta-up); }
+    .delta-down { color: var(--delta-down); }
+    .delta-equal{ color: var(--delta-equal); }
 
     .team-name {
       font-weight: 800;
@@ -253,8 +223,7 @@
       gap: 8px;
     }
     .team-badge {
-      width: 24px;
-      height: 24px;
+      width: 24px; height: 24px;
       background: rgba(255,255,255,0.1);
       border-radius: 50%;
       display: inline-flex;
@@ -263,15 +232,43 @@
       font-size: 0.7rem;
       flex-shrink: 0;
     }
-    .username-sub {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      font-weight: 600;
+    .username-sub { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; }
+
+    /* ── POINTS BREAKDOWN ── */
+    .points-cell {
+      min-width: 180px;
     }
-    .points-val {
+    .points-total {
       font-weight: 800;
       color: var(--teal);
+      font-size: 1rem;
     }
+    .points-breakdown {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .pts-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 50px;
+    }
+    .pts-tag.fantasy {
+      background: rgba(0, 168, 232, 0.15);
+      color: var(--blue-accent);
+      border: 1px solid rgba(0, 168, 232, 0.3);
+    }
+    .pts-tag.predictor {
+      background: rgba(167, 139, 250, 0.15);
+      color: var(--purple);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+    }
+    .pts-tag .tag-icon { font-size: 0.8em; }
 
     /* highlighted row (current user) */
     .current-user-row {
@@ -310,20 +307,9 @@
       cursor: pointer;
       font-family: var(--font);
     }
-    .page-btn.active {
-      background: var(--teal);
-      color: var(--navy);
-      border-color: var(--teal);
-    }
-    .page-btn:hover:not(.disabled) {
-      background: rgba(0,212,170,0.2);
-      color: var(--teal);
-      transform: translateY(-1px);
-    }
-    .page-btn.disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    .page-btn.active { background: var(--teal); color: var(--navy); border-color: var(--teal); }
+    .page-btn:hover:not(.disabled) { background: rgba(0,212,170,0.2); color: var(--teal); transform: translateY(-1px); }
+    .page-btn.disabled { opacity: 0.4; cursor: not-allowed; }
     .page-indicator {
       color: var(--text-dim);
       font-weight: 600;
@@ -333,18 +319,8 @@
     }
 
     /* empty / loading */
-    .empty-row td {
-      text-align: center;
-      padding: 3rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-    .loading-row td {
-      text-align: center;
-      padding: 3rem;
-      color: var(--teal);
-      font-weight: 700;
-    }
+    .empty-row td { text-align: center; padding: 3rem; color: var(--text-muted); font-weight: 600; }
+    .loading-row td { text-align: center; padding: 3rem; color: var(--teal); font-weight: 700; }
     .spinner {
       display: inline-block;
       width: 18px; height: 18px;
@@ -357,13 +333,8 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* matchday pills (for matchday tab selector) */
-    .matchday-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 1.25rem;
-    }
+    /* matchday pills */
+    .matchday-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; }
     .md-pill {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.12);
@@ -376,19 +347,30 @@
       transition: all 0.2s;
       font-family: var(--font);
     }
-    .md-pill.active {
-      background: var(--teal);
-      color: var(--navy);
-      border-color: var(--teal);
+    .md-pill.active { background: var(--teal); color: var(--navy); border-color: var(--teal); }
+    .md-pill:hover:not(.active) { background: rgba(0,212,170,0.15); color: var(--teal); }
+    .md-pill.no-data { opacity: 0.4; cursor: not-allowed; }
+
+    /* legend */
+    .points-legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      align-items: center;
     }
-    .md-pill:hover:not(.active) {
-      background: rgba(0,212,170,0.15);
-      color: var(--teal);
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
-    .md-pill.no-data {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    .legend-dot.fantasy  { background: var(--blue-accent); }
+    .legend-dot.predictor{ background: var(--purple); }
+    .legend-dot.total    { background: var(--teal); }
 
     .footer-note {
       text-align: center;
@@ -398,16 +380,15 @@
     }
 
     @media (max-width: 680px) {
-      .leaderboard-table th, .leaderboard-table td {
-        padding: 0.7rem 0.8rem;
-        font-size: 0.8rem;
-      }
+      .leaderboard-table th, .leaderboard-table td { padding: 0.7rem 0.8rem; font-size: 0.8rem; }
       .rank-cell { width: 55px; }
       .delta-cell { width: 55px; }
       .user-badge { font-size: 0.55rem; margin-left: 4px; }
       .leaderboard-header { flex-direction: column; align-items: flex-start; }
       .tabs-nav { width: 100%; }
       .tab-btn { flex: 1; text-align: center; padding: 9px 10px; }
+      .points-breakdown { gap: 6px; }
+      .pts-tag { font-size: 0.68rem; padding: 2px 6px; }
     }
   </style>
 </head>
@@ -420,16 +401,14 @@
       <span class="nav-logo-icon">⚽</span>
       Fantasy SV
     </a>
-    
     <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
       <span></span><span></span><span></span>
     </button>
-
     <div class="nav-links" id="nav-links">
       <a href="/squad-builder" class="nav-link">Mi Equipo</a>
       <a href="/schedule" class="nav-link">Calendario</a>
-      <a href="/predictor" class="nav-link active">Predicciones</a>
-      <a href="/leaderboard" class="nav-link">Clasificación</a>
+      <a href="/predictor" class="nav-link">Predicciones</a>
+      <a href="/leaderboard" class="nav-link active">Clasificación</a>
       <a href="/profile" class="nav-link">Perfil</a>
       <a href="/leagues" class="nav-link">Ligas Privadas</a>
       <span id="nav-auth"></span>
@@ -462,8 +441,17 @@
       </div>
     </div>
 
-    <!-- ── TAB: GLOBAL (with rank change) ── -->
+    <!-- ── TAB: GLOBAL ── -->
     <div x-show="activeTab === 'global'" x-transition>
+
+      <!-- Legend -->
+      <div class="points-legend">
+        <span style="color:var(--text-dim);font-weight:700;font-size:0.78rem;">Desglose:</span>
+        <div class="legend-item"><div class="legend-dot total"></div><span>Total</span></div>
+        <div class="legend-item"><div class="legend-dot fantasy"></div><span>Fantasy</span></div>
+        <div class="legend-item"><div class="legend-dot predictor"></div><span>Predictor</span></div>
+      </div>
+
       <div class="table-wrapper">
         <table class="leaderboard-table">
           <thead>
@@ -471,7 +459,7 @@
               <th>Rango</th>
               <th>Equipo / Usuario</th>
               <th>Δ</th>
-              <th>Puntos Totales</th>
+              <th>Puntos</th>
             </tr>
           </thead>
           <tbody>
@@ -479,9 +467,13 @@
             <template x-if="!loading">
               <template x-for="team in paginatedGlobal" :key="team.id">
                 <tr :class="team.is_current_user ? 'current-user-row' : ''">
+
+                  <!-- Rank -->
                   <td class="rank-cell">
                     <span :class="'rank-' + team.rank" x-text="team.rank"></span>
                   </td>
+
+                  <!-- Team / User -->
                   <td class="team-name">
                     <span class="team-badge">⚡</span>
                     <div>
@@ -492,6 +484,8 @@
                       <div class="username-sub" x-text="'@' + team.user_username"></div>
                     </div>
                   </td>
+
+                  <!-- Delta -->
                   <td class="delta-cell">
                     <template x-if="team.previous_rank !== null && team.previous_rank !== undefined">
                       <div>
@@ -510,7 +504,22 @@
                       <span class="delta-equal">–</span>
                     </template>
                   </td>
-                  <td class="points-val" x-text="team.total_points + ' pts'"></td>
+
+                  <!-- Points breakdown -->
+                  <td class="points-cell">
+                    <div class="points-total" x-text="team.total_points + ' pts'"></div>
+                    <div class="points-breakdown">
+                      <span class="pts-tag fantasy">
+                        <span class="tag-icon">⚽</span>
+                        <span x-text="team.fantasy_points"></span>
+                      </span>
+                      <span class="pts-tag predictor">
+                        <span class="tag-icon">🎯</span>
+                        <span x-text="team.predictor_points"></span>
+                      </span>
+                    </div>
+                  </td>
+
                 </tr>
               </template>
             </template>
@@ -520,6 +529,7 @@
           </tbody>
         </table>
       </div>
+
       <!-- Pagination Global -->
       <div class="pagination" x-show="totalPagesGlobal > 1">
         <button class="page-btn" :class="{ disabled: currentPageGlobal === 1 }" @click="prevPageGlobal()" :disabled="currentPageGlobal === 1">← Anterior</button>
@@ -531,9 +541,8 @@
       </div>
     </div>
 
-    <!-- ── TAB: MATCHDAY (unchanged) ── -->
+    <!-- ── TAB: MATCHDAY ── -->
     <div x-show="activeTab === 'matchday'" x-transition>
-      <!-- Matchday pills -->
       <div x-show="matchdays.length > 0" class="matchday-pills">
         <template x-for="md in matchdays" :key="md.id">
           <button
@@ -562,9 +571,7 @@
             <template x-if="!loading">
               <template x-for="team in paginatedMatchday" :key="team.id">
                 <tr :class="team.is_current_user ? 'current-user-row' : ''">
-                  <td class="rank-cell">
-                    <span :class="'rank-' + team.rank" x-text="team.rank"></span>
-                  </td>
+                  <td class="rank-cell"><span :class="'rank-' + team.rank" x-text="team.rank"></span></td>
                   <td class="team-name">
                     <span class="team-badge">⚡</span>
                     <div>
@@ -588,6 +595,7 @@
           </tbody>
         </table>
       </div>
+
       <!-- Pagination Matchday -->
       <div class="pagination" x-show="totalPagesMatchday > 1">
         <button class="page-btn" :class="{ disabled: currentPageMatchday === 1 }" @click="prevPageMatchday()" :disabled="currentPageMatchday === 1">← Anterior</button>
@@ -599,7 +607,7 @@
       </div>
     </div>
 
-    <!-- ── TAB: DATE RANGE (unchanged) ── -->
+    <!-- ── TAB: DATE RANGE ── -->
     <div x-show="activeTab === 'dates'" x-transition>
       <div class="tab-controls">
         <span class="control-label">Desde</span>
@@ -623,9 +631,7 @@
             <template x-if="!loadingDates">
               <template x-for="team in paginatedDates" :key="team.id">
                 <tr :class="team.is_current_user ? 'current-user-row' : ''">
-                  <td class="rank-cell">
-                    <span :class="'rank-' + team.rank" x-text="team.rank"></span>
-                  </td>
+                  <td class="rank-cell"><span :class="'rank-' + team.rank" x-text="team.rank"></span></td>
                   <td class="team-name">
                     <span class="team-badge">⚡</span>
                     <div>
@@ -649,6 +655,7 @@
           </tbody>
         </table>
       </div>
+
       <!-- Pagination Dates -->
       <div class="pagination" x-show="totalPagesDates > 1">
         <button class="page-btn" :class="{ disabled: currentPageDates === 1 }" @click="prevPageDates()" :disabled="currentPageDates === 1">← Anterior</button>
@@ -661,7 +668,7 @@
     </div>
 
     <div class="footer-note">
-      * Los puntos se actualizan automáticamente tras cada cálculo de jornada. Fila resaltada = tu equipo.
+      * Los puntos se actualizan automáticamente tras cada cálculo de jornada. Fila resaltada = tu equipo. El ranking global suma puntos de Fantasy y Predictor.
     </div>
   </div>
 </main>
@@ -680,7 +687,7 @@
 
       // Matchday
       matchdays: [],
-      matchdayLeaderboard: {},     // { [matchdayId]: [...] }
+      matchdayLeaderboard: {},
       selectedMatchdayId: null,
       currentPageMatchday: 1,
 
@@ -703,7 +710,6 @@
         this.updateTimestamp();
         await this.loadGlobal();
         await this.loadMatchdayData();
-        // default dates to current month
         const today = new Date();
         const y = today.getFullYear();
         const m = String(today.getMonth() + 1).padStart(2, '0');
@@ -712,7 +718,7 @@
       },
 
       get headerSubtitle() {
-        if (this.activeTab === 'global') return 'Temporada 2026 · Clasificación global acumulada';
+        if (this.activeTab === 'global') return 'Temporada 2026 · Fantasy + Predictor';
         if (this.activeTab === 'matchday') {
           const md = this.matchdays.find(m => m.id === this.selectedMatchdayId);
           return md ? `Jornada: ${md.name}` : 'Selecciona una jornada';
@@ -723,12 +729,8 @@
         return '';
       },
 
-      // ── TAB SWITCH ──
-      switchTab(tab) {
-        this.activeTab = tab;
-      },
+      switchTab(tab) { this.activeTab = tab; },
 
-      // ── REFRESH ──
       async refreshData() {
         if (this.activeTab === 'global') await this.loadGlobal();
         else if (this.activeTab === 'matchday') await this.loadMatchdayData();
@@ -746,7 +748,12 @@
           const resp = await authFetch('/squad/global_leaderboard');
           if (resp.ok) {
             const data = await resp.json();
-            this.globalLeaderboard = data.leaderboard || [];
+            // Ensure fantasy_points / predictor_points default to 0 if absent
+            this.globalLeaderboard = (data.leaderboard || []).map(e => ({
+              ...e,
+              fantasy_points:   e.fantasy_points   ?? 0,
+              predictor_points: e.predictor_points ?? 0,
+            }));
           }
         } catch (e) {
           console.warn('Error loading global leaderboard', e);
@@ -768,7 +775,6 @@
       async loadMatchdayData() {
         this.loading = true;
         try {
-          // 1. Get active season
           const seasonsResp = await fetch('/seasons');
           if (!seasonsResp.ok) throw new Error('seasons failed');
           const seasonsData = await seasonsResp.json();
@@ -776,26 +782,21 @@
           const activeSeason = seasons.find(s => s.status === 'active') || seasons[seasons.length - 1];
           if (!activeSeason) { this.loading = false; return; }
 
-          // 2. Get matchdays for that season
           const mdsResp = await fetch(`/seasons/${activeSeason.id}/matchdays`);
           if (!mdsResp.ok) throw new Error('matchdays failed');
           const mdsData = await mdsResp.json();
           this.matchdays = mdsData.matchdays || [];
 
-          // 3. Load matchday leaderboard (all matchdays in one call)
           const lbResp = await authFetch('/squad/matchday_leaderboard');
           if (lbResp.ok) {
             const lbData = await lbResp.json();
-            // API returns { leaderboard: { "1": [...], "2": [...] } }
             const raw = lbData.leaderboard || {};
-            // Normalize keys to integers
             this.matchdayLeaderboard = {};
             for (const [k, v] of Object.entries(raw)) {
               this.matchdayLeaderboard[parseInt(k)] = v;
             }
           }
 
-          // Auto-select latest matchday that has data
           const withData = this.matchdays.filter(md => {
             const d = this.matchdayLeaderboard[md.id];
             return d && d.length > 0;
@@ -811,10 +812,7 @@
         this.loading = false;
       },
 
-      selectMatchday(id) {
-        this.selectedMatchdayId = id;
-        this.currentPageMatchday = 1;
-      },
+      selectMatchday(id) { this.selectedMatchdayId = id; this.currentPageMatchday = 1; },
 
       get currentMatchdayTeams() {
         if (this.selectedMatchdayId === null) return [];

@@ -781,16 +781,23 @@ def bench_swap(
 
 @router.get("/global_leaderboard")
 def get_global_leaderboard(
-    request: Request, 
+    request: Request,
     current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
-    Return the global leaderboard based on cumulative points across all matchdays,
-    including each team's previous rank (from Redis) to compute rank changes.
+    Return the global leaderboard combining fantasy points and predictor points.
+
+    Each entry exposes:
+      - fantasy_points  : cumulative TeamScore points minus transfer penalties
+      - predictor_points: sum of PredictionMatchdayStats.total_points for the user
+      - total_points    : fantasy_points + predictor_points  (used for ranking)
+
+    Rank delta is stored/retrieved from Redis using the combined total.
     """
     redis = get_redis()
     user_id = current_user.id
+
     season = (
         db.query(models.Season)
         .filter(models.Season.status == models.SeasonStatus.active)
@@ -799,17 +806,59 @@ def get_global_leaderboard(
     if not season:
         return {"leaderboard": []}
 
-    # Get all team scores (filter out null matchday_id if needed)
-    team_scores = (
-        db.query(models.TeamScore)
+    # ── 1. Fantasy points ────────────────────────────────────────────────────
+    # One row per (fantasy_team, matchday). We only need the latest cumulative
+    # value per fantasy team, so group by fantasy_team_id and take the max
+    # matchday_id row (the most recent cumulative total).
+    latest_matchday_sq = (
+        db.query(
+            models.TeamScore.fantasy_team_id,
+            func.max(models.TeamScore.matchday_id).label("latest_matchday_id"),
+        )
         .filter(models.TeamScore.matchday_id != None)
+        .join(
+            models.FantasyTeam,
+            models.FantasyTeam.id == models.TeamScore.fantasy_team_id,
+        )
+        .filter(models.FantasyTeam.season_id == season.id)
+        .group_by(models.TeamScore.fantasy_team_id)
+        .subquery()
+    )
+
+    latest_scores = (
+        db.query(models.TeamScore)
+        .join(
+            latest_matchday_sq,
+            (models.TeamScore.fantasy_team_id == latest_matchday_sq.c.fantasy_team_id)
+            & (models.TeamScore.matchday_id == latest_matchday_sq.c.latest_matchday_id),
+        )
         .all()
     )
 
-    # Build leaderboard entries with current points
+    # ── 2. Predictor points per user ────────────────────────────────────────
+    # Sum PredictionMatchdayStats across all matchdays belonging to this season.
+    predictor_rows = (
+        db.query(
+            models.PredictionMatchdayStats.user_id,
+            func.sum(models.PredictionMatchdayStats.total_points).label("predictor_total"),
+        )
+        .join(
+            models.Matchday,
+            models.Matchday.id == models.PredictionMatchdayStats.matchday_id,
+        )
+        .filter(models.Matchday.season_id == season.id)
+        .group_by(models.PredictionMatchdayStats.user_id)
+        .all()
+    )
+    predictor_by_user: dict[int, int] = {r.user_id: r.predictor_total for r in predictor_rows}
+
+    # ── 3. Build leaderboard ─────────────────────────────────────────────────
     leaderboard = []
-    for ts in team_scores:
+    for ts in latest_scores:
         ft = ts.fantasy_team
+        if not ft or not ft.user:
+            continue
+
         total_penalty = (
             db.query(func.sum(models.TeamScore.transfer_penalty))
             .filter(
@@ -819,7 +868,10 @@ def get_global_leaderboard(
             .scalar()
         ) or 0
 
-        # Retrieve previous rank from Redis (if exists)
+        fantasy_pts = ts.cumulative_points - total_penalty
+        predictor_pts = predictor_by_user.get(ft.user_id, 0)
+        combined_pts = fantasy_pts + predictor_pts
+
         redis_key = f"leaderboard_rank:{ft.id}"
         previous_rank_raw = redis.get(redis_key)
         previous_rank = int(previous_rank_raw) if previous_rank_raw else None
@@ -828,23 +880,22 @@ def get_global_leaderboard(
             {
                 "id": ft.id,
                 "name": ft.name,
-                "user_username": ft.user.username if ft.user else "User",
+                "user_username": ft.user.username,
                 "user_id": ft.user_id,
-                "total_points": ts.cumulative_points - total_penalty,
+                "fantasy_points": fantasy_pts,
+                "predictor_points": predictor_pts,
+                "total_points": combined_pts,
                 "is_current_user": ft.user_id == user_id,
-                "previous_rank": previous_rank,  # None means no previous data
+                "previous_rank": previous_rank,
             }
         )
 
-    # Sort by total_points descending to assign new ranks
+    # ── 4. Sort by combined total, assign ranks, persist to Redis ───────────
     leaderboard.sort(key=lambda x: x["total_points"], reverse=True)
 
-    # Assign new ranks and update Redis with the new rank
     for idx, entry in enumerate(leaderboard):
         new_rank = idx + 1
         entry["rank"] = new_rank
-
-        # Store the new rank in Redis for next time
         redis_key = f"leaderboard_rank:{entry['id']}"
         redis.set(redis_key, new_rank)
 

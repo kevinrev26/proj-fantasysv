@@ -2,6 +2,7 @@ from typing import List
 
 import sentry_sdk
 import structlog
+from datetime import datetime, timezone
 from celery import Celery
 from celery.signals import setup_logging as celery_setup_logging
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -17,6 +18,11 @@ from .models import (
     PlayerScore,
     TeamScore,
     LeaderboardWeeklyEntry,
+    Fixture,
+    FixtureResult,
+    Prediction,
+    PredictionScore,
+    PredictionMatchdayStats,
 )
 from .scoring import (
     apply_wildcard_multiplier,
@@ -306,7 +312,8 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                 fantasy_team_id = fantasy_team.id,
                 total_points = total_points,
             )
-            db.add(leaderboard_entry, team_score)
+            db.add(team_score)
+            db.add(leaderboard_entry)
             logger.debug("Team score updated", team_score_id=team_score.id, points=total_points)
 
         # Removing closing matchday state here, because we are keep updating the scores per fixtures.
@@ -377,3 +384,188 @@ def reactivate_players_for_teams_task(self, team_ids: List[int]):
         db.close()
         logger.debug("Database session closed for reactivate_players_for_teams_task")
     return {"reactivated_teams": team_ids}
+
+
+@celery_app.task(
+    name="calculate_prediction_points",
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+)
+def calculate_prediction_points_task(self, fixture_id: int):
+    logger.info("Starting prediction points calculation", fixture_id=fixture_id)
+    db = SessionLocal()
+    try:
+        # 1. Load the fixture and its result
+        fixture = db.query(Fixture).filter(Fixture.id == fixture_id).first()
+        if not fixture:
+            logger.error("Fixture not found", fixture_id=fixture_id)
+            return
+
+        result = fixture.result
+        if not result:
+            logger.warning("Fixture has no result yet, aborting", fixture_id=fixture_id)
+            return
+
+        actual_home = result.home_goals
+        actual_away = result.away_goals
+
+        # Determine actual outcome: "home", "away", or "draw"
+        if actual_home > actual_away:
+            actual_outcome = "home"
+        elif actual_away > actual_home:
+            actual_outcome = "away"
+        else:
+            actual_outcome = "draw"
+
+        # 2. Load all predictions for this fixture
+        predictions = (
+            db.query(Prediction)
+            .filter(Prediction.fixture_id == fixture_id)
+            .all()
+        )
+
+        if not predictions:
+            logger.info("No predictions found for fixture", fixture_id=fixture_id)
+            return
+
+        logger.info("Scoring predictions", fixture_id=fixture_id, count=len(predictions))
+
+        # Track which users need their matchday stats updated
+        affected_users = set()
+
+        for prediction in predictions:
+            exact_score_points = 0
+            correct_outcome_points = 0
+
+            pred_home = prediction.predicted_home_goals
+            pred_away = prediction.predicted_away_goals
+
+            # Exact score: 3 points
+            if pred_home == actual_home and pred_away == actual_away:
+                exact_score_points = 3
+            else:
+                # Determine predicted outcome
+                if pred_home > pred_away:
+                    pred_outcome = "home"
+                elif pred_away > pred_home:
+                    pred_outcome = "away"
+                else:
+                    pred_outcome = "draw"
+
+                # Correct outcome only: 1 point
+                if pred_outcome == actual_outcome:
+                    correct_outcome_points = 1
+
+            raw_points = exact_score_points + correct_outcome_points
+
+            # Apply joker multiplier (x2) if this prediction has is_joker=True
+            joker_applied = prediction.is_joker
+            points_earned = raw_points * 2 if joker_applied else raw_points
+
+            # Upsert PredictionScore (safe to re-run on result correction)
+            score = (
+                db.query(PredictionScore)
+                .filter(PredictionScore.prediction_id == prediction.id)
+                .first()
+            )
+            if score:
+                score.points_earned = points_earned
+                score.exact_score_points = exact_score_points
+                score.correct_outcome_points = correct_outcome_points
+                score.joker_multiplier_applied = joker_applied
+                score.calculated_at = datetime.now(timezone.utc)
+                logger.debug(
+                    "Updated existing prediction score",
+                    prediction_id=prediction.id,
+                    points_earned=points_earned,
+                )
+            else:
+                score = PredictionScore(
+                    prediction_id=prediction.id,
+                    points_earned=points_earned,
+                    exact_score_points=exact_score_points,
+                    correct_outcome_points=correct_outcome_points,
+                    joker_multiplier_applied=joker_applied,
+                    calculated_at=datetime.now(timezone.utc),
+                )
+                db.add(score)
+                logger.debug(
+                    "Created new prediction score",
+                    prediction_id=prediction.id,
+                    points_earned=points_earned,
+                )
+
+            affected_users.add(prediction.user_id)
+
+        db.commit()
+
+        # 3. Recalculate PredictionMatchdayStats for every affected user
+        matchday_id = fixture.matchday_id
+
+        for user_id in affected_users:
+            # Sum all scored predictions for this user across the whole matchday
+            # (not just this fixture — another fixture in the matchday may already be scored)
+            user_predictions = (
+                db.query(Prediction)
+                .join(Fixture, Fixture.id == Prediction.fixture_id)
+                .filter(
+                    Prediction.user_id == user_id,
+                    Fixture.matchday_id == matchday_id,
+                )
+                .all()
+            )
+
+            total_points = sum(
+                p.score.points_earned for p in user_predictions if p.score
+            )
+            joker_pred = next((p for p in user_predictions if p.is_joker), None)
+
+            stats = (
+                db.query(PredictionMatchdayStats)
+                .filter(
+                    PredictionMatchdayStats.user_id == user_id,
+                    PredictionMatchdayStats.matchday_id == matchday_id,
+                )
+                .first()
+            )
+
+            if stats:
+                stats.total_points = total_points
+                stats.joker_used = joker_pred is not None
+                stats.joker_applied_to_fixture_id = joker_pred.fixture_id if joker_pred else None
+            else:
+                stats = PredictionMatchdayStats(
+                    user_id=user_id,
+                    matchday_id=matchday_id,
+                    total_points=total_points,
+                    joker_used=joker_pred is not None,
+                    joker_applied_to_fixture_id=joker_pred.fixture_id if joker_pred else None,
+                )
+                db.add(stats)
+
+            logger.debug(
+                "Updated matchday stats",
+                user_id=user_id,
+                matchday_id=matchday_id,
+                total_points=total_points,
+            )
+
+        db.commit()
+        logger.info(
+            "Prediction points calculation completed",
+            fixture_id=fixture_id,
+            users_affected=len(affected_users),
+        )
+
+    except Exception as e:
+        logger.error(
+            "Prediction points calculation failed",
+            fixture_id=fixture_id,
+            error=str(e),
+        )
+        db.rollback()
+        raise self.retry(exc=e)
+    finally:
+        db.close()
