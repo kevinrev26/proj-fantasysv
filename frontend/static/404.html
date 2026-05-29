@@ -5,234 +5,500 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>                                                                                                                     
   <title>Página no encontrada — Fantasy SV</title>                                                                                                                                            
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>                                                                       
-  <style>                                                                                                                                                                                     
-    :root {                                                                                                                                                                                   
-      --navy:        #0a1628;                                                                                                                                                                 
-      --navy-mid:    #0f2040;                                                                                                                                                                 
-      --navy-light:  #162a50;                                                                                                                                                                 
-      --navy-card:   #1a3260;                                                                                                                                                                 
-      --teal:        #00d4aa;                                                                                                                                                                 
-      --teal-dark:   #00a88a;                                                                                                                                                                 
-      --teal-glow:   rgba(0, 212, 170, 0.18);                                                                                                                                                 
-      --gold:        #f5c842;                                                                                                                                                                 
-      --blue-accent: #00a8e8;                                                                                                                                                                 
-      --red-accent:  #ff5f6d;                                                                                                                                                                 
-      --red-glow:    rgba(255, 95, 109, 0.18);                                                                                                                                                
-      --text-white:  #ffffff;                                                                                                                                                                 
-      --text-dim:    rgba(255,255,255,0.55);                                                                                                                                                  
-      --text-muted:  rgba(255,255,255,0.28);                                                                                                                                                  
-      --font:        'Nunito', sans-serif;                                                                                                                                                    
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }                                                                                                                 
-                                                                                                                                                                                              
-    body {                                                                                                                                                                                    
-      font-family: var(--font);                                                                                                                                                               
-      background: var(--navy);                                                                                                                                                                
-      color: var(--text-white);                                                                                                                                                               
-      min-height: 100vh;                                                                                                                                                                      
-      display: flex;                                                                                                                                                                          
-      flex-direction: column;                                                                                                                                                                 
-      align-items: center;                                                                                                                                                                    
-      justify-content: center;                                                                                                                                                                
-      overflow: hidden;                                                                                                                                                                       
-      position: relative;                                                                                                                                                                     
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    /* ── Ambient background blobs ── */                                                                                                                                                      
-    .bg-blob {                                                                                                                                                                                
-      position: fixed;                                                                                                                                                                        
-      border-radius: 50%;                                                                                                                                                                     
-      filter: blur(90px);                                                                                                                                                                     
-      opacity: 0.18;                                                                                                                                                                          
-      pointer-events: none;                                                                                                                                                                   
-      animation: drift 10s ease-in-out infinite alternate;                                                                                                                                    
-    }                                                                                                                                                                                         
-    .bg-blob-1 {                                                                                                                                                                              
-      width: 520px; height: 520px;                                                                                                                                                            
-      background: var(--red-accent);                                                                                                                                                          
-      top: -160px; left: -160px;                                                                                                                                                              
-      animation-delay: 0s;                                                                                                                                                                    
-    }                                                                                                                                                                                         
-    .bg-blob-2 {                                                                                                                                                                              
-      width: 400px; height: 400px;                                                                                                                                                            
-      background: var(--teal);                                                                                                                                                                
-      bottom: -120px; right: -120px;                                                                                                                                                          
-      animation-delay: -4s;                                                                                                                                                                   
-    }                                                                                                                                                                                         
-    .bg-blob-3 {                                                                                                                                                                              
-      width: 260px; height: 260px;                                                                                                                                                            
-      background: var(--blue-accent);                                                                                                                                                         
-      top: 50%; left: 50%;                                                                                                                                                                    
-      transform: translate(-50%, -50%);                                                                                                                                                       
-      animation-delay: -2s;                                                                                                                                                                   
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    @keyframes drift {                                                                                                                                                                        
-      from { transform: translate(0, 0) scale(1); }                                                                                                                                           
-      to   { transform: translate(30px, 20px) scale(1.08); }                                                                                                                                  
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    /* ── Grid overlay ── */                                                                                                                                                                  
-    .grid-overlay {                                                                                                                                                                           
-      position: fixed;                                                                                                                                                                        
-      inset: 0;                                                                                                                                                                               
-      pointer-events: none;                                                                                                                                                                   
-      background-image:                                                                                                                                                                       
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),                                                                                                                        
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);                                                                                                                 
-      background-size: 48px 48px;                                                                                                                                                             
-      mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%);                                                                                                   
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    /* ── Card ── */                                                                                                                                                                          
-    .card {                                                                                                                                                                                   
-      position: relative;                                                                                                                                                                     
-      z-index: 10;                                                                                                                                                                            
-      background: rgba(15, 32, 64, 0.72);                                                                                                                                                     
-      border: 1px solid rgba(255, 95, 109, 0.22);                                                                                                                                             
-      border-radius: 20px;                                                                                                                                                                    
-      padding: 3rem 2.5rem 2.5rem;                                                                                                                                                            
-      max-width: 460px;                                                                                                                                                                       
-      width: calc(100% - 2rem);                                                                                                                                                               
-      text-align: center;                                                                                                                                                                     
-      backdrop-filter: blur(20px);                                                                                                                                                            
-      box-shadow:                                                                                                                                                                             
-        0 0 0 1px rgba(255,255,255,0.04) inset,                                                                                                                                               
-        0 24px 64px rgba(0,0,0,0.5),                                                                                                                                                          
-        0 0 80px var(--red-glow);                                                                                                                                                             
-      animation: card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;                                                                                                                            
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    @keyframes card-in {                                                                                                                                                                      
-      from { opacity: 0; transform: translateY(32px) scale(0.97); }                                                                                                                           
-      to   { opacity: 1; transform: translateY(0) scale(1); }                                                                                                                                 
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    /* ── Icon ── */                                                                                                                                                                          
-    .icon-wrap {                                                                                                                                                                              
-      display: inline-flex;                                                                                                                                                                   
-      align-items: center;                                                                                                                                                                    
-      justify-content: center;                                                                                                                                                                
-      width: 80px; height: 80px;                                                                                                                                                              
-      border-radius: 50%;                                                                                                                                                                     
-      background: var(--red-glow);                                                                                                                                                            
-      border: 1.5px solid rgba(255, 95, 109, 0.35);                                                                                                                                           
-      margin-bottom: 1.5rem;                                                                                                                                                                  
-      animation: pulse-ring 2.4s ease-in-out infinite;                                                                                                                                        
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    @keyframes pulse-ring {                                                                                                                                                                   
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 95, 109, 0.35); }                                                                                                                              
-      50%       { box-shadow: 0 0 0 14px rgba(255, 95, 109, 0); }                                                                                                                             
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    .icon-wrap svg {                                                                                                                                                                          
-      width: 36px; height: 36px;                                                                                                                                                              
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    /* ── Code badge ── */                                                                                                                                                                    
-    .code-badge {                                                                                                                                                                             
-      display: inline-block;                                                                                                                                                                  
-      font-size: 0.72rem;                                                                                                                                                                     
-      font-weight: 800;                                                                                                                                                                       
-      letter-spacing: 0.18em;                                                                                                                                                                 
-      text-transform: uppercase;                                                                                                                                                              
-      color: var(--red-accent);                                                                                                                                                               
-      background: var(--red-glow);                                                                                                                                                            
-      border: 1px solid rgba(255, 95, 109, 0.3);                                                                                                                                              
-      border-radius: 6px;                                                                                                                                                                     
-      padding: 3px 10px;                                                                                                                                                                      
-      margin-bottom: 1rem;                                                                                                                                                                    
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    /* ── Heading ── */                                                                                                                                                                       
-    h1 {                                                                                                                                                                                      
-      font-size: 2.2rem;                                                                                                                                                                      
-      font-weight: 900;                                                                                                                                                                       
-      line-height: 1.1;                                                                                                                                                                       
-      margin-bottom: 0.75rem;                                                                                                                                                                 
-      background: linear-gradient(135deg, #ffffff 30%, rgba(255,255,255,0.55));                                                                                                               
-      -webkit-background-clip: text;                                                                                                                                                          
-      background-clip: text;                                                                                                                                                                  
-      color: transparent;                                                                                                                                                                     
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    .subtitle {                                                                                                                                                                               
-      color: var(--text-dim);                                                                                                                                                                 
-      font-size: 0.95rem;                                                                                                                                                                     
-      font-weight: 600;                                                                                                                                                                       
-      line-height: 1.6;                                                                                                                                                                       
-      margin-bottom: 2rem;                                                                                                                                                                    
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    /* ── Divider ── */                                                                                                                                                                       
-    .divider {                                                                                                                                                                                
-      width: 100%;                                                                                                                                                                            
-      height: 1px;                                                                                                                                                                            
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);                                                                                                   
-      margin-bottom: 1.75rem;                                                                                                                                                                 
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    /* ── Actions ── */                                                                                                                                                                       
-    .actions {                                                                                                                                                                                
-      display: flex;                                                                                                                                                                          
-      flex-direction: column;                                                                                                                                                                 
-      gap: 0.75rem;                                                                                                                                                                           
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    .btn {                                                                                                                                                                                    
-      display: block;                                                                                                                                                                         
-      width: 100%;                                                                                                                                                                            
-      padding: 0.85rem 1rem;                                                                                                                                                                  
-      border-radius: 10px;                                                                                                                                                                    
-      font-family: var(--font);                                                                                                                                                               
-      font-weight: 700;                                                                                                                                                                       
-      font-size: 0.95rem;                                                                                                                                                                     
-      cursor: pointer;                                                                                                                                                                        
-      text-decoration: none;                                                                                                                                                                  
-      text-align: center;                                                                                                                                                                     
-      transition: all 0.2s ease;                                                                                                                                                              
-      border: none;                                                                                                                                                                           
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    .btn-primary {                                                                                                                                                                            
-      background: var(--teal);                                                                                                                                                                
-      color: var(--navy);                                                                                                                                                                     
-    }                                                                                                                                                                                         
-    .btn-primary:hover {                                                                                                                                                                      
-      background: var(--teal-dark);                                                                                                                                                           
-      transform: translateY(-2px);                                                                                                                                                            
-      box-shadow: 0 6px 20px var(--teal-glow);                                                                                                                                                
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    .btn-ghost {                                                                                                                                                                              
-      background: transparent;                                                                                                                                                                
-      color: var(--text-dim);                                                                                                                                                                 
-      border: 1px solid rgba(255,255,255,0.1);                                                                                                                                                
-    }                                                                                                                                                                                         
-    .btn-ghost:hover {                                                                                                                                                                        
-      color: var(--text-white);                                                                                                                                                               
-      border-color: rgba(255,255,255,0.22);                                                                                                                                                   
-      background: rgba(255,255,255,0.04);                                                                                                                                                     
-      transform: translateY(-2px);                                                                                                                                                            
-    }                                                                                                                                                                                         
-                                                                                                                                                                                              
-    .btn:active { transform: translateY(0); }                                                                                                                                                 
-                                                                                                                                                                                              
-    /* ── Footer note ── */                                                                                                                                                                   
-    .footer-note {                                                                                                                                                                            
-      margin-top: 1.5rem;                                                                                                                                                                     
-      color: var(--text-muted);                                                                                                                                                               
-      font-size: 0.8rem;                                                                                                                                                                      
-      font-weight: 600;                                                                                                                                                                       
-    }                                                                                                                                                                                         
-    .footer-note a {                                                                                                                                                                          
-      color: var(--teal);                                                                                                                                                                     
-      text-decoration: none;                                                                                                                                                                  
-    }                                                                                                                                                                                         
-    .footer-note a:hover { text-decoration: underline; }                                                                                                                                      
-  </style>                                                                                                                                                                                    
+<style>
+    :root {
+        /* Color Palette */
+        --primary-blue: #0D47FF;
+        --secondary-purple: #7B2CFF;
+        --success-green: #00D26A;
+        --danger-red: #FF3D4D;
+        --gold: #F8C63A;
+        --background-dark: #0B1020;
+        --surface-dark: #151C32;
+        --text-white: #FFFFFF;
+        --text-muted: #A6B0C3;
+        
+        /* Typography */
+        --font-primary: 'Inter', sans-serif;
+        --font-secondary: 'Rajdhani', sans-serif;
+        --font-numeric: 'Oswald', sans-serif;
+        --font-heading: 'Archivo', sans-serif;
+        
+        /* Spacing */
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --spacing-xxl: 3rem;
+        
+        /* Borders */
+        --border-radius: 12px;
+        --border-radius-lg: 20px;
+        --border-width: 1px;
+        
+        /* Shadows */
+        --shadow-card: 0 12px 30px rgba(0, 0, 0, 0.3);
+        --shadow-glow-blue: 0 0 20px rgba(13, 71, 255, 0.5);
+        --shadow-glow-purple: 0 0 20px rgba(123, 44, 255, 0.5);
+        --shadow-glow-green: 0 0 20px rgba(0, 210, 106, 0.5);
+        --shadow-glow-red: 0 0 20px rgba(255, 61, 77, 0.5);
+        --shadow-glow-gold: 0 0 20px rgba(248, 198, 58, 0.5);
+        
+        /* Animations */
+        --transition-fast: 0.2s ease;
+        --transition-normal: 0.3s ease;
+        --transition-slow: 0.5s ease;
+    }
+
+    *, *::before, *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: var(--font-primary);
+        background: var(--background-dark);
+        color: var(--text-white);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+        background-image: 
+            radial-gradient(circle at 10% 20%, rgba(13, 71, 255, 0.15) 0%, transparent 20%),
+            radial-gradient(circle at 90% 80%, rgba(123, 44, 255, 0.15) 0%, transparent 20%),
+            linear-gradient(to bottom, #0B1020, #0B1020);
+        background-attachment: fixed;
+    }
+
+    /* ── Ambient background blobs ── */
+    .bg-blob {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(90px);
+        opacity: 0.18;
+        pointer-events: none;
+        animation: drift 15s ease-in-out infinite alternate;
+    }
+    
+    .bg-blob-1 {
+        width: 520px;
+        height: 520px;
+        background: var(--primary-blue);
+        top: -160px;
+        left: -160px;
+        animation-delay: 0s;
+    }
+    
+    .bg-blob-2 {
+        width: 400px;
+        height: 400px;
+        background: var(--secondary-purple);
+        bottom: -120px;
+        right: -120px;
+        animation-delay: -4s;
+    }
+    
+    .bg-blob-3 {
+        width: 260px;
+        height: 260px;
+        background: var(--gold);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation-delay: -2s;
+    }
+    
+    @keyframes drift {
+        from { transform: translate(0, 0) scale(1); }
+        to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+
+    /* ── Grid overlay ── */
+    .grid-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+        background-size: 48px 48px;
+        mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%);
+    }
+
+    /* ── Card ── */
+    .card {
+        position: relative;
+        z-index: 10;
+        background: rgba(21, 28, 50, 0.72);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xxl) var(--spacing-xl);
+        max-width: 460px;
+        width: calc(100% - 2rem);
+        text-align: center;
+        backdrop-filter: blur(12px);
+        box-shadow: 
+            0 0 0 1px rgba(255,255,255,0.04) inset,
+            var(--shadow-card),
+            0 0 40px rgba(13, 71, 255, 0.2);
+        animation: card-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        transition: all var(--transition-normal);
+    }
+
+    @keyframes card-in {
+        from { opacity: 0; transform: translateY(32px) scale(0.97); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Icon ── */
+    .icon-wrap {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(13, 71, 255, 0.2);
+        border: 1.5px solid rgba(13, 71, 255, 0.35);
+        margin-bottom: var(--spacing-lg);
+        animation: pulse-ring 2.4s ease-in-out infinite;
+        box-shadow: var(--shadow-glow-blue);
+    }
+
+    @keyframes pulse-ring {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(13, 71, 255, 0.35); }
+        50%       { box-shadow: 0 0 0 14px rgba(13, 71, 255, 0); }
+    }
+
+    .icon-wrap svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* ── Code badge ── */
+    .code-badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--gold);
+        background: rgba(248, 198, 58, 0.15);
+        border: 1px solid rgba(248, 198, 58, 0.3);
+        border-radius: 6px;
+        padding: 3px 10px;
+        margin-bottom: var(--spacing-lg);
+        box-shadow: var(--shadow-glow-gold);
+    }
+
+    /* ── Heading ── */
+    h1 {
+        font-family: var(--font-heading);
+        font-size: 2.2rem;
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: var(--spacing-md);
+        background: linear-gradient(135deg, #ffffff 30%, rgba(255,255,255,0.55));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+
+    .subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        font-weight: 500;
+        line-height: 1.6;
+        margin-bottom: var(--spacing-xl);
+        font-family: var(--font-primary);
+    }
+
+    /* ── Divider ── */
+    .divider {
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    /* ── Actions ── */
+    .actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .btn {
+        display: block;
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border-radius: var(--border-radius);
+        font-family: var(--font-secondary);
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        transition: all var(--transition-normal);
+        border: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .btn-primary {
+        background: var(--primary-blue);
+        color: var(--text-white);
+        box-shadow: var(--shadow-glow-blue);
+    }
+
+    .btn-primary:hover {
+        background: #1a58ff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px var(--shadow-glow-blue);
+    }
+
+    .btn-ghost {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset;
+    }
+
+    .btn-ghost:hover {
+        color: var(--text-white);
+        border-color: rgba(255,255,255,0.22);
+        background: rgba(255,255,255,0.04);
+        transform: translateY(-2px);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset;
+    }
+
+    .btn:active {
+        transform: translateY(0);
+    }
+
+    /* ── Footer note ── */
+    .footer-note {
+        margin-top: var(--spacing-lg);
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        font-weight: 500;
+        font-family: var(--font-primary);
+    }
+
+    .footer-note a {
+        color: var(--gold);
+        text-decoration: none;
+        transition: all var(--transition-fast);
+    }
+
+    .footer-note a:hover {
+        color: #ffd76a;
+        text-decoration: underline;
+    }
+
+    /* ── Status badges ── */
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0 0.25rem;
+        transition: all var(--transition-fast);
+    }
+
+    .status-live {
+        background: rgba(255, 61, 77, 0.2);
+        color: var(--danger-red);
+        border: 1px solid rgba(255, 61, 77, 0.3);
+        box-shadow: var(--shadow-glow-red);
+    }
+
+    .status-goal {
+        background: rgba(0, 210, 106, 0.2);
+        color: var(--success-green);
+        border: 1px solid rgba(0, 210, 106, 0.3);
+        box-shadow: var(--shadow-glow-green);
+    }
+
+    .status-assist {
+        background: rgba(13, 71, 255, 0.2);
+        color: var(--primary-blue);
+        border: 1px solid rgba(13, 71, 255, 0.3);
+        box-shadow: var(--shadow-glow-blue);
+    }
+
+    .status-sub {
+        background: rgba(123, 44, 255, 0.2);
+        color: var(--secondary-purple);
+        border: 1px solid rgba(123, 44, 255, 0.3);
+        box-shadow: var(--shadow-glow-purple);
+    }
+
+    .status-warning {
+        background: rgba(248, 198, 58, 0.2);
+        color: var(--gold);
+        border: 1px solid rgba(248, 198, 58, 0.3);
+        box-shadow: var(--shadow-glow-gold);
+    }
+
+    .status-red {
+        background: rgba(255, 61, 77, 0.2);
+        color: var(--danger-red);
+        border: 1px solid rgba(255, 61, 77, 0.3);
+        box-shadow: var(--shadow-glow-red);
+    }
+
+    .status-success {
+        background: rgba(0, 210, 106, 0.2);
+        color: var(--success-green);
+        border: 1px solid rgba(0, 210, 106, 0.3);
+        box-shadow: var(--shadow-glow-green);
+    }
+
+    /* ── Stats cards ── */
+    .stats-card {
+        background: rgba(21, 28, 50, 0.5);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-md);
+        backdrop-filter: blur(12px);
+        box-shadow: 
+            0 0 0 1px rgba(255,255,255,0.04) inset,
+            0 4px 12px rgba(0,0,0,0.2);
+        transition: all var(--transition-normal);
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 
+            0 0 0 1px rgba(255,255,255,0.08) inset,
+            0 8px 20px rgba(0,0,0,0.3),
+            0 0 30px rgba(13, 71, 255, 0.3);
+    }
+
+    .stats-value {
+        font-family: var(--font-numeric);
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+        background: linear-gradient(135deg, #ffffff 30%, #a6b0c3);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .stats-label {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* ── Leaderboard styling ── */
+    .leaderboard {
+        width: 100%;
+        margin: var(--spacing-xl) 0;
+    }
+
+    .leaderboard-item {
+        display: flex;
+        align-items: center;
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--border-radius);
+        background: rgba(21, 28, 50, 0.3);
+        margin-bottom: var(--spacing-xs);
+        transition: all var(--transition-normal);
+        border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .leaderboard-item:hover {
+        background: rgba(21, 28, 50, 0.5);
+        transform: translateX(5px);
+        box-shadow: 0 0 15px rgba(13, 71, 255, 0.2);
+    }
+
+    .rank {
+        font-family: var(--font-numeric);
+        font-size: 1.5rem;
+        font-weight: 700;
+        width: 30px;
+        margin-right: var(--spacing-md);
+        text-align: center;
+    }
+
+    .rank-1 {
+        color: var(--gold);
+        text-shadow: 0 0 10px rgba(248, 198, 58, 0.5);
+    }
+
+    .rank-2 {
+        color: #c0c0c0;
+        text-shadow: 0 0 10px rgba(192, 192, 192, 0.3);
+    }
+
+    .rank-3 {
+        color: #cd7f32;
+        text-shadow: 0 0 10px rgba(205, 127, 50, 0.3);
+    }
+
+    .team-name {
+        flex: 1;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+
+    .points {
+        font-family: var(--font-numeric);
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--gold);
+    }
+
+    /* ── Responsive adjustments ── */
+    @media (max-width: 768px) {
+        .card {
+            padding: var(--spacing-xl) var(--spacing-md);
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+        }
+        
+        .stats-value {
+            font-size: 2rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .card {
+            padding: var(--spacing-lg) var(--spacing-sm);
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+        }
+        
+        .subtitle {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+                                                                                                                                                                                  
 </head>                                                                                                                                                                                       
 <body>                                                                                                                                                                                        
                                                                                                                                                                                               

@@ -4,49 +4,51 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Iniciar Sesión — EA FC Fantasy</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
-    /* ========== GLOBAL & VARIABLES (same aesthetic as squad builder) ========== */
+    /* ========== GLOBAL & VARIABLES ========== */
     :root {
-      --navy:        #0a1628;
-      --navy-mid:    #0f2040;
-      --navy-light:  #162a50;
-      --navy-card:   #1a3260;
-      --teal:        #00d4aa;
-      --teal-dark:   #00a88a;
-      --teal-glow:   rgba(0, 212, 170, 0.25);
-      --gold:        #f5c842;
-      --gold-dark:   #d4a800;
-      --blue-accent: #00a8e8;
-      --red-accent:  #ff5f6d;
-      --orange:      #ff9f43;
-      --text-white:  #ffffff;
-      --text-dim:    rgba(255,255,255,0.55);
-      --text-muted:  rgba(255,255,255,0.3);
-      --radius:      14px;
-      --radius-sm:   8px;
-      --shadow-card: 0 8px 32px rgba(0,0,0,0.45);
-      --font: 'Nunito', sans-serif;
+      --primary-blue: #0D47FF;
+      --secondary-purple: #7B2CFF;
+      --success-green: #00D26A;
+      --danger-red: #FF3D4D;
+      --gold: #F8C63A;
+      --background-dark: #0B1020;
+      --surface-dark: #151C32;
+      --text-white: #FFFFFF;
+      --text-muted: #A6B0C3;
+      --radius: 16px;
+      --radius-sm: 12px;
+      --shadow-card: 0 12px 40px rgba(13, 71, 255, 0.25);
+      --shadow-glow: 0 0 20px rgba(13, 71, 255, 0.5);
+      --font-primary: 'Inter', sans-serif;
+      --font-heading: 'Oswald', sans-serif;
+      --font-display: 'Rajdhani', sans-serif;
     }
     * { margin:0; padding:0; box-sizing: border-box; }
     body {
-      font-family: var(--font);
-      background: var(--navy);
+      font-family: var(--font-primary);
+      background: var(--background-dark);
       color: var(--text-white);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(13, 71, 255, 0.15) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(123, 44, 255, 0.15) 0%, transparent 20%),
+        linear-gradient(135deg, #0B1020 0%, #0B1020 100%);
     }
     /* ── NAVBAR ── */
     .navbar {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(10, 22, 40, 0.88);
-      backdrop-filter: blur(18px);
+      background: rgba(11, 16, 32, 0.88);
+      backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(255,255,255,0.07);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
     .nav-inner {
       max-width: 1180px;
@@ -63,14 +65,20 @@
       gap: 10px;
       text-decoration: none;
       font-weight: 900;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       color: var(--text-white);
       letter-spacing: -0.01em;
+      font-family: var(--font-display);
+      position: relative;
     }
-    .nav-brand span { font-size: 1.5rem; }
+    .nav-brand span { 
+      font-size: 1.8rem; 
+      animation: pulse 2s infinite;
+    }
     .nav-brand em {
       font-style: normal;
-      color: var(--teal);
+      color: var(--gold);
+      text-shadow: 0 0 10px rgba(248, 198, 58, 0.5);
     }
     .nav-links {
       display: flex;
@@ -78,17 +86,32 @@
       gap: 0.25rem;
     }
     .nav-links a {
-      color: var(--text-dim);
+      color: var(--text-muted);
       text-decoration: none;
-      font-weight: 700;
-      font-size: 0.88rem;
-      padding: 0.45rem 0.9rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.45rem 1.1rem;
       border-radius: var(--radius-sm);
-      transition: color 0.2s, background 0.2s;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
     .nav-links a:hover {
       color: var(--text-white);
-      background: rgba(255,255,255,0.06);
+      background: rgba(13, 71, 255, 0.2);
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--primary-blue);
+      transition: width 0.3s ease;
+    }
+    .nav-links a:hover::after {
+      width: 100%;
     }
     .nav-actions {
       display: flex;
@@ -99,36 +122,58 @@
       background: transparent;
       border: 1px solid rgba(255,255,255,0.18);
       color: var(--text-white);
-      padding: 0.45rem 1rem;
+      padding: 0.5rem 1.2rem;
       border-radius: var(--radius-sm);
-      font-family: var(--font);
-      font-weight: 700;
-      font-size: 0.88rem;
+      font-family: var(--font-primary);
+      font-weight: 600;
+      font-size: 0.9rem;
       cursor: pointer;
       text-decoration: none;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(13, 71, 255, 0.2);
     }
     .btn-ghost-sm:hover {
       border-color: rgba(255,255,255,0.35);
       background: rgba(255,255,255,0.05);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(13, 71, 255, 0.3);
     }
     .btn-teal-sm {
-      background: var(--teal);
-      color: var(--navy);
-      padding: 0.45rem 1.1rem;
+      background: var(--primary-blue);
+      color: var(--text-white);
+      padding: 0.5rem 1.3rem;
       border-radius: var(--radius-sm);
-      font-family: var(--font);
-      font-weight: 800;
-      font-size: 0.88rem;
+      font-family: var(--font-primary);
+      font-weight: 700;
+      font-size: 0.9rem;
       cursor: pointer;
       text-decoration: none;
       border: none;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(13, 71, 255, 0.4);
+      font-weight: 600;
     }
     .btn-teal-sm:hover {
-      background: var(--teal-dark);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px var(--teal-glow);
+      background: #1a58ff;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(13, 71, 255, 0.6);
+    }
+    .btn-teal-sm::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+    .btn-teal-sm:hover::before {
+      left: 100%;
     }
     @media (max-width: 680px) {
       .nav-links { display: none; }
@@ -137,115 +182,247 @@
     /* main container */
     .login-container {
       max-width: 500px;
-      margin: 3rem auto;
+      margin: 4rem auto;
       padding: 1.5rem;
+      position: relative;
+      z-index: 2;
     }
     .login-card {
-      background: var(--navy-mid);
+      background: rgba(21, 28, 50, 0.7);
       border-radius: var(--radius);
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 2rem;
+      border: 1px solid rgba(13, 71, 255, 0.3);
+      padding: 2.5rem;
       box-shadow: var(--shadow-card);
+      backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+      transform: translateZ(0);
+    }
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, var(--primary-blue), var(--secondary-purple), var(--gold), var(--primary-blue));
+      z-index: -1;
+      border-radius: var(--radius);
+      animation: borderAnimation 6s linear infinite;
+      background-size: 400% 400%;
     }
     .login-title {
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
+      position: relative;
     }
     .login-title h1 {
-      font-size: 1.8rem;
-      font-weight: 900;
-      background: linear-gradient(135deg, var(--teal), var(--blue-accent));
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold), var(--primary-blue));
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
+      text-shadow: 0 0 15px rgba(248, 198, 58, 0.3);
+      margin-bottom: 0.5rem;
     }
     .login-title p {
-      color: var(--text-dim);
-      font-weight: 600;
-      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 1rem;
       margin-top: 8px;
+      position: relative;
+    }
+    .login-title p::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-blue), var(--gold));
+      border-radius: 3px;
     }
     .form-group {
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.5rem;
+      position: relative;
     }
     .form-group label {
       display: block;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
       font-weight: 600;
-      color: var(--text-dim);
+      color: var(--text-white);
+      font-size: 1rem;
+      letter-spacing: 0.5px;
     }
     .form-input {
       width: 100%;
-      padding: 0.9rem 1rem;
-      background: rgba(0,0,0,0.2);
+      padding: 1rem 1.2rem;
+      background: rgba(0,0,0,0.3);
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: var(--radius-sm);
       color: var(--text-white);
-      font-family: var(--font);
+      font-family: var(--font-primary);
       font-size: 1rem;
-      transition: border-color 0.2s;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px rgba(13, 71, 255, 0.2);
+      position: relative;
+      z-index: 2;
     }
     .form-input:focus {
       outline: none;
-      border-color: var(--teal);
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 15px rgba(13, 71, 255, 0.5);
+      transform: translateY(-2px);
     }
     .btn {
       width: 100%;
-      padding: 0.9rem;
-      background: var(--teal);
-      color: var(--navy);
+      padding: 1.1rem;
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
+      color: var(--text-white);
       border: none;
       border-radius: var(--radius-sm);
-      font-family: var(--font);
+      font-family: var(--font-display);
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1.1rem;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(13, 71, 255, 0.4);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      transform: translateZ(0);
     }
     .btn:hover {
-      background: var(--teal-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px var(--teal-glow);
+      background: linear-gradient(135deg, #1a58ff, #8c44ff);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(13, 71, 255, 0.6);
     }
     .btn:active {
       transform: translateY(0);
     }
     .register-link {
       text-align: center;
-      margin-top: 1.5rem;
-      color: var(--text-dim);
-      font-weight: 600;
+      margin-top: 2rem;
+      color: var(--text-muted);
+      font-weight: 500;
     }
     .register-link a {
-      color: var(--teal);
+      color: var(--gold);
       text-decoration: none;
-      font-weight: 700;
+      font-weight: 600;
+      position: relative;
+      padding: 0 5px;
+    }
+    .register-link a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    .register-link a:hover::after {
+      transform: scaleX(1);
     }
     .register-link a:hover {
-      text-decoration: underline;
+      text-shadow: 0 0 10px rgba(248, 198, 58, 0.5);
     }
     .error-message {
-      color: var(--red-accent);
+      color: var(--danger-red);
       font-weight: 600;
-      margin-top: 0.5rem;
+      margin-top: 1rem;
       text-align: center;
+      animation: fadeIn 0.5s ease;
     }
     .success-message {
-      color: var(--teal);
+      color: var(--success-green);
       font-weight: 600;
-      margin-top: 0.5rem;
+      margin-top: 1rem;
       text-align: center;
+      animation: fadeIn 0.5s ease;
     }
 
+    /* Animations */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes borderAnimation {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
     /* mobile */
     @media (max-width: 680px) {
       .login-container {
         padding: 1rem;
-        margin: 1rem auto;
+        margin: 1.5rem auto;
       }
       .login-card {
-        padding: 1.5rem;
+        padding: 1.8rem;
       }
+      .login-title h1 {
+        font-size: 1.8rem;
+      }
+    }
+    
+    /* Decorative elements */
+    .decoration {
+      position: absolute;
+      z-index: 1;
+      opacity: 0.1;
+    }
+    
+    .decoration-1 {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--primary-blue), transparent 70%);
+      top: 10%;
+      left: 10%;
+      animation: float 15s infinite ease-in-out;
+    }
+    
+    .decoration-2 {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--secondary-purple), transparent 70%);
+      bottom: 15%;
+      right: 15%;
+      animation: float 18s infinite ease-in-out reverse;
+    }
+    
+    .decoration-3 {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--gold), transparent 70%);
+      top: 40%;
+      right: 20%;
+      animation: float 12s infinite ease-in-out;
+    }
+    
+    @keyframes float {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(20px, 20px) rotate(10deg); }
+      66% { transform: translate(-20px, 10px) rotate(-10deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
     }
   </style>
 </head>
@@ -261,7 +438,7 @@
         <a href="/schedule">Calendario</a>
       </div>
       <div class="nav-actions">
-        <a href="/login" class="btn-ghost-sm" style="border-color:rgba(0,212,170,0.4);color:var(--teal);">Iniciar Sesión</a>
+        <a href="/login" class="btn-ghost-sm" style="border-color:rgba(13,71,255,0.4);color:var(--primary-blue);">Iniciar Sesión</a>
         <a href="/register" class="btn-teal-sm">Registrarse</a>
       </div>
     </div>
@@ -309,6 +486,10 @@
         </div>
       </div>
     </div>
+    
+    <div class="decoration decoration-1"></div>
+    <div class="decoration decoration-2"></div>
+    <div class="decoration decoration-3"></div>
   </main>
 
   <script>

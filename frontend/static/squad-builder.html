@@ -19,652 +19,736 @@
         <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
         <script src="/js/auth.js"></script>
         <script src="/js/nav.js"></script>
-        <style>
-            /* ── Tab bar always visible ── */
-            @media (min-width: 1024px) {
-                .tab-bar {
-                    display: flex !important;
-                }
-            }
+    <style>
+        /* ── Design Tokens ── */
+        :root {
+            --primary-blue: #0D47FF;
+            --secondary-purple: #7B2CFF;
+            --success-green: #00D26A;
+            --danger-red: #FF3D4D;
+            --gold: #F8C63A;
+            --background: #0B1020;
+            --surface: #151C32;
+            --text: #FFFFFF;
+            --muted-text: #A6B0C3;
+            --font-primary: 'Inter', sans-serif;
+            --font-secondary: 'Rajdhani', sans-serif;
+            --font-numeric: 'Oswald', sans-serif;
+        }
 
-            /* ── HEADER mobile fix ── */
-            @media (max-width: 600px) {
-                .header-inner {
-                    flex-wrap: wrap;
-                    gap: 8px;
-                    padding: 10px 14px !important;
-                }
-                .header-logo {
-                    flex: 1 1 100%;
-                }
-                .header-right {
-                    flex: 1 1 100%;
-                    justify-content: space-between;
-                }
-                .countdown-timer {
-                    font-size: 0.75rem;
-                    padding: 5px 10px;
-                }
-                .budget-pill {
-                    padding: 5px 10px;
-                }
-                .budget-pill-value {
-                    font-size: 0.9rem;
-                }
-            }
+        /* ── Global Styles ── */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-            /* ── Pitch grid: FW top → GK bottom ── */
-            .pitch-grid {
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                height: 100%;
-            }
-            .zone-fw {
-                order: 1;
-            }
-            .zone-mf {
-                order: 2;
-            }
-            .zone-df {
-                order: 3;
-            }
-            .zone-gk {
-                order: 4;
-            }
-            .pitch-zone {
-                margin: 0;
-            }
+        body {
+            font-family: var(--font-primary);
+            background: var(--background);
+            color: var(--text);
+            font-size: 16px;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
 
-            /* ── TAB BADGE – centred above text, no offset ── */
-            .tab-badge {
-                position: static !important;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                min-width: 18px;
-                height: 18px;
-                padding: 0 5px;
-                margin-left: 5px;
-                border-radius: 50px;
-                font-size: 0.65rem;
-                font-weight: 800;
-                background: var(--teal, #00d4aa);
-                color: #0d1b2e;
-                vertical-align: middle;
+        /* ── Tab bar always visible ── */
+        @media (min-width: 1024px) {
+            .tab-bar {
+                display: flex !important;
+                background: rgba(21, 28, 50, 0.8);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 12px;
+                padding: 8px;
             }
+        }
 
-            /* ── Field wrapper – leaves room for bench below on mobile ── */
-            .field-wrapper {
-                position: relative;
-                width: 100%;
-                /* enough height for all 4 rows: FW MF DF GK */
-                height: 72vw;
-                min-height: 340px;
-                max-height: 480px;
-                overflow: hidden;
-                background: linear-gradient(180deg, #1a4a2c 0%, #2c8c4a 100%);
-            }
-            @media (min-width: 768px) {
-                .field-wrapper {
-                    height: 54vw;
-                    max-height: 560px;
-                }
-            }
-
-            /* ── Bench section – always below the field, never overlapping ── */
-            .bench-section {
-                position: relative; /* NOT absolute/fixed */
-                z-index: 2;
-                background: linear-gradient(
-                    180deg,
-                    rgba(10, 22, 40, 0.97) 0%,
-                    #101e32 100%
-                );
-                padding: 10px 14px 12px;
-                border-top: 1px solid rgba(255, 255, 255, 0.08);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            }
-
-            /* ── Points tab stat pills ── */
-            .stat-pill {
-                display: inline-flex;
-                align-items: center;
-                gap: 2px;
-                padding: 2px 7px;
-                border-radius: 20px;
-                font-size: 0.72rem;
-                font-weight: 700;
-                background: rgba(255, 255, 255, 0.07);
-                color: var(--text-color);
-            }
-            .stat-pill--green {
-                background: rgba(0, 200, 100, 0.15);
-                color: #00c864;
-            }
-            .stat-pill--blue {
-                background: rgba(80, 150, 255, 0.15);
-                color: #5096ff;
-            }
-            .stat-pill--teal {
-                background: rgba(0, 212, 170, 0.15);
-                color: var(--teal);
-            }
-            .stat-pill--yellow {
-                background: rgba(255, 200, 0, 0.15);
-                color: #ffc800;
-            }
-            .stat-pill--red {
-                background: rgba(255, 80, 80, 0.15);
-                color: #ff5050;
-            }
-
-            /* ── Swap highlight ── */
-            .jersey-card.swap-source {
-                outline: 3px solid #f5c842;
-                outline-offset: 2px;
-            }
-            .bench-card.swap-source {
-                outline: 3px solid #f5c842;
-                outline-offset: 2px;
-            }
-            .jersey-card.swap-target {
-                outline: 3px solid #00d4aa;
-                outline-offset: 2px;
-                cursor: pointer;
-            }
-            .bench-card.swap-target {
-                outline: 3px solid #00d4aa;
-                outline-offset: 2px;
-                cursor: pointer;
-            }
-            .jersey-slot.swap-eligible .jersey-card,
-            .bench-card.swap-eligible {
-                opacity: 0.5;
-            }
-
-            /* ── Team filter pills ── */
-            .filt-team-wrap {
-                display: flex;
-                gap: 6px;
-                overflow-x: auto;
-                padding-bottom: 2px;
-                align-items: center;
-            }
-            .filt-team-wrap::-webkit-scrollbar {
-                display: none;
-            }
-            .filt-pill.filt-team.active {
-                background: #c084fc;
-                border-color: #c084fc;
-                color: #0d1b2e;
-            }
-
-            /* ── Lock banner ── */
-            .lock-banner {
-                background: linear-gradient(
-                    90deg,
-                    rgba(255, 95, 109, 0.18),
-                    rgba(255, 95, 109, 0.08)
-                );
-                border-bottom: 1px solid rgba(255, 95, 109, 0.35);
-                padding: 10px 18px;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                font-weight: 700;
-                color: #ff9aa4;
-                font-size: 0.9rem;
-            }
-
-            /* ── Squad remove button ── */
-            .squad-remove {
-                flex-shrink: 0;
-                width: 28px;
-                height: 28px;
-                border-radius: 50%;
-                border: none;
-                background: rgba(255, 80, 80, 0.15);
-                color: #ff5555;
-                font-size: 1rem;
-                line-height: 1;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition:
-                    background 0.15s,
-                    transform 0.1s;
-                margin-left: 8px;
-                z-index: 10;
-                pointer-events: all;
-            }
-            .squad-remove:hover {
-                background: rgba(255, 80, 80, 0.4);
-                transform: scale(1.15);
-            }
-            .squad-remove:active {
-                transform: scale(0.92);
-            }
-
-            /* ── Pitch view toggle ── */
-            .pitch-view-toggle {
-                display: flex;
-                align-items: center;
-                gap: 0;
-                background: rgba(255,255,255,0.06);
-                border-radius: 10px;
-                padding: 3px;
-                margin: 10px 12px 8px;
-                border: 1px solid rgba(255,255,255,0.08);
-            }
-            .pv-btn {
-                flex: 1;
-                padding: 8px 10px;
-                border: none;
-                background: transparent;
-                color: rgba(255,255,255,0.5);
-                font-family: 'Nunito', sans-serif;
-                font-size: 0.78rem;
-                font-weight: 700;
-                border-radius: 7px;
-                cursor: pointer;
-                transition: all 0.18s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 5px;
-                white-space: nowrap;
-            }
-            .pv-btn.active {
-                background: rgba(0,212,170,0.18);
-                color: #00d4aa;
-                box-shadow: 0 1px 6px rgba(0,212,170,0.15);
-            }
-            .pv-btn:disabled {
-                opacity: 0.35;
-                cursor: not-allowed;
-            }
-            .pv-btn .pv-icon { font-size: 1rem; }
-
-            /* ══════════════════════════════════════════════
-               3D PITCH — SQUAD VIEW (Plantilla)
-            ══════════════════════════════════════════════ */
-
-            /* Outer scene – perspective origin */
-            .pitch3d-scene {
-                width: 100%;
-                min-height: calc(100vh - 180px);
-
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
-
-                padding: 1.5rem 0 1rem;
-
-                overflow: hidden;
-
-                background: linear-gradient(
-                    180deg,
-                    #1e3a5f 0%,
-                    #2c5a7a 100%
-                );
-
-                position: relative;
-            }
-
-            /* The tilted pitch surface */
-            .pitch3d-field {
-                position: relative;
-
-                width: min(96vw, 1100px);
-                height: min(60vh, 700px);
-
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-
-                margin: 0 auto;
-
-                transform: perspective(900px);
-                transform-origin: center 60%;
-                transform-style: preserve-3d;
-
-                border-radius: 18px 18px 6px 6px;
-                overflow: visible;
-
-                background:
-                    repeating-linear-gradient(
-                        180deg,
-                        rgba(0,0,0,0.03) 0px,
-                        rgba(0,0,0,0.03) 48px,
-                        transparent 48px,
-                        transparent 96px
-                    ),
-                    linear-gradient(180deg, #4dba6e 0%, #6ad48a 35%, #5bcb7c 65%, #4db86e 100%);
-
-                padding: 3rem 1rem 2rem;
-
-                box-shadow: 0 12px 28px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
-            }
-
-            /* White pitch lines via box-shadow on pseudo elements */
-            .pitch3d-field::before {
-                content:'';
-                position:absolute;
-                inset: 0;
-                border: 2px solid rgba(255,255,255,0.35);
-                border-radius: 8px 8px 3px 3px;
-                pointer-events: none;
-            }
-            .pitch3d-midline {
-                position: absolute;
-                left: 6%;
-                right: 6%;
-                height: 1.5px;
-                background: rgba(255,255,255,0.3);
-                top: 50%;
-                transform: translateY(-50%);
-                pointer-events: none;
-            }
-            .pitch3d-midcircle {
-                position: absolute;
-                left: 50%;
-                top: 50%;
-                width: 52px;
-                height: 52px;
-                border: 1.5px solid rgba(255,255,255,0.25);
-                border-radius: 50%;
-                transform: translate(-50%,-50%);
-                pointer-events: none;
-            }
-            /* Sponsor banner strip — two banners, configurable from backend */
-            .pitch3d-banners {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-
-                position: absolute;
-
-                left: 4%;
-                right: 4%;
-
-                top: 1rem;
-
-                height: 28px;
-
-                pointer-events: none;
-                z-index: 5;
-            }
-            .pitch3d-banner {
-                flex: 1;
-
-                margin: 0 6px;
-
-                height: 100%;
-
-                border-radius: 6px;
-
-                background: rgba(0,0,0,0.15);
-
-                border: 1px solid rgba(255,255,255,0.16);
-
-                backdrop-filter: blur(4px);
-
-                display: flex;
-                align-items: center;
-                justify-content: center;
-
-                overflow: hidden;
-            }
-            .pitch3d-banner img {
-                max-height: 14px;
-                max-width: 90%;
-                object-fit: contain;
-                opacity: 0.85;
-            }
-            .pitch3d-banner-text {
-                font-size: 0.55rem;
-                font-weight: 800;
-                letter-spacing: 0.12em;
-                color: rgba(255,255,255,0.4);
-                text-transform: uppercase;
-            }
-            /* Position row */
-            .pitch3d-row {
-                display: flex;
-                justify-content: center;
-                align-items: flex-end;
-                gap: clamp(8px, 1.4vw, 18px);
-
-                position: relative;
-                z-index: 2;
-
-                flex: 1;
-            }
-
-            /* Individual jersey slot on the 3D pitch */
-            .pitch3d-slot {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                cursor: pointer;
-                position: relative;
-                /* subtle depth per row done in JS via style */
-            }
-
-            .jersey3d {
-                position: relative;
-
-                width: clamp(42px, 5vw, 82px);
-
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-
-                gap: 2px;
-            }
-            .jersey3d-shape {
-                position: relative;
-                width: clamp(42px, 5vw, 82px);
-                height: clamp(38px, 4.5vw, 74px);
-                filter: drop-shadow(0 4px 6px rgba(0,0,0,0.55)) drop-shadow(0 1px 2px rgba(0,0,0,0.4));
-                transition: filter 0.15s, transform 0.15s;
-            }
-            .pitch3d-slot:hover .jersey3d-shape {
-                filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.5)) brightness(1.2);
-                transform: translateY(-2px) scale(1.06);
-            }
-            .jersey3d-svg {
-                width: 100%;
-                height: 100%;
-            }
-
-            .pitch3d-slot .jersey3d-empty svg path {
-                stroke: rgba(255,255,255,0.6);
-            }
-            /* Gloss overlay on the jersey */
-            .jersey3d-gloss {
-                position: absolute;
-
-                top: 4%;
-                left: 8%;
-
-                width: 84%;
-                height: 42%;
-
-                background:
-                    linear-gradient(
-                        160deg,
-                        rgba(255,255,255,0.22) 0%,
-                        rgba(255,255,255,0) 65%
-                    );
-
-                clip-path:
-                    polygon(
-                        12% 0%,
-                        88% 0%,
-                        100% 40%,
-                        75% 100%,
-                        25% 100%,
-                        0% 40%
-                    );
-
-                pointer-events: none;
-            }
-            /* Remove × badge */
-            .jersey3d-remove {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                background: rgba(220,50,50,0.9);
-                border: 1.5px solid #fff;
-                color: #fff;
-                font-size: 0.55rem;
-                font-weight: 900;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                z-index: 10;
-                opacity: 0;
-                transition: opacity 0.15s;
-                line-height: 1;
-            }
-            .pitch3d-slot:hover .jersey3d-remove { opacity: 1; }
-            .jersey3d-wildcard {
-                position: absolute;
-                top: -5px;
-                left: -5px;
-                font-size: 0.7rem;
-                color: gold;
-                text-shadow: 0 1px 3px rgba(0,0,0,0.7);
-            }
-            /* Name plate */
-            .jersey3d-nameplate {
-                background: rgba(5,20,35,0.88);
-                border-radius: 3px;
-                padding: 2px 4px;
-                text-align: center;
-                min-width: 44px;
-                max-width: 56px;
-            }
-            .jersey3d-name {
-                font-size: 0.6rem;
-                font-weight: 800;
-                color: #e8f0f8;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 54px;
-                display: block;
-                letter-spacing: 0.02em;
-            }
-            .jersey3d-pos {
-                font-size: 0.5rem;
-                font-weight: 700;
-                opacity: 0.55;
-                letter-spacing: 0.05em;
-                color: #e8f0f8;
-            }
-            /* Empty slot on 3D pitch */
-            .jersey3d-empty {
-                width: 44px;
-                height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-            }
-            .jersey3d-empty svg {
-                width: 44px;
-                height: 40px;
-                opacity: 0.35;
-                transition: opacity 0.15s;
-            }
-            .pitch3d-slot:hover .jersey3d-empty svg { opacity: 0.65; }
-            .jersey3d-empty-label {
-                font-size: 0.55rem;
-                color: rgba(255,255,255,0.3);
-                text-align: center;
-                margin-top: 2px;
-                font-weight: 700;
-            }
-
-            /* Swap highlights for 3D pitch */
-            .pitch3d-slot.swap-src .jersey3d-shape { outline: 2px solid #f5c842; outline-offset: 2px; border-radius: 3px; }
-            .pitch3d-slot.swap-tgt .jersey3d-shape { outline: 2px solid #00d4aa; outline-offset: 2px; border-radius: 3px; }
-
-            /* Bench row below the tilted field */
-            .pitch3d-bench {
-                display: flex;
-                justify-content: center;
+        /* ── HEADER mobile fix ── */
+        @media (max-width: 600px) {
+            .header-inner {
+                flex-wrap: wrap;
                 gap: 8px;
-                padding: 10px 12px 4px;
-                background: linear-gradient(180deg,rgba(8,18,30,0.95),#0a1220);
-                border-top: 1px solid rgba(255,255,255,0.06);
+                padding: 10px 14px !important;
+                background: rgba(21, 28, 50, 0.8);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 12px;
             }
-            .pitch3d-bench-label {
-                font-size: 0.6rem;
-                font-weight: 800;
-                letter-spacing: 0.1em;
-                color: rgba(255,255,255,0.3);
-                text-transform: uppercase;
-                text-align: center;
-                padding: 4px 0 0;
-                margin-bottom: 4px;
+            .header-logo {
+                flex: 1 1 100%;
+            }
+            .header-right {
+                flex: 1 1 100%;
+                justify-content: space-between;
+            }
+            .countdown-timer {
+                font-size: 0.75rem;
+                padding: 5px 10px;
+                background: rgba(13, 27, 46, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 8px;
+            }
+            .budget-pill {
+                padding: 5px 10px;
+                background: rgba(13, 27, 46, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 8px;
+            }
+            .budget-pill-value {
+                font-size: 0.9rem;
+                font-weight: 700;
+            }
+        }
+
+        /* ── Pitch grid: FW top → GK bottom ── */
+        .pitch-grid {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            background: rgba(21, 28, 50, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .zone-fw {
+            order: 1;
+        }
+        .zone-mf {
+            order: 2;
+        }
+        .zone-df {
+            order: 3;
+        }
+        .zone-gk {
+            order: 4;
+        }
+        .pitch-zone {
+            margin: 0;
+        }
+
+        /* ── TAB BADGE – centred above text, no offset ── */
+        .tab-badge {
+            position: static !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            margin-left: 5px;
+            border-radius: 50px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            background: var(--primary-blue);
+            color: #0d1b2e;
+            vertical-align: middle;
+            box-shadow: 0 0 8px rgba(13, 71, 255, 0.5);
+        }
+
+        /* ── Field wrapper – leaves room for bench below on mobile ── */
+        .field-wrapper {
+            position: relative;
+            width: 100%;
+            height: 72vw;
+            min-height: 340px;
+            max-height: 480px;
+            overflow: hidden;
+            background: linear-gradient(180deg, #1a4a2c 0%, #2c8c4a 100%);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        @media (min-width: 768px) {
+            .field-wrapper {
+                height: 54vw;
+                max-height: 560px;
+            }
+        }
+
+        /* ── Bench section – always below the field, never overlapping ── */
+        .bench-section {
+            position: relative; /* NOT absolute/fixed */
+            z-index: 2;
+            background: linear-gradient(
+                180deg,
+                rgba(10, 22, 40, 0.97) 0%,
+                #101e32 100%
+            );
+            padding: 10px 14px 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            margin-top: 12px;
+        }
+
+        /* ── Points tab stat pills ── */
+        .stat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 2px 7px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.07);
+            color: var(--text);
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
+        }
+        .stat-pill--green {
+            background: rgba(0, 200, 100, 0.15);
+            color: var(--success-green);
+            box-shadow: 0 0 6px rgba(0, 200, 100, 0.3);
+        }
+        .stat-pill--blue {
+            background: rgba(80, 150, 255, 0.15);
+            color: var(--primary-blue);
+            box-shadow: 0 0 6px rgba(80, 150, 255, 0.3);
+        }
+        .stat-pill--teal {
+            background: rgba(0, 212, 170, 0.15);
+            color: var(--success-green);
+            box-shadow: 0 0 6px rgba(0, 212, 170, 0.3);
+        }
+        .stat-pill--yellow {
+            background: rgba(255, 200, 0, 0.15);
+            color: var(--gold);
+            box-shadow: 0 0 6px rgba(255, 200, 0, 0.3);
+        }
+        .stat-pill--red {
+            background: rgba(255, 80, 80, 0.15);
+            color: var(--danger-red);
+            box-shadow: 0 0 6px rgba(255, 80, 80, 0.3);
+        }
+
+        /* ── Swap highlight ── */
+        .jersey-card.swap-source {
+            outline: 3px solid var(--gold);
+            outline-offset: 2px;
+            box-shadow: 0 0 12px rgba(248, 198, 58, 0.5);
+        }
+        .bench-card.swap-source {
+            outline: 3px solid var(--gold);
+            outline-offset: 2px;
+            box-shadow: 0 0 12px rgba(248, 198, 58, 0.5);
+        }
+        .jersey-card.swap-target {
+            outline: 3px solid var(--success-green);
+            outline-offset: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(0, 212, 106, 0.5);
+        }
+        .bench-card.swap-target {
+            outline: 3px solid var(--success-green);
+            outline-offset: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(0, 212, 106, 0.5);
+        }
+        .jersey-slot.swap-eligible .jersey-card,
+        .bench-card.swap-eligible {
+            opacity: 0.5;
+        }
+
+        /* ── Team filter pills ── */
+        .filt-team-wrap {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+            align-items: center;
+            background: rgba(21, 28, 50, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 8px;
+        }
+        .filt-team-wrap::-webkit-scrollbar {
+            display: none;
+        }
+        .filt-pill.filt-team.active {
+            background: var(--secondary-purple);
+            border-color: var(--secondary-purple);
+            color: #0d1b2e;
+            box-shadow: 0 0 10px rgba(123, 44, 255, 0.5);
+        }
+
+        /* ── Lock banner ── */
+        .lock-banner {
+            background: linear-gradient(
+                90deg,
+                rgba(255, 95, 109, 0.18),
+                rgba(255, 95, 109, 0.08)
+            );
+            border-bottom: 1px solid rgba(255, 95, 109, 0.35);
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #ff9aa4;
+            font-size: 0.9rem;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(255, 95, 109, 0.3);
+        }
+
+        /* ── Squad remove button ── */
+        .squad-remove {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 80, 80, 0.15);
+            color: var(--danger-red);
+            font-size: 1rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition:
+                background 0.15s,
+                transform 0.1s;
+            margin-left: 8px;
+            z-index: 10;
+            pointer-events: all;
+            box-shadow: 0 0 8px rgba(255, 80, 80, 0.3);
+        }
+        .squad-remove:hover {
+            background: rgba(255, 80, 80, 0.4);
+            transform: scale(1.15);
+        }
+        .squad-remove:active {
+            transform: scale(0.92);
+        }
+
+        /* ── Pitch view toggle ── */
+        .pitch-view-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 3px;
+            margin: 10px 12px 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .pv-btn {
+            flex: 1;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            font-family: var(--font-primary);
+            font-size: 0.78rem;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.18s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            white-space: nowrap;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+        }
+        .pv-btn.active {
+            background: rgba(13, 71, 255, 0.18);
+            color: var(--primary-blue);
+            box-shadow: 0 1px 6px rgba(13, 71, 255, 0.3);
+        }
+        .pv-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .pv-btn .pv-icon { font-size: 1rem; }
+
+        /* ══════════════════════════════════════════════
+        3D PITCH — SQUAD VIEW (Plantilla)
+        ══════════════════════════════════════════════ */
+
+        /* Outer scene – perspective origin */
+        .pitch3d-scene {
+            width: 100%;
+            min-height: calc(100vh - 180px);
+
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+
+            padding: 1.5rem 0 1rem;
+
+            overflow: hidden;
+
+            background: linear-gradient(
+                180deg,
+                #1e3a5f 0%,
+                #2c5a7a 100%
+            );
+
+            position: relative;
+        }
+
+        /* The tilted pitch surface */
+        .pitch3d-field {
+            position: relative;
+
+            width: min(96vw, 1100px);
+            height: min(60vh, 700px);
+
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            margin: 0 auto;
+
+            transform: perspective(900px);
+            transform-origin: center 60%;
+            transform-style: preserve-3d;
+
+            border-radius: 18px 18px 6px 6px;
+            overflow: visible;
+
+            background:
+                repeating-linear-gradient(
+                    180deg,
+                    rgba(0,0,0,0.03) 0px,
+                    rgba(0,0,0,0.03) 48px,
+                    transparent 48px,
+                    transparent 96px
+                ),
+                linear-gradient(180deg, #4dba6e 0%, #6ad48a 35%, #5bcb7c 65%, #4db86e 100%);
+
+            padding: 3rem 1rem 2rem;
+
+            box-shadow: 0 12px 28px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        /* White pitch lines via box-shadow on pseudo elements */
+        .pitch3d-field::before {
+            content:'';
+            position:absolute;
+            inset: 0;
+            border: 2px solid rgba(255,255,255,0.35);
+            border-radius: 8px 8px 3px 3px;
+            pointer-events: none;
+        }
+        .pitch3d-midline {
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            height: 1.5px;
+            background: rgba(255,255,255,0.3);
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        .pitch3d-midcircle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 52px;
+            height: 52px;
+            border: 1.5px solid rgba(255,255,255,0.25);
+            border-radius: 50%;
+            transform: translate(-50%,-50%);
+            pointer-events: none;
+        }
+        /* Sponsor banner strip — two banners, configurable from backend */
+        .pitch3d-banners {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            position: absolute;
+
+            left: 4%;
+            right: 4%;
+
+            top: 1rem;
+
+            height: 28px;
+
+            pointer-events: none;
+            z-index: 5;
+        }
+        .pitch3d-banner {
+            flex: 1;
+
+            margin: 0 6px;
+
+            height: 100%;
+
+            border-radius: 6px;
+
+            background: rgba(0,0,0,0.15);
+
+            border: 1px solid rgba(255,255,255,0.16);
+
+            backdrop-filter: blur(4px);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            overflow: hidden;
+        }
+        .pitch3d-banner img {
+            max-height: 14px;
+            max-width: 90%;
+            object-fit: contain;
+            opacity: 0.85;
+        }
+        .pitch3d-banner-text {
+            font-size: 0.55rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+        }
+        /* Position row */
+        .pitch3d-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: clamp(8px, 1.4vw, 18px);
+
+            position: relative;
+            z-index: 2;
+
+            flex: 1;
+        }
+
+        /* Individual jersey slot on the 3D pitch */
+        .pitch3d-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            /* subtle depth per row done in JS via style */
+        }
+
+        .jersey3d {
+            position: relative;
+
+            width: clamp(42px, 5vw, 82px);
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            gap: 2px;
+        }
+        .jersey3d-shape {
+            position: relative;
+            width: clamp(42px, 5vw, 82px);
+            height: clamp(38px, 4.5vw, 74px);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.55)) drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+            transition: filter 0.15s, transform 0.15s;
+        }
+        .pitch3d-slot:hover .jersey3d-shape {
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.5)) brightness(1.2);
+            transform: translateY(-2px) scale(1.06);
+        }
+        .jersey3d-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .pitch3d-slot .jersey3d-empty svg path {
+            stroke: rgba(255,255,255,0.6);
+        }
+        /* Gloss overlay on the jersey */
+        .jersey3d-gloss {
+            position: absolute;
+
+            top: 4%;
+            left: 8%;
+
+            width: 84%;
+            height: 42%;
+
+            background:
+                linear-gradient(
+                    160deg,
+                    rgba(255,255,255,0.22) 0%,
+                    rgba(255,255,255,0) 65%
+                );
+
+            clip-path:
+                polygon(
+                    12% 0%,
+                    88% 0%,
+                    100% 40%,
+                    75% 100%,
+                    25% 100%,
+                    0% 40%
+                );
+
+            pointer-events: none;
+        }
+        /* Remove × badge */
+        .jersey3d-remove {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(220,50,50,0.9);
+            border: 1.5px solid #fff;
+            color: #fff;
+            font-size: 0.55rem;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.15s;
+            line-height: 1;
+            box-shadow: 0 0 6px rgba(220, 50, 50, 0.5);
+        }
+        .pitch3d-slot:hover .jersey3d-remove { opacity: 1; }
+        .jersey3d-wildcard {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            font-size: 0.7rem;
+            color: var(--gold);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+        }
+        /* Name plate */
+        .jersey3d-nameplate {
+            background: rgba(5,20,35,0.88);
+            border-radius: 3px;
+            padding: 2px 4px;
+            text-align: center;
+            min-width: 44px;
+            max-width: 56px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+        }
+        .jersey3d-name {
+            font-size: 0.6rem;
+            font-weight: 800;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 54px;
+            display: block;
+            letter-spacing: 0.02em;
+        }
+        .jersey3d-pos {
+            font-size: 0.5rem;
+            font-weight: 700;
+            opacity: 0.55;
+            letter-spacing: 0.05em;
+            color: var(--text);
+        }
+        /* Empty slot on 3D pitch */
+        .jersey3d-empty {
+            width: 44px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .jersey3d-empty svg {
+            width: 44px;
+            height: 40px;
+            opacity: 0.35;
+            transition: opacity 0.15s;
+        }
+        .pitch3d-slot:hover .jersey3d-empty svg { opacity: 0.65; }
+        .jersey3d-empty-label {
+            font-size: 0.55rem;
+            color: rgba(255,255,255,0.3);
+            text-align: center;
+            margin-top: 2px;
+            font-weight: 700;
+        }
+
+        /* Swap highlights for 3D pitch */
+        .pitch3d-slot.swap-src .jersey3d-shape { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 3px; box-shadow: 0 0 10px rgba(248, 198, 58, 0.5); }
+        .pitch3d-slot.swap-tgt .jersey3d-shape { outline: 2px solid var(--success-green); outline-offset: 2px; border-radius: 3px; box-shadow: 0 0 10px rgba(0, 212, 106, 0.5); }
+
+        /* Bench row below the tilted field */
+        .pitch3d-bench {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 12px 4px;
+            background: linear-gradient(180deg,rgba(8,18,30,0.95),#0a1220);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            margin-top: 12px;
+        }
+        .pitch3d-bench-label {
+            font-size: 0.6rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+            text-align: center;
+            padding: 4px 0 0;
+            margin-bottom: 4px;
+        }
+
+        /* Wildcard/swap hints */
+        .pitch3d-hint {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.45);
+            text-align: center;
+            padding: 4px 12px;
+            min-height: 20px;
+        }
+        .pitch3d-hint.swap-active { color: var(--gold); }
+        .pitch3d-hint.wc-hint { color: rgba(0,212,170,0.7); }
+
+        .formation-locked-hint {
+            margin: 0 12px 12px;
+            padding: 10px 14px;
+            background: rgba(255,200,0,0.07);
+            border: 1px solid rgba(255,200,0,0.2);
+            border-radius: 10px;
+            font-size: 0.76rem;
+            color: rgba(255,200,80,0.75);
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 0 10px rgba(255, 200, 0, 0.2);
+        }
+
+        @media (max-width: 768px) {
+
+            .pitch3d-field {
+                width: 98vw;
+                height: 58vh;
+
+                transform: perspective(700px);
+
+                padding: 3.5rem 0.7rem 1.5rem;
             }
 
-            /* Wildcard/swap hints */
-            .pitch3d-hint {
-                font-size: 0.7rem;
-                color: rgba(255,255,255,0.45);
-                text-align: center;
-                padding: 4px 12px;
-                min-height: 20px;
-            }
-            .pitch3d-hint.swap-active { color: #f5c842; }
-            .pitch3d-hint.wc-hint { color: rgba(0,212,170,0.7); }
-
-            .formation-locked-hint {
-                margin: 0 12px 12px;
-                padding: 10px 14px;
-                background: rgba(255,200,0,0.07);
-                border: 1px solid rgba(255,200,0,0.2);
-                border-radius: 10px;
-                font-size: 0.76rem;
-                color: rgba(255,200,80,0.75);
-                text-align: center;
-                font-weight: 600;
+            .pitch3d-banner {
+                margin: 0 3px;
             }
 
-            @media (max-width: 768px) {
-
-                .pitch3d-field {
-                    width: 98vw;
-                    height: 58vh;
-
-                    transform: perspective(700px);
-
-                    padding: 3.5rem 0.7rem 1.5rem;
-                }
-
-                .pitch3d-banner {
-                    margin: 0 3px;
-                }
-
-                .pitch3d-banner-text {
-                    font-size: 0.48rem;
-                }
-
-                .pitch3d-row {
-                    gap: 6px;
-                }
+            .pitch3d-banner-text {
+                font-size: 0.48rem;
             }
-        </style>
+
+            .pitch3d-row {
+                gap: 6px;
+            }
+        }
+    </style>
+
     </head>
     <body>
         <!-- ── NAVIGATION ── -->

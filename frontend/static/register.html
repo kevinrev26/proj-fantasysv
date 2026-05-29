@@ -5,68 +5,472 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Registro — Fantasy SV</title>
   <link rel="stylesheet" href="style.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Archivo:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Rajdhani', 'Archivo', sans-serif;
+      background: linear-gradient(135deg, #0B1020 0%, #151C32 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Background elements */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(13, 71, 255, 0.15) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(123, 44, 255, 0.15) 0%, transparent 20%),
+        radial-gradient(circle at 50% 50%, rgba(0, 210, 106, 0.1) 0%, transparent 30%);
+      z-index: -1;
+    }
+
     .auth-page {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #0d1117 0%, #161b22 60%, #1a2233 100%);
       padding: 24px 16px;
+      width: 100%;
     }
+
     .auth-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(21, 28, 50, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 20px;
       padding: 40px 36px;
       width: 100%;
       max-width: 420px;
       backdrop-filter: blur(12px);
+      box-shadow: 
+        0 0 30px rgba(13, 71, 255, 0.2),
+        0 0 60px rgba(123, 44, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
     }
+
+    .auth-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(13, 71, 255, 0.1) 0%, rgba(123, 44, 255, 0.1) 100%);
+      z-index: -1;
+      border-radius: 20px;
+    }
+
     .auth-logo {
       text-align: center;
       margin-bottom: 32px;
+      position: relative;
     }
-    .auth-logo .logo-icon { font-size: 2.8rem; display: block; margin-bottom: 8px; }
-    .auth-logo h1 { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 4px; }
-    .auth-logo p { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin: 0; }
-    .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+
+    .auth-logo .logo-icon { 
+      font-size: 3.5rem; 
+      display: block; 
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #0D47FF, #7B2CFF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 15px rgba(13, 71, 255, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { text-shadow: 0 0 15px rgba(13, 71, 255, 0.5); }
+      50% { text-shadow: 0 0 25px rgba(13, 71, 255, 0.8), 0 0 35px rgba(123, 44, 255, 0.6); }
+      100% { text-shadow: 0 0 15px rgba(13, 71, 255, 0.5); }
+    }
+
+    .auth-logo h1 { 
+      font-family: 'Oswald', 'Inter', sans-serif;
+      font-size: 2.2rem; 
+      font-weight: 700; 
+      color: #fff; 
+      margin: 0 0 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #0D47FF, #00D26A);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
+    }
+
+    .auth-logo p { 
+      color: #A6B0C3; 
+      font-size: 1rem; 
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .form-group { 
+      margin-bottom: 24px; 
+    }
+
+    .form-group label { 
+      display: block; 
+      font-size: 0.9rem; 
+      font-weight: 600; 
+      color: #A6B0C3; 
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      margin-bottom: 8px;
+      font-family: 'Rajdhani', sans-serif;
+    }
+
     .form-group input {
-      width: 100%; padding: 12px 16px; border-radius: 10px;
-      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
-      color: #fff; font-family: inherit; font-size: 1rem; outline: none;
-      transition: border-color 0.2s, background 0.2s; box-sizing: border-box;
+      width: 100%; 
+      padding: 14px 16px; 
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.07); 
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff; 
+      font-family: 'Inter', sans-serif; 
+      font-size: 1rem; 
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-sizing: border-box;
+      box-shadow: 0 0 0 1px rgba(13, 71, 255, 0);
     }
-    .form-group input:focus { border-color: #00d4aa; background: rgba(0,212,170,0.07); }
-    .form-group input.error { border-color: #ff5f6d; }
-    .field-error { color: #ff5f6d; font-size: 0.8rem; margin-top: 6px; }
+
+    .form-group input:focus { 
+      border-color: #0D47FF; 
+      background: rgba(13, 71, 255, 0.1); 
+      box-shadow: 0 0 0 1px #0D47FF, 0 0 20px rgba(13, 71, 255, 0.3);
+    }
+
+    .form-group input.error { 
+      border-color: #FF3D4D; 
+      box-shadow: 0 0 0 1px #FF3D4D, 0 0 15px rgba(255, 61, 77, 0.3);
+    }
+
+    .field-error { 
+      color: #FF3D4D; 
+      font-size: 0.85rem; 
+      margin-top: 6px; 
+      font-family: 'Inter', sans-serif;
+    }
+
     .submit-btn {
-      width: 100%; padding: 14px; border-radius: 12px; border: none; cursor: pointer;
-      background: linear-gradient(135deg, #00d4aa, #00a8e8);
-      color: #fff; font-family: inherit; font-size: 1.05rem; font-weight: 800;
-      letter-spacing: 0.02em; transition: opacity 0.2s, transform 0.1s;
+      width: 100%; 
+      padding: 16px; 
+      border-radius: 12px; 
+      border: none; 
+      cursor: pointer;
+      background: linear-gradient(135deg, #0D47FF, #7B2CFF);
+      color: #fff; 
+      font-family: 'Inter', 'Rajdhani', sans-serif;
+      font-size: 1.1rem; 
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 
+        0 0 20px rgba(13, 71, 255, 0.4),
+        0 0 30px rgba(123, 44, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+      margin-top: 10px;
     }
-    .submit-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .auth-footer { text-align: center; margin-top: 24px; color: rgba(255,255,255,0.4); font-size: 0.88rem; }
-    .auth-footer a { color: #00d4aa; text-decoration: none; font-weight: 700; }
-    .alert { padding: 14px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
-    .alert-error { background: rgba(255,95,109,0.15); border: 1px solid rgba(255,95,109,0.4); color: #ff9aa4; }
-    .alert-success { background: rgba(0,212,170,0.15); border: 1px solid rgba(0,212,170,0.4); color: #00d4aa; }
-    .step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 28px; }
+
+    .submit-btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 0 25px rgba(13, 71, 255, 0.6),
+        0 0 40px rgba(123, 44, 255, 0.4);
+    }
+
+    .submit-btn:hover:not(:disabled)::before {
+      left: 100%;
+    }
+
+    .submit-btn:disabled { 
+      opacity: 0.5; 
+      cursor: not-allowed; 
+      transform: none;
+      box-shadow: 0 0 15px rgba(13, 71, 255, 0.2);
+    }
+
+    .auth-footer { 
+      text-align: center; 
+      margin-top: 28px; 
+      color: #A6B0C3; 
+      font-size: 0.9rem; 
+      font-weight: 400;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .auth-footer a { 
+      color: #00D26A; 
+      text-decoration: none; 
+      font-weight: 600; 
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .auth-footer a::after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1px;
+      background: #00D26A;
+      transition: width 0.3s;
+    }
+
+    .auth-footer a:hover::after {
+      width: 100%;
+    }
+
+    .alert { 
+      padding: 16px 20px; 
+      border-radius: 12px; 
+      margin-bottom: 24px; 
+      font-size: 0.95rem; 
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert-error { 
+      background: rgba(255, 61, 77, 0.15); 
+      border: 1px solid rgba(255, 61, 77, 0.4); 
+      color: #FF9AA4; 
+    }
+
+    .alert-success { 
+      background: rgba(0, 210, 106, 0.15); 
+      border: 1px solid rgba(0, 210, 106, 0.4); 
+      color: #00D26A; 
+    }
+
+    .step-indicator { 
+      display: flex; 
+      gap: 10px; 
+      justify-content: center; 
+      margin-bottom: 32px; 
+    }
+
     .step-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: rgba(255,255,255,0.2); transition: background 0.3s;
+      width: 12px; 
+      height: 12px; 
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2); 
+      transition: all 0.3s ease;
+      position: relative;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
     }
-    .step-dot.active { background: #00d4aa; }
-    .step-dot.done { background: rgba(0,212,170,0.5); }
+
+    .step-dot.active { 
+      background: #0D47FF; 
+      box-shadow: 0 0 10px rgba(13, 71, 255, 0.6);
+      transform: scale(1.2);
+    }
+
+    .step-dot.done { 
+      background: rgba(0, 210, 106, 0.5); 
+      box-shadow: 0 0 10px rgba(0, 210, 106, 0.4);
+    }
+
+    .step-dot.active::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.8);
+      animation: pulseDot 1.5s infinite;
+    }
+
+    @keyframes pulseDot {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+      50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.4; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    }
+
+    /* Post-registration state */
+    .post-registration {
+      text-align: center;
+      padding: 20px;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .post-registration .emoji {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    .post-registration h2 {
+      font-family: 'Oswald', 'Inter', sans-serif;
+      font-size: 1.8rem;
+      color: #fff;
+      margin: 0 0 15px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .post-registration h2::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(135deg, #0D47FF, #00D26A);
+      border-radius: 3px;
+    }
+
+    .post-registration p {
+      color: #A6B0C3;
+      line-height: 1.6;
+      margin: 0 0 25px;
+      font-size: 1.05rem;
+      font-weight: 400;
+    }
+
+    .post-registration strong {
+      color: #00D26A;
+      font-weight: 600;
+    }
+
+    .post-registration .info-note {
+      background: rgba(13, 71, 255, 0.1);
+      border: 1px solid rgba(13, 71, 255, 0.2);
+      border-radius: 12px;
+      padding: 15px 20px;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #A6B0C3;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .post-registration .info-note svg {
+      width: 20px;
+      height: 20px;
+      color: #0D47FF;
+    }
+
+    .activation-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 14px 28px;
+      background: rgba(0, 210, 106, 0.15);
+      border: 1px solid rgba(0, 210, 106, 0.4);
+      border-radius: 12px;
+      color: #00D26A;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s;
+      font-family: 'Inter', sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .activation-link::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: 0.5s;
+    }
+
+    .activation-link:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 210, 106, 0.3);
+    }
+
+    .activation-link:hover::before {
+      left: 100%;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 30px 20px;
+      }
+      
+      .auth-logo h1 {
+        font-size: 1.8rem;
+      }
+      
+      .auth-logo .logo-icon {
+        font-size: 2.5rem;
+      }
+      
+      .step-indicator {
+        margin-bottom: 24px;
+      }
+      
+      .step-dot {
+        width: 10px;
+        height: 10px;
+      }
+    }
   </style>
 </head>
-<body style="margin:0;font-family:'Nunito',sans-serif;">
+<body>
 
 <div class="auth-page">
   <div class="auth-card">
@@ -121,17 +525,17 @@
 
     <!-- Post-registration state: waiting for activation -->
     <template x-if="registered">
-      <div style="text-align:center;">
-        <div style="font-size:3rem;margin-bottom:16px;">📬</div>
-        <h2 style="color:#fff;margin:0 0 12px;">¡Revisa tu correo!</h2>
-        <p style="color:rgba(255,255,255,0.55);line-height:1.6;margin:0 0 20px;">
-          Hemos enviado un enlace de activación a <strong style="color:#00d4aa;" x-text="form.email"></strong>.
-          Haz clic en el enlace del correo para activar tu cuenta y continuar.
-        </p>
-        <p style="color:rgba(255,255,255,0.35);font-size:0.82rem;">
-          💡 Para desarrollo: revisa los registros del servidor backend para el token/URL de activación.
-        </p>
-        <a href="/activate" style="display:inline-block;margin-top:16px;padding:12px 28px;background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.4);border-radius:10px;color:#00d4aa;font-weight:700;text-decoration:none;">
+      <div class="post-registration">
+        <div class="emoji">📬</div>
+        <h2>¡Revisa tu correo!</h2>
+        <p>Hemos enviado un enlace de activación a <strong x-text="form.email"></strong>. Haz clic en el enlace del correo para activar tu cuenta y continuar.</p>
+        <div class="info-note">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>💡 Para desarrollo: revisa los registros del servidor backend para el token/URL de activación.</span>
+        </div>
+        <a href="/activate" class="activation-link">
           Tengo mi código de activación →
         </a>
       </div>
