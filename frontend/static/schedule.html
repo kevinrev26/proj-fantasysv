@@ -574,6 +574,21 @@
         transform .18s ease,
         box-shadow .18s ease;
       position: relative;
+      background: rgba(255,255,255,.04);
+      overflow: hidden;
+    }
+
+    .crest-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 4px;
+      display: block;
+    }
+
+    .crest-fallback {
+      font-size: 1.6rem;
+      line-height: 1;
     }
 
     .team-name {
@@ -1017,13 +1032,14 @@
               <!-- Home -->
               <div class="team-block">
 
-                <div
-                  class="team-badge"
-                  :class="badgeClass(f.home_name || f.home_team_id)"
-                >
-                  <span
-                    x-text="initials(f.home_name || '?')"
-                  ></span>
+                <div class="team-badge">
+                  <img
+                    :src="teamCrest(f.home_name)"
+                    :alt="f.home_name || 'Equipo local'"
+                    class="crest-img"
+                    @error="onCrestError($event, f.home_name)"
+                  />
+                  <span class="crest-fallback" style="display:none;"></span>
                 </div>
 
                 <div
@@ -1066,13 +1082,14 @@
               <!-- Away -->
               <div class="team-block">
 
-                <div
-                  class="team-badge"
-                  :class="badgeClass(f.away_name || f.away_team_id)"
-                >
-                  <span
-                    x-text="initials(f.away_name || '?')"
-                  ></span>
+                <div class="team-badge">
+                  <img
+                    :src="teamCrest(f.away_name)"
+                    :alt="f.away_name || 'Equipo visitante'"
+                    class="crest-img"
+                    @error="onCrestError($event, f.away_name)"
+                  />
+                  <span class="crest-fallback" style="display:none;"></span>
                 </div>
 
                 <div
@@ -1440,26 +1457,76 @@ function scheduleApp() {
       return '';
     },
 
-    initials(name) {
-      return (name || '?')
-        .split(' ')
-        .map(w => w[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 3);
+    // ── TEAM CREST MAP ──
+    // Maps team name (as returned by API) → { id, flag }
+    // id matches /img/crest/{id}.png filenames
+    TEAM_MAP: {
+      "Uruguay":              { id: 1,  flag: "🇺🇾" },
+      "Germany":              { id: 2,  flag: "🇩🇪" },
+      "Spain":                { id: 3,  flag: "🇪🇸" },
+      "Paraguay":             { id: 4,  flag: "🇵🇾" },
+      "Argentina":            { id: 5,  flag: "🇦🇷" },
+      "Ghana":                { id: 6,  flag: "🇬🇭" },
+      "Brazil":               { id: 7,  flag: "🇧🇷" },
+      "Portugal":             { id: 8,  flag: "🇵🇹" },
+      "Japan":                { id: 9,  flag: "🇯🇵" },
+      "Mexico":               { id: 10, flag: "🇲🇽" },
+      "England":              { id: 11, flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+      "United States":        { id: 12, flag: "🇺🇸" },
+      "South Korea":          { id: 13, flag: "🇰🇷" },
+      "France":               { id: 14, flag: "🇫🇷" },
+      "South Africa":         { id: 15, flag: "🇿🇦" },
+      "Algeria":              { id: 16, flag: "🇩🇿" },
+      "Australia":            { id: 17, flag: "🇦🇺" },
+      "New Zealand":          { id: 18, flag: "🇳🇿" },
+      "Switzerland":          { id: 19, flag: "🇨🇭" },
+      "Ecuador":              { id: 20, flag: "🇪🇨" },
+      "Sweden":               { id: 21, flag: "🇸🇪" },
+      "Czechia":              { id: 22, flag: "🇨🇿" },
+      "Croatia":              { id: 23, flag: "🇭🇷" },
+      "Saudi Arabia":         { id: 24, flag: "🇸🇦" },
+      "Tunisia":              { id: 25, flag: "🇹🇳" },
+      "Turkey":               { id: 26, flag: "🇹🇷" },
+      "Senegal":              { id: 27, flag: "🇸🇳" },
+      "Belgium":              { id: 28, flag: "🇧🇪" },
+      "Morocco":              { id: 29, flag: "🇲🇦" },
+      "Austria":              { id: 30, flag: "🇦🇹" },
+      "Colombia":             { id: 31, flag: "🇨🇴" },
+      "Egypt":                { id: 32, flag: "🇪🇬" },
+      "Canada":               { id: 33, flag: "🇨🇦" },
+      "Haiti":                { id: 34, flag: "🇭🇹" },
+      "Iran":                 { id: 35, flag: "🇮🇷" },
+      "Bosnia-Herzegovina":   { id: 36, flag: "🇧🇦" },
+      "Panama":               { id: 37, flag: "🇵🇦" },
+      "Cape Verde Islands":   { id: 38, flag: "🇨🇻" },
+      "Congo DR":             { id: 39, flag: "🇨🇩" },
+      "Ivory Coast":          { id: 40, flag: "🇨🇮" },
+      "Qatar":                { id: 41, flag: "🇶🇦" },
+      "Jordan":               { id: 42, flag: "🇯🇴" },
+      "Iraq":                 { id: 43, flag: "🇮🇶" },
+      "Uzbekistan":           { id: 44, flag: "🇺🇿" },
+      "Netherlands":          { id: 45, flag: "🇳🇱" },
+      "Norway":               { id: 46, flag: "🇳🇴" },
+      "Scotland":             { id: 47, flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
+      "Curaçao":              { id: 48, flag: "🇨🇼" },
     },
 
-    badgeClass(nameOrId) {
+    teamCrest(name) {
+      const team = this.TEAM_MAP[name];
+      if (!team) return '';
+      return `/img/crest/${team.id}.png`;
+    },
 
-      const str = String(nameOrId || 'X');
-
-      let hash = 0;
-
-      for (const c of str) {
-        hash = (hash * 31 + c.charCodeAt(0)) & 0xffffffff;
+    onCrestError(event, name) {
+      // Hide broken image, show flag emoji fallback
+      const img = event.target;
+      const fallback = img.nextElementSibling;
+      img.style.display = 'none';
+      if (fallback) {
+        const team = this.TEAM_MAP[name];
+        fallback.textContent = team ? team.flag : '🏳️';
+        fallback.style.display = 'inline';
       }
-
-      return 'badge-' + (Math.abs(hash) % 8);
     },
 
     async getFixtureResult(matchdayId, fixtureId) {

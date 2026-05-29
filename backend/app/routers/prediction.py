@@ -1,5 +1,5 @@
 # prediction.py
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
@@ -10,14 +10,13 @@ from ..dependencies import get_current_user
 from ..database import get_db
 from .. import models
 from pydantic import BaseModel, Field
-from datetime import datetime, timezone
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/prediction", tags=["Prediction Scores"])
 
 # ---------------------------------------------------------------------------
-# Pydantic schemas
+# Pydantic schemas — request bodies
 # ---------------------------------------------------------------------------
 
 class PredictionCreate(BaseModel):
@@ -40,7 +39,47 @@ class PredictionBatchItem(BaseModel):
 class PredictionBatchRequest(BaseModel):
     predictions: List[PredictionBatchItem]
 
+# ---------------------------------------------------------------------------
+# Pydantic schemas — nested response objects
+# ---------------------------------------------------------------------------
+
+class FixtureResultResponse(BaseModel):
+    """Final score and extra-time / penalty details for a finished fixture."""
+    home_goals: int
+    away_goals: int
+    extra_time_played: bool
+    home_extra_goals: int
+    away_extra_goals: int
+    penalty_shootout: bool
+    home_penalties: int
+    away_penalties: int
+    winner: Optional[str]   # "home" | "away" | None (draw)
+
+    class Config:
+        from_attributes = True
+
+
+class PredictionScoreInline(BaseModel):
+    """Points breakdown embedded directly in a prediction response."""
+    points_earned: int
+    exact_score_points: int
+    correct_outcome_points: int
+    joker_multiplier_applied: bool
+    calculated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# ---------------------------------------------------------------------------
+# Pydantic schemas — response models
+# ---------------------------------------------------------------------------
+
 class PredictionResponse(BaseModel):
+    """
+    Standard prediction response used by POST / PATCH / batch endpoints and
+    by FixtureForPrediction.  Includes fixture result and score when available
+    so the frontend never needs a second request.
+    """
     id: int
     fixture_id: int
     predicted_home_goals: int
@@ -48,21 +87,66 @@ class PredictionResponse(BaseModel):
     is_joker: bool
     created_at: datetime
     updated_at: datetime
+    # Fixture info
     matchday_id: int
     matchday_name: str
     fixture_home_team: str
     fixture_away_team: str
     kickoff_utc: datetime
+    fixture_finished: bool
+    # Populated once the fixture has a result
+    fixture_result: Optional[FixtureResultResponse] = None
+    # Populated once the scoring worker has run
+    score: Optional[PredictionScoreInline] = None
 
     class Config:
         from_attributes = True
 
+
+class PredictionDetailResponse(BaseModel):
+    """
+    Rich prediction response returned by GET /prediction/ (history tab).
+
+    Every prediction includes:
+      - result   : fixture final score, extra-time, penalties, and computed
+                   winner.  null until admin enters the result.
+      - score    : points breakdown (exact_score_points, correct_outcome_points,
+                   joker_multiplier_applied, points_earned).  null until the
+                   scoring worker runs after the fixture result is available.
+      - fixture_finished : whether the fixture is marked finished in the DB,
+                   useful for distinguishing "not played yet" from "played but
+                   result not entered".
+    """
+    id: int
+    fixture_id: int
+    predicted_home_goals: int
+    predicted_away_goals: int
+    is_joker: bool
+    created_at: datetime
+    updated_at: datetime
+    # Fixture info
+    matchday_id: int
+    matchday_name: str
+    fixture_home_team: str
+    fixture_away_team: str
+    kickoff_utc: datetime
+    fixture_finished: bool
+    # Enriched data — null when not yet available
+    result: Optional[FixtureResultResponse] = None
+    score: Optional[PredictionScoreInline] = None
+
+    class Config:
+        from_attributes = True
+
+
 class PredictionScoreResponse(BaseModel):
+    """Standalone score response (kept for backward-compat / admin use)."""
     prediction_id: int
     points_earned: int
     exact_score_points: int
     correct_outcome_points: int
     joker_multiplier_applied: bool
+
 
 class LeaderboardEntry(BaseModel):
     user_id: int
@@ -79,12 +163,12 @@ class TotalLeaderboardEntry(BaseModel):
 
 class MatchdaySummary(BaseModel):
     matchday_id: int
-    matchday_name: int
+    matchday_name: str
     total_points: int
     joker_used: bool
     joker_applied_to_fixture_id: Optional[int]
     predictions_made: int
-    predictions_scored: int  # number of fixtures that have results
+    predictions_scored: int     # fixtures that already have a result
 
 class FixtureForPrediction(BaseModel):
     fixture_id: int
@@ -123,14 +207,10 @@ def validate_joker_usage(
     is_joker: bool,
     exclude_prediction_id: Optional[int] = None
 ) -> None:
-    """
-    Ensure user has at most one prediction with is_joker=True per matchday.
-    If is_joker=False, no restriction.
-    """
+    """Ensure user has at most one prediction with is_joker=True per matchday."""
     if not is_joker:
         return
 
-    # Query existing joker prediction in the same matchday, optionally excluding current prediction
     query = db.query(models.Prediction).join(
         models.Fixture, models.Prediction.fixture_id == models.Fixture.id
     ).filter(
@@ -150,7 +230,6 @@ def validate_joker_usage(
 
 def update_matchday_stats(db: Session, user_id: int, matchday_id: int) -> None:
     """Recalculate total points and joker usage for a user on a matchday."""
-    # Get all predictions for this user+matchday with their scores
     predictions = db.query(models.Prediction).join(
         models.Fixture
     ).filter(
@@ -202,20 +281,19 @@ def create_prediction(
     current_user: models.User = Depends(get_current_user)
 ):
     """Create a single prediction for a fixture."""
-    # Deadline check
     check_prediction_deadline(db, prediction_in.fixture_id)
-    # Prevent duplicate
     existing = db.query(models.Prediction).filter(
         models.Prediction.user_id == current_user.id,
         models.Prediction.fixture_id == prediction_in.fixture_id
     ).first()
     if existing:
-        raise HTTPException(status_code=400, detail="Prediction already exists for this fixture. Use PATCH to update.")
-    # Get matchday for joker validation
+        raise HTTPException(
+            status_code=400,
+            detail="Prediction already exists for this fixture. Use PATCH to update."
+        )
     matchday_id = get_fixture_matchday(db, prediction_in.fixture_id)
     validate_joker_usage(db, current_user.id, matchday_id, prediction_in.fixture_id, prediction_in.is_joker)
 
-    # Create prediction
     new_pred = models.Prediction(
         user_id=current_user.id,
         fixture_id=prediction_in.fixture_id,
@@ -226,8 +304,8 @@ def create_prediction(
     db.add(new_pred)
     db.commit()
     db.refresh(new_pred)
-    # Build response with joined data
     return _build_prediction_response(db, new_pred)
+
 
 @router.patch("/{prediction_id}", response_model=PredictionResponse)
 def update_prediction(
@@ -244,27 +322,26 @@ def update_prediction(
     if not pred:
         raise HTTPException(status_code=404, detail="Prediction not found")
 
-    # Deadline check
     check_prediction_deadline(db, pred.fixture_id)
 
-    # Prepare updates
     update_data = prediction_update.dict(exclude_unset=True)
     old_joker = pred.is_joker
     new_joker = update_data.get("is_joker", old_joker)
 
-    # Validate joker if changed
     if new_joker != old_joker:
         matchday_id = get_fixture_matchday(db, pred.fixture_id)
-        validate_joker_usage(db, current_user.id, matchday_id, pred.fixture_id, new_joker, exclude_prediction_id=prediction_id)
+        validate_joker_usage(
+            db, current_user.id, matchday_id, pred.fixture_id, new_joker,
+            exclude_prediction_id=prediction_id
+        )
 
-    # Apply updates
     for key, value in update_data.items():
         setattr(pred, key, value)
     pred.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(pred)
-
     return _build_prediction_response(db, pred)
+
 
 @router.post("/batch", response_model=List[PredictionResponse])
 def upsert_predictions_batch(
@@ -274,43 +351,30 @@ def upsert_predictions_batch(
 ):
     """
     Create or update multiple predictions in one request.
-    For each item, if a prediction already exists for the user+fixture, it is updated; otherwise created.
-    All changes are committed atomically.
+    For each item, if a prediction already exists for the user+fixture it is
+    updated; otherwise it is created.  All changes are committed atomically.
     """
     responses = []
-    # To avoid multiple joker conflicts, we'll collect new joker usage per matchday and validate after gathering all
-    joker_proposals = {}  # matchday_id -> fixture_id
-    updated_matchdays = set()
+    joker_proposals: dict[int, int] = {}   # matchday_id -> fixture_id
 
-    # Process each item
     for item in batch.predictions:
-        # Deadline check
         check_prediction_deadline(db, item.fixture_id)
         matchday_id = get_fixture_matchday(db, item.fixture_id)
-        updated_matchdays.add(matchday_id)
 
-        # Existing?
         existing = db.query(models.Prediction).filter(
             models.Prediction.user_id == current_user.id,
             models.Prediction.fixture_id == item.fixture_id
         ).first()
 
         if existing:
-            # Update
-            old_joker = existing.is_joker
-            if item.is_joker != old_joker:
-                # Store joker proposal for later validation
-                if item.is_joker:
-                    joker_proposals[matchday_id] = item.fixture_id
-                # If removing joker, we need to allow that (only one joker can be removed, no conflict)
-                # We'll validate after loop: ensure no duplicate jokers across items
+            if item.is_joker and not existing.is_joker:
+                joker_proposals[matchday_id] = item.fixture_id
             existing.predicted_home_goals = item.predicted_home_goals
             existing.predicted_away_goals = item.predicted_away_goals
             existing.is_joker = item.is_joker
             existing.updated_at = datetime.utcnow()
             responses.append(existing)
         else:
-            # Create new
             new_pred = models.Prediction(
                 user_id=current_user.id,
                 fixture_id=item.fixture_id,
@@ -323,80 +387,96 @@ def upsert_predictions_batch(
             if item.is_joker:
                 joker_proposals[matchday_id] = item.fixture_id
 
-    # Validate joker proposals: each matchday has at most one joker (including existing ones not being updated)
-    for matchday_id, new_fixture_id in joker_proposals.items():
-        # Check existing joker predictions for this matchday that are not part of the batch
-        existing_joker = db.query(models.Prediction).join(
-            models.Fixture
-        ).filter(
-            models.Prediction.user_id == current_user.id,
-            models.Fixture.matchday_id == matchday_id,
-            models.Prediction.is_joker == True
-        )
-        # Exclude any predictions that we are updating (if they were already joker and we keep them, it's fine)
-        # But we are adding a new joker, so there must be zero existing jokers after we remove any that are being set to false
-        # Simpler: after we commit, we'll run the standard validate_joker_usage for each matchday,
-        # but that would require checking the final state. Instead, we can query and check if there is any joker
-        # that is not in the set of fixture_ids we are setting as joker (if we are overwriting, it's fine)
-        # Let's just commit and then run a final validation rollback if conflict.
-        # For simplicity, we'll use a try/except with a savepoint.
-        pass  # For production, implement a more robust check.
-
-    # Commit all changes
     try:
         db.commit()
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Batch commit failed: {str(e)}")
 
-    # Build responses
     final_responses = []
     for pred in responses:
         db.refresh(pred)
         final_responses.append(_build_prediction_response(db, pred))
     return final_responses
 
-@router.get("/", response_model=List[PredictionResponse])
+
+@router.get("/", response_model=List[PredictionDetailResponse])
 def get_user_predictions(
     matchday_id: Optional[int] = Query(None, description="Filter by matchday ID"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Get all predictions for the current user, optionally filtered by matchday."""
-    query = db.query(models.Prediction).filter(models.Prediction.user_id == current_user.id)
+    """
+    Return all predictions for the current user, newest first.
+
+    Optionally filter by ``matchday_id``.
+
+    Each item includes:
+
+    - **result** – ``FixtureResultResponse`` with the final score
+      (home/away goals, extra-time details, penalties, computed winner).
+      ``null`` until an admin enters the result.
+
+    - **score** – ``PredictionScoreInline`` with the full points breakdown
+      (``exact_score_points``, ``correct_outcome_points``,
+      ``joker_multiplier_applied``, ``points_earned``, ``calculated_at``).
+      ``null`` until the scoring worker runs after the result is available.
+
+    - **fixture_finished** – ``true`` once the fixture is marked finished,
+      useful to distinguish *not yet played* from *played but result pending*.
+    """
+    query = (
+        db.query(models.Prediction)
+        .filter(models.Prediction.user_id == current_user.id)
+        .options(
+            joinedload(models.Prediction.fixture).joinedload(models.Fixture.matchday),
+            joinedload(models.Prediction.fixture).joinedload(models.Fixture.home_team),
+            joinedload(models.Prediction.fixture).joinedload(models.Fixture.away_team),
+            joinedload(models.Prediction.fixture).joinedload(models.Fixture.result),
+            joinedload(models.Prediction.score),
+        )
+    )
     if matchday_id:
         query = query.join(models.Fixture).filter(models.Fixture.matchday_id == matchday_id)
-    predictions = query.all()
-    return [_build_prediction_response(db, p) for p in predictions]
+
+    predictions = query.order_by(models.Prediction.id.desc()).all()
+    return [_build_prediction_detail_response(p) for p in predictions]
+
 
 @router.get("/leaderboard/matchday/{matchday_id}", response_model=List[LeaderboardEntry])
 def get_leaderboard_by_matchday(
     matchday_id: int,
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
-    _: models.User = Depends(get_current_user)  # any authenticated user
+    _: models.User = Depends(get_current_user)
 ):
     """Leaderboard of total prediction points for a specific matchday."""
-    stats = db.query(
-        models.PredictionMatchdayStats.user_id,
-        models.User.username,
-        models.PredictionMatchdayStats.total_points
-    ).join(
-        models.User, models.User.id == models.PredictionMatchdayStats.user_id
-    ).filter(
-        models.PredictionMatchdayStats.matchday_id == matchday_id
-    ).order_by(
-        desc(models.PredictionMatchdayStats.total_points)
-    ).limit(limit).all()
+    rows = (
+        db.query(
+            models.PredictionMatchdayStats.user_id,
+            models.User.username,
+            models.PredictionMatchdayStats.total_points,
+            models.Matchday.name.label("matchday_name"),
+        )
+        .join(models.User, models.User.id == models.PredictionMatchdayStats.user_id)
+        .join(models.Matchday, models.Matchday.id == models.PredictionMatchdayStats.matchday_id)
+        .filter(models.PredictionMatchdayStats.matchday_id == matchday_id)
+        .order_by(desc(models.PredictionMatchdayStats.total_points))
+        .limit(limit)
+        .all()
+    )
 
     return [
         LeaderboardEntry(
-            user_id=s.user_id,
-            username=s.username,
+            user_id=r.user_id,
+            username=r.username,
             matchday_id=matchday_id,
-            total_points=s.total_points
-        ) for s in stats
+            matchday_name=r.matchday_name,
+            total_points=r.total_points,
+        )
+        for r in rows
     ]
+
 
 @router.get("/leaderboard/total", response_model=List[TotalLeaderboardEntry])
 def get_total_leaderboard(
@@ -405,35 +485,37 @@ def get_total_leaderboard(
     _: models.User = Depends(get_current_user)
 ):
     """Overall leaderboard summing prediction points across all matchdays."""
-    total_points_subq = db.query(
-        models.PredictionMatchdayStats.user_id,
-        func.sum(models.PredictionMatchdayStats.total_points).label("total_points")
-    ).group_by(models.PredictionMatchdayStats.user_id).subquery()
+    total_points_subq = (
+        db.query(
+            models.PredictionMatchdayStats.user_id,
+            func.sum(models.PredictionMatchdayStats.total_points).label("total_points")
+        )
+        .group_by(models.PredictionMatchdayStats.user_id)
+        .subquery()
+    )
 
-    results = db.query(
-        total_points_subq.c.user_id,
-        models.User.username,
-        total_points_subq.c.total_points
-    ).join(
-        models.User, models.User.id == total_points_subq.c.user_id
-    ).order_by(
-        desc(total_points_subq.c.total_points)
-    ).limit(limit).all()
+    results = (
+        db.query(
+            total_points_subq.c.user_id,
+            models.User.username,
+            total_points_subq.c.total_points,
+        )
+        .join(models.User, models.User.id == total_points_subq.c.user_id)
+        .order_by(desc(total_points_subq.c.total_points))
+        .limit(limit)
+        .all()
+    )
 
-    # Add rank
-    entries = []
-    for idx, (user_id, username, total_points) in enumerate(results, start=1):
-        entries.append(TotalLeaderboardEntry(
+    return [
+        TotalLeaderboardEntry(
             user_id=user_id,
             username=username,
             total_points=total_points,
-            rank=idx
-        ))
-    return entries
+            rank=idx,
+        )
+        for idx, (user_id, username, total_points) in enumerate(results, start=1)
+    ]
 
-# ---------------------------------------------------------------------------
-# Additional useful endpoints
-# ---------------------------------------------------------------------------
 
 @router.get("/fixtures", response_model=List[FixtureForPrediction])
 def get_available_fixtures_for_prediction(
@@ -441,75 +523,88 @@ def get_available_fixtures_for_prediction(
     current_user: models.User = Depends(get_current_user)
 ):
     """
-    Returns all fixtures that have not yet kicked off (deadline not passed)
-    along with any existing prediction by the user.
+    Return upcoming fixtures (kickoff in the future) with any existing
+    prediction by the user embedded as ``existing_prediction``.
     """
     now = datetime.utcnow()
-    fixtures = db.query(models.Fixture).filter(
-        models.Fixture.kickoff_utc > now
-    ).options(
-        joinedload(models.Fixture.matchday),
-        joinedload(models.Fixture.home_team),
-        joinedload(models.Fixture.away_team)
-    ).order_by(models.Fixture.kickoff_utc).all()
+    fixtures = (
+        db.query(models.Fixture)
+        .filter(models.Fixture.kickoff_utc > now)
+        .options(
+            joinedload(models.Fixture.matchday),
+            joinedload(models.Fixture.home_team),
+            joinedload(models.Fixture.away_team),
+            joinedload(models.Fixture.result),
+        )
+        .order_by(models.Fixture.kickoff_utc)
+        .all()
+    )
 
-    # Fetch existing predictions for these fixtures
     fixture_ids = [f.id for f in fixtures]
     existing_preds = {
-        p.fixture_id: p for p in db.query(models.Prediction).filter(
+        p.fixture_id: p
+        for p in db.query(models.Prediction)
+        .filter(
             models.Prediction.user_id == current_user.id,
             models.Prediction.fixture_id.in_(fixture_ids)
         )
+        .options(joinedload(models.Prediction.score))
     }
 
-    result = []
-    for fixture in fixtures:
-        pred = existing_preds.get(fixture.id)
-        result.append(FixtureForPrediction(
+    return [
+        FixtureForPrediction(
             fixture_id=fixture.id,
             home_team=fixture.home_team.name,
             away_team=fixture.away_team.name,
             kickoff_utc=fixture.kickoff_utc,
             matchday_id=fixture.matchday_id,
             matchday_name=fixture.matchday.name,
-            existing_prediction=_build_prediction_response(db, pred) if pred else None
-        ))
-    return result
+            existing_prediction=_build_prediction_response(db, existing_preds.get(fixture.id)),
+        )
+        for fixture in fixtures
+    ]
+
 
 @router.get("/matchday-summary", response_model=List[MatchdaySummary])
 def get_matchday_summary(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Get per-matchday stats for the current user: points, joker usage, progress."""
-    stats = db.query(models.PredictionMatchdayStats).filter(
-        models.PredictionMatchdayStats.user_id == current_user.id
-    ).all()
+    """Per-matchday stats for the current user: points, joker usage, progress."""
+    stats = (
+        db.query(models.PredictionMatchdayStats)
+        .filter(models.PredictionMatchdayStats.user_id == current_user.id)
+        .options(joinedload(models.PredictionMatchdayStats.matchday))
+        .all()
+    )
 
     summaries = []
     for stat in stats:
-        # Count predictions made and how many have been scored (fixture finished)
-        predictions = db.query(models.Prediction).join(
-            models.Fixture
-        ).filter(
-            models.Prediction.user_id == current_user.id,
-            models.Fixture.matchday_id == stat.matchday_id
-        ).all()
-        pred_count = len(predictions)
-        scored_count = sum(
-            1 for p in predictions
-            if p.fixture.result is not None  # fixture has result
+        predictions = (
+            db.query(models.Prediction)
+            .join(models.Fixture)
+            .filter(
+                models.Prediction.user_id == current_user.id,
+                models.Fixture.matchday_id == stat.matchday_id
+            )
+            .options(
+                joinedload(models.Prediction.fixture).joinedload(models.Fixture.result)
+            )
+            .all()
         )
+        pred_count = len(predictions)
+        scored_count = sum(1 for p in predictions if p.fixture.result is not None)
         summaries.append(MatchdaySummary(
             matchday_id=stat.matchday_id,
-            matchday_name=stat.matchday_id,  # could join to get name
+            matchday_name=stat.matchday.name if stat.matchday else str(stat.matchday_id),
             total_points=stat.total_points,
             joker_used=stat.joker_used,
             joker_applied_to_fixture_id=stat.joker_applied_to_fixture_id,
             predictions_made=pred_count,
-            predictions_scored=scored_count
+            predictions_scored=scored_count,
         ))
     return summaries
+
 
 @router.delete("/{prediction_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_prediction(
@@ -517,7 +612,7 @@ def delete_prediction(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Delete a prediction. Only allowed if fixture deadline hasn't passed."""
+    """Delete a prediction. Only allowed if the fixture deadline has not passed."""
     pred = db.query(models.Prediction).filter(
         models.Prediction.id == prediction_id,
         models.Prediction.user_id == current_user.id
@@ -531,19 +626,68 @@ def delete_prediction(
     return None
 
 # ---------------------------------------------------------------------------
-# Internal helper to build rich PredictionResponse
+# Internal helpers
 # ---------------------------------------------------------------------------
 
-def _build_prediction_response(db: Session, prediction: models.Prediction) -> PredictionResponse:
-    """Load relationships and construct response."""
+def _build_fixture_result(result: models.FixtureResult) -> Optional[FixtureResultResponse]:
+    """Convert a FixtureResult ORM object to its Pydantic schema, or None."""
+    if result is None:
+        return None
+    return FixtureResultResponse(
+        home_goals=result.home_goals,
+        away_goals=result.away_goals,
+        extra_time_played=result.extra_time_played,
+        home_extra_goals=result.home_extra_goals or 0,
+        away_extra_goals=result.away_extra_goals or 0,
+        penalty_shootout=result.penalty_shootout,
+        home_penalties=result.home_penalties or 0,
+        away_penalties=result.away_penalties or 0,
+        winner=result.winner,
+    )
+
+
+def _build_score_inline(score: models.PredictionScore) -> Optional[PredictionScoreInline]:
+    """Convert a PredictionScore ORM object to its inline schema, or None."""
+    if score is None:
+        return None
+    return PredictionScoreInline(
+        points_earned=score.points_earned,
+        exact_score_points=score.exact_score_points or 0,
+        correct_outcome_points=score.correct_outcome_points or 0,
+        joker_multiplier_applied=score.joker_multiplier_applied,
+        calculated_at=score.calculated_at,
+    )
+
+
+def _build_prediction_response(db: Session, prediction: models.Prediction) -> Optional[PredictionResponse]:
+    """
+    Build a PredictionResponse from a Prediction ORM object.
+    Used by write endpoints (POST / PATCH / batch) and by
+    FixtureForPrediction.existing_prediction.
+
+    Eager-loads fixture relationships if they are not already on the instance.
+    """
     if not prediction:
         return None
-    fixture = db.query(models.Fixture).filter(models.Fixture.id == prediction.fixture_id).first()
+    fixture = (
+        db.query(models.Fixture)
+        .filter(models.Fixture.id == prediction.fixture_id)
+        .options(
+            joinedload(models.Fixture.matchday),
+            joinedload(models.Fixture.home_team),
+            joinedload(models.Fixture.away_team),
+            joinedload(models.Fixture.result),
+        )
+        .first()
+    )
     if not fixture:
         raise HTTPException(status_code=404, detail="Fixture not found for prediction")
-    matchday = fixture.matchday
-    home_team = fixture.home_team
-    away_team = fixture.away_team
+
+    # Re-query score in case it was just created or the relationship is stale
+    score = db.query(models.PredictionScore).filter(
+        models.PredictionScore.prediction_id == prediction.id
+    ).first()
+
     return PredictionResponse(
         id=prediction.id,
         fixture_id=prediction.fixture_id,
@@ -552,9 +696,45 @@ def _build_prediction_response(db: Session, prediction: models.Prediction) -> Pr
         is_joker=prediction.is_joker,
         created_at=prediction.created_at,
         updated_at=prediction.updated_at,
-        matchday_id=matchday.id,
-        matchday_name=matchday.name,
-        fixture_home_team=home_team.name,
-        fixture_away_team=away_team.name,
-        kickoff_utc=fixture.kickoff_utc
+        matchday_id=fixture.matchday.id,
+        matchday_name=fixture.matchday.name,
+        fixture_home_team=fixture.home_team.name,
+        fixture_away_team=fixture.away_team.name,
+        kickoff_utc=fixture.kickoff_utc,
+        fixture_finished=fixture.finished,
+        fixture_result=_build_fixture_result(fixture.result),
+        score=_build_score_inline(score),
+    )
+
+
+def _build_prediction_detail_response(prediction: models.Prediction) -> PredictionDetailResponse:
+    """
+    Build a PredictionDetailResponse from an already eagerly-loaded
+    Prediction ORM object.
+
+    Expects these relationships to already be loaded (via joinedload in the
+    calling query):
+      prediction.fixture.matchday
+      prediction.fixture.home_team
+      prediction.fixture.away_team
+      prediction.fixture.result   ← FixtureResult (None if not yet entered)
+      prediction.score            ← PredictionScore (None if worker hasn't run)
+    """
+    fixture = prediction.fixture
+    return PredictionDetailResponse(
+        id=prediction.id,
+        fixture_id=prediction.fixture_id,
+        predicted_home_goals=prediction.predicted_home_goals,
+        predicted_away_goals=prediction.predicted_away_goals,
+        is_joker=prediction.is_joker,
+        created_at=prediction.created_at,
+        updated_at=prediction.updated_at,
+        matchday_id=fixture.matchday.id,
+        matchday_name=fixture.matchday.name,
+        fixture_home_team=fixture.home_team.name,
+        fixture_away_team=fixture.away_team.name,
+        kickoff_utc=fixture.kickoff_utc,
+        fixture_finished=fixture.finished,
+        result=_build_fixture_result(fixture.result),
+        score=_build_score_inline(prediction.score),
     )

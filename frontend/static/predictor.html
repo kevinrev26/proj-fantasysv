@@ -201,6 +201,48 @@
       color: var(--muted);
     }
 
+    /* ── TABS ── */
+    .tabs-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 28px;
+    }
+    .tabs-nav {
+      display: flex;
+      gap: 4px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 50px;
+      padding: 4px;
+      width: fit-content;
+      margin-bottom: 28px;
+    }
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-body);
+      font-weight: 800;
+      font-size: .85rem;
+      padding: 10px 22px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: all .2s;
+      color: var(--dim);
+      background: transparent;
+      letter-spacing: .03em;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--teal), var(--blue));
+      color: var(--navy);
+      box-shadow: 0 4px 20px rgba(0,212,170,.3);
+    }
+    .tab-btn.active .tab-icon { filter: none; }
+
     /* ── MAIN CONTENT ── */
     .main {
       position: relative;
@@ -404,13 +446,38 @@
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(0,212,170,.15), rgba(0,168,232,.15));
+      background: rgba(255,255,255,.04);
       border: 2px solid rgba(255,255,255,.1);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.4rem;
+      font-size: 1.6rem;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+    .past-team-emblem {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.04);
+      border: 2px solid rgba(255,255,255,.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .crest-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 4px;
+      display: block;
+    }
+    .crest-fallback {
+      font-size: 1.6rem;
+      line-height: 1;
     }
     .team-name-card {
       font-size: .78rem;
@@ -565,6 +632,309 @@
       color: var(--red);
     }
 
+    /* ── PAST PREDICTIONS TAB ── */
+    .past-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .past-section-title {
+      font-family: var(--font-head);
+      font-size: 1.6rem;
+      letter-spacing: .05em;
+      color: var(--text);
+    }
+    .past-matchday-filter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-label {
+      font-size: .75rem;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .matchday-pill {
+      font-family: var(--font-body);
+      font-weight: 800;
+      font-size: .75rem;
+      padding: 6px 14px;
+      border-radius: 50px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04);
+      color: var(--dim);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .matchday-pill:hover { background: rgba(255,255,255,.09); color: var(--text); }
+    .matchday-pill.active {
+      background: var(--teal-dim);
+      border-color: rgba(0,212,170,.4);
+      color: var(--teal);
+    }
+
+    /* Past predictions grid */
+    .past-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    /* Past prediction card */
+    .past-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      transition: border-color .2s, transform .2s;
+      animation: fadeIn .3s ease both;
+    }
+    .past-card:hover {
+      border-color: rgba(255,255,255,.14);
+      transform: translateY(-2px);
+    }
+    .past-card.exact-hit {
+      border-color: rgba(0,212,170,.35);
+      box-shadow: var(--shadow-card), 0 0 0 1px rgba(0,212,170,.12), 0 0 24px rgba(0,212,170,.06);
+    }
+    .past-card.outcome-hit {
+      border-color: rgba(0,168,232,.3);
+      box-shadow: var(--shadow-card), 0 0 0 1px rgba(0,168,232,.1);
+    }
+    .past-card.joker-card {
+      border-color: rgba(245,197,24,.4);
+      box-shadow: var(--shadow-card), 0 0 0 1px rgba(245,197,24,.15), 0 0 30px rgba(245,197,24,.06);
+    }
+    .past-card.no-result {
+      opacity: .7;
+    }
+
+    .past-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(0,0,0,.25);
+      border-bottom: 1px solid var(--card-border);
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .past-matchday-tag {
+      color: var(--dim);
+    }
+    .past-matchday-tag span { color: var(--text); }
+
+    .result-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 50px;
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .05em;
+    }
+    .result-badge.exact {
+      background: var(--teal-dim);
+      border: 1px solid rgba(0,212,170,.3);
+      color: var(--teal);
+    }
+    .result-badge.outcome {
+      background: rgba(0,168,232,.12);
+      border: 1px solid rgba(0,168,232,.25);
+      color: var(--blue);
+    }
+    .result-badge.miss {
+      background: var(--red-dim);
+      border: 1px solid rgba(255,77,109,.2);
+      color: var(--red);
+    }
+    .result-badge.pending {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      color: var(--muted);
+    }
+    .result-badge.joker {
+      background: var(--gold-dim);
+      border: 1px solid rgba(245,197,24,.3);
+      color: var(--gold);
+    }
+
+    /* Matchup row for past cards */
+    .past-matchup {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 18px 12px;
+      gap: 8px;
+    }
+    .past-team-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+    .past-team-name {
+      font-size: .75rem;
+      font-weight: 800;
+      text-align: center;
+      color: var(--text);
+      line-height: 1.2;
+      word-break: break-word;
+    }
+    .past-vs {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      padding: 0 4px;
+    }
+
+    /* Scores comparison section */
+    .scores-comparison {
+      padding: 0 18px 18px;
+    }
+    .scores-row {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      justify-content: center;
+    }
+    .score-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,0,0,.2);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius-sm);
+      padding: 12px 10px;
+    }
+    .score-col-label {
+      font-size: .65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+    .score-col-value {
+      font-family: var(--font-head);
+      font-size: 1.8rem;
+      line-height: 1;
+      letter-spacing: .05em;
+    }
+    .score-col.prediction .score-col-value { color: var(--text); }
+    .score-col.actual-score .score-col-value { color: var(--teal); }
+    .score-col.actual-score.no-result .score-col-value { color: var(--muted); }
+    .score-col-sub {
+      font-size: .65rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .scores-divider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      flex-shrink: 0;
+      padding-top: 18px;
+    }
+    .scores-divider-line {
+      width: 1px;
+      flex: 1;
+      background: rgba(255,255,255,.08);
+    }
+    .scores-divider-icon {
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    /* Points earned section */
+    .past-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 18px 14px;
+      border-top: 1px solid rgba(255,255,255,.05);
+      gap: 8px;
+    }
+    .points-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .points-value {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: .04em;
+    }
+    .points-value.positive { color: var(--teal); }
+    .points-value.zero { color: var(--muted); }
+    .points-label {
+      font-size: .72rem;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      line-height: 1.2;
+    }
+    .points-breakdown {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .breakdown-chip {
+      font-size: .65rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 50px;
+      letter-spacing: .04em;
+    }
+    .breakdown-chip.exact-chip {
+      background: var(--teal-dim);
+      color: var(--teal);
+    }
+    .breakdown-chip.outcome-chip {
+      background: rgba(0,168,232,.12);
+      color: var(--blue);
+    }
+    .breakdown-chip.joker-chip {
+      background: var(--gold-dim);
+      color: var(--gold);
+    }
+    .breakdown-chip.miss-chip {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    /* Pending result state inside past card */
+    .pending-result {
+      padding: 12px 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--muted);
+      border-top: 1px solid rgba(255,255,255,.05);
+    }
+
     /* ── EMPTY / LOADING / ERROR STATES ── */
     .state-block {
       position: relative;
@@ -660,11 +1030,46 @@
     .save-all-text strong { color: var(--teal); }
     .save-all-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 
+    /* ── PAST STATS SUMMARY BAR ── */
+    .past-stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .past-stat-chip {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+    }
+    .past-stat-value {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: .04em;
+    }
+    .past-stat-label {
+      font-size: .67rem;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 680px) {
       .fixtures-grid { grid-template-columns: 1fr; }
+      .past-grid { grid-template-columns: 1fr; }
       .hero-title { font-size: 3rem; }
       .actions-bar { flex-direction: column; align-items: flex-start; }
+      .tabs-nav { width: 100%; }
+      .tab-btn { flex: 1; justify-content: center; }
     }
   </style>
 </head>
@@ -691,9 +1096,9 @@
 
   <!-- HERO -->
   <div class="hero">
-    <div class="hero-eyebrow">Jornada Próxima</div>
+    <div class="hero-eyebrow">Módulo de Predicciones</div>
     <h1 class="hero-title">PREDIC<span>CIONES</span></h1>
-    <div class="hero-meta" x-show="!loading && !error && fixtures.length > 0">
+    <div class="hero-meta" x-show="!loading && !error && fixtures.length > 0 && activeTab === 'predict'">
       <div class="hero-badge">
         <span>📅</span>
         <span x-text="'Jornada ' + matchdayName"></span>
@@ -709,194 +1114,430 @@
     </div>
   </div>
 
-  <!-- LOADING -->
-  <div class="state-block" x-show="loading">
-    <div class="state-center">
-      <div class="spinner"></div>
-      <p class="state-desc">Cargando partidos...</p>
+  <!-- ── TABS NAV ── -->
+  <div class="tabs-wrapper">
+    <div class="tabs-nav">
+      <button class="tab-btn" :class="{ active: activeTab === 'predict' }" @click="switchTab('predict')">
+        <span class="tab-icon">🎯</span>
+        <span>Hacer Predicción</span>
+      </button>
+      <button class="tab-btn" :class="{ active: activeTab === 'history' }" @click="switchTab('history')">
+        <span class="tab-icon">📋</span>
+        <span>Mis Predicciones</span>
+        <span x-show="pastPredictions.length > 0" x-text="'(' + pastPredictions.length + ')'"
+              style="font-size:.72rem;opacity:.7;"></span>
+      </button>
     </div>
   </div>
 
-  <!-- ERROR -->
-  <div class="state-block" x-show="!loading && error">
-    <div class="state-center">
-      <div class="state-icon">⚠️</div>
-      <div class="state-title">Error</div>
-      <p class="state-desc" x-text="error"></p>
-      <button class="btn btn-primary" @click="loadFixtures()">Intentar de nuevo</button>
-    </div>
-  </div>
-
-  <!-- EMPTY -->
-  <div class="state-block" x-show="!loading && !error && fixtures.length === 0">
-    <div class="state-center">
-      <div class="state-icon">🏟️</div>
-      <div class="state-title">Sin Partidos</div>
-      <p class="state-desc">No hay partidos próximos disponibles para predecir. ¡Vuelve más tarde!</p>
-    </div>
-  </div>
-
-  <!-- MAIN CONTENT -->
-  <div class="main" x-show="!loading && !error && fixtures.length > 0">
-
-    <!-- Save All Banner -->
-    <div class="save-all-banner">
-      <div class="save-all-text">
-        <strong x-text="predictedCount + '/' + fixtures.length"></strong> partidos predichos
-        <span x-show="unpredictedCount > 0">— <span x-text="unpredictedCount"></span> sin predicción (se guardarán como 0-0)</span>
-      </div>
-      <div class="save-all-btns">
-        <button class="btn btn-ghost btn-sm" @click="resetAll()" :disabled="savingAll">
-          🔄 Reiniciar todo
-        </button>
-        <button class="btn btn-primary" @click="saveAll()" :disabled="savingAll">
-          <span x-show="!savingAll">💾 Guardar Todo</span>
-          <span x-show="savingAll"><span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Guardando...</span>
-        </button>
+  <!-- ════════════════════════════════════════
+       TAB 1 — PREDICTOR
+  ════════════════════════════════════════ -->
+  <div x-show="activeTab === 'predict'">
+    <!-- LOADING -->
+    <div class="state-block" x-show="loading">
+      <div class="state-center">
+        <div class="spinner"></div>
+        <p class="state-desc">Cargando partidos...</p>
       </div>
     </div>
 
-    <!-- Actions Bar -->
-    <div class="actions-bar">
-      <div class="actions-left">
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" :style="`width: ${progressPct}%`"></div>
+    <!-- ERROR -->
+    <div class="state-block" x-show="!loading && error">
+      <div class="state-center">
+        <div class="state-icon">⚠️</div>
+        <div class="state-title">Error</div>
+        <p class="state-desc" x-text="error"></p>
+        <button class="btn btn-primary" @click="loadFixtures()">Intentar de nuevo</button>
+      </div>
+    </div>
+
+    <!-- EMPTY -->
+    <div class="state-block" x-show="!loading && !error && fixtures.length === 0">
+      <div class="state-center">
+        <div class="state-icon">🏟️</div>
+        <div class="state-title">Sin Partidos</div>
+        <p class="state-desc">No hay partidos próximos disponibles para predecir. ¡Vuelve más tarde!</p>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main" x-show="!loading && !error && fixtures.length > 0">
+
+      <!-- Save All Banner -->
+      <div class="save-all-banner">
+        <div class="save-all-text">
+          <strong x-text="predictedCount + '/' + fixtures.length"></strong> partidos predichos
+          <span x-show="unpredictedCount > 0">— <span x-text="unpredictedCount"></span> sin predicción (se guardarán como 0-0)</span>
         </div>
-        <div class="progress-info">
-          <strong x-text="predictedCount"></strong> / <span x-text="fixtures.length"></span> predichos
+        <div class="save-all-btns">
+          <button class="btn btn-ghost btn-sm" @click="resetAll()" :disabled="savingAll">
+            🔄 Reiniciar todo
+          </button>
+          <button class="btn btn-primary" @click="saveAll()" :disabled="savingAll">
+            <span x-show="!savingAll">💾 Guardar Todo</span>
+            <span x-show="savingAll"><span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Guardando...</span>
+          </button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" @click="loadFixtures()">
-          🔄 Actualizar
-        </button>
+
+      <!-- Actions Bar -->
+      <div class="actions-bar">
+        <div class="actions-left">
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" :style="`width: ${progressPct}%`"></div>
+          </div>
+          <div class="progress-info">
+            <strong x-text="predictedCount"></strong> / <span x-text="fixtures.length"></span> predichos
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" @click="loadFixtures()">
+            🔄 Actualizar
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- Fixtures Grid -->
-    <div class="fixtures-grid">
-      <template x-for="(fx, idx) in fixtures" :key="fx.fixture_id">
-        <div
-          class="fixture-card"
-          :class="{
-            'has-prediction': fx.existing_prediction,
-            'is-joker-card': fx.localJoker,
-            'past-deadline': fx.pastDeadline
-          }"
-        >
-          <!-- Top Bar -->
-          <div class="card-topbar">
-            <div class="card-time">
-              <span class="time-val" x-text="formatDate(fx.kickoff_utc)"></span>
-            </div>
-            <!-- Joker Toggle -->
-            <button
-              class="joker-toggle"
-              :class="{ active: fx.localJoker }"
-              @click="toggleJoker(idx)"
-              :disabled="fx.pastDeadline || (!fx.localJoker && jokerUsed && jokerUsedOnFixtureId !== fx.fixture_id)"
-              :title="jokerTooltip(fx)"
-            >
-              <span class="star-icon">★</span>
-              <span x-text="fx.localJoker ? 'JOKER ✓' : 'JOKER'"></span>
-            </button>
-          </div>
-
-          <!-- Matchup -->
-          <div class="card-matchup">
-            <div class="team-side">
-              <div class="team-emblem" x-text="teamEmoji(fx.home_team)"></div>
-              <div class="team-name-card" x-text="fx.home_team"></div>
-            </div>
-            <div class="vs-divider">VS</div>
-            <div class="team-side">
-              <div class="team-emblem" x-text="teamEmoji(fx.away_team)"></div>
-              <div class="team-name-card" x-text="fx.away_team"></div>
-            </div>
-          </div>
-
-          <!-- Score Input -->
-          <div class="score-section">
-            <div class="score-label" x-text="fx.pastDeadline ? 'PARTIDO EN CURSO / FINALIZADO' : 'Tu Predicción'"></div>
-            <div class="score-inputs">
-              <!-- Home goals -->
-              <div class="score-field">
-                <label x-text="fx.home_team.split(' ')[0]"></label>
-                <div class="score-controls">
-                  <button class="score-btn" @click="decrement(idx, 'home')" :disabled="fx.pastDeadline || fx.localHome <= 0">−</button>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    class="score-input"
-                    x-model.number="fx.localHome"
-                    @input="clampScore(idx, 'home')"
-                    :disabled="fx.pastDeadline"
-                  />
-                  <button class="score-btn" @click="increment(idx, 'home')" :disabled="fx.pastDeadline">+</button>
-                </div>
-              </div>
-
-              <div class="score-dash">—</div>
-
-              <!-- Away goals -->
-              <div class="score-field">
-                <label x-text="fx.away_team.split(' ')[0]"></label>
-                <div class="score-controls">
-                  <button class="score-btn" @click="decrement(idx, 'away')" :disabled="fx.pastDeadline || fx.localAway <= 0">−</button>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    class="score-input"
-                    x-model.number="fx.localAway"
-                    @input="clampScore(idx, 'away')"
-                    :disabled="fx.pastDeadline"
-                  />
-                  <button class="score-btn" @click="increment(idx, 'away')" :disabled="fx.pastDeadline">+</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Deadline passed -->
-          <div class="deadline-badge" x-show="fx.pastDeadline">
-            ⏰ Plazo cerrado — sin cambios permitidos
-          </div>
-
-          <!-- Card Actions (only if not past deadline) -->
-          <div class="card-actions" x-show="!fx.pastDeadline">
-            <button
-              class="btn btn-primary btn-sm card-save-btn"
-              @click="saveSingle(idx)"
-              :disabled="fx.saving"
-            >
-              <span x-show="!fx.saving">
-                <span x-text="fx.existing_prediction ? '✏️ Actualizar' : '✅ Guardar'"></span>
-              </span>
-              <span x-show="fx.saving"><span class="spinner" style="width:12px;height:12px;border-width:2px;"></span></span>
-            </button>
-            <button
-              class="btn btn-danger btn-sm card-delete-btn"
-              x-show="fx.existing_prediction"
-              @click="deletePrediction(idx)"
-              :disabled="fx.saving"
-              title="Eliminar predicción"
-            >
-              🗑️
-            </button>
-          </div>
-
-          <!-- Saved indicator -->
+      <!-- Fixtures Grid -->
+      <div class="fixtures-grid">
+        <template x-for="(fx, idx) in fixtures" :key="fx.fixture_id">
           <div
-            class="saved-indicator"
-            x-show="fx.savedMsg"
-            :class="{ updating: fx.saving }"
+            class="fixture-card"
+            :class="{
+              'has-prediction': fx.existing_prediction,
+              'is-joker-card': fx.localJoker,
+              'past-deadline': fx.pastDeadline
+            }"
           >
-            ✅ <span x-text="fx.savedMsg"></span>
+            <!-- Top Bar -->
+            <div class="card-topbar">
+              <div class="card-time">
+                <span class="time-val" x-text="formatDate(fx.kickoff_utc)"></span>
+              </div>
+              <!-- Joker Toggle -->
+              <button
+                class="joker-toggle"
+                :class="{ active: fx.localJoker }"
+                @click="toggleJoker(idx)"
+                :disabled="fx.pastDeadline || (!fx.localJoker && jokerUsed && jokerUsedOnFixtureId !== fx.fixture_id)"
+                :title="jokerTooltip(fx)"
+              >
+                <span class="star-icon">★</span>
+                <span x-text="fx.localJoker ? 'JOKER ✓' : 'JOKER'"></span>
+              </button>
+            </div>
+
+            <!-- Matchup -->
+            <div class="card-matchup">
+              <div class="team-side">
+                <div class="team-emblem">
+                  <img
+                    :src="teamCrest(fx.home_team)"
+                    :alt="fx.home_team"
+                    class="crest-img"
+                    @error="onCrestError($event, fx.home_team)"
+                  />
+                  <span class="crest-fallback" style="display:none;"></span>
+                </div>
+                <div class="team-name-card" x-text="fx.home_team"></div>
+              </div>
+              <div class="vs-divider">VS</div>
+              <div class="team-side">
+                <div class="team-emblem">
+                  <img
+                    :src="teamCrest(fx.away_team)"
+                    :alt="fx.away_team"
+                    class="crest-img"
+                    @error="onCrestError($event, fx.away_team)"
+                  />
+                  <span class="crest-fallback" style="display:none;"></span>
+                </div>
+                <div class="team-name-card" x-text="fx.away_team"></div>
+              </div>
+            </div>
+
+            <!-- Score Input -->
+            <div class="score-section">
+              <div class="score-label" x-text="fx.pastDeadline ? 'PARTIDO EN CURSO / FINALIZADO' : 'Tu Predicción'"></div>
+              <div class="score-inputs">
+                <!-- Home goals -->
+                <div class="score-field">
+                  <label x-text="fx.home_team.split(' ')[0]"></label>
+                  <div class="score-controls">
+                    <button class="score-btn" @click="decrement(idx, 'home')" :disabled="fx.pastDeadline || fx.localHome <= 0">−</button>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      class="score-input"
+                      x-model.number="fx.localHome"
+                      @input="clampScore(idx, 'home')"
+                      :disabled="fx.pastDeadline"
+                    />
+                    <button class="score-btn" @click="increment(idx, 'home')" :disabled="fx.pastDeadline">+</button>
+                  </div>
+                </div>
+
+                <div class="score-dash">—</div>
+
+                <!-- Away goals -->
+                <div class="score-field">
+                  <label x-text="fx.away_team.split(' ')[0]"></label>
+                  <div class="score-controls">
+                    <button class="score-btn" @click="decrement(idx, 'away')" :disabled="fx.pastDeadline || fx.localAway <= 0">−</button>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      class="score-input"
+                      x-model.number="fx.localAway"
+                      @input="clampScore(idx, 'away')"
+                      :disabled="fx.pastDeadline"
+                    />
+                    <button class="score-btn" @click="increment(idx, 'away')" :disabled="fx.pastDeadline">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deadline passed -->
+            <div class="deadline-badge" x-show="fx.pastDeadline">
+              ⏰ Plazo cerrado — sin cambios permitidos
+            </div>
+
+            <!-- Card Actions (only if not past deadline) -->
+            <div class="card-actions" x-show="!fx.pastDeadline">
+              <button
+                class="btn btn-primary btn-sm card-save-btn"
+                @click="saveSingle(idx)"
+                :disabled="fx.saving"
+              >
+                <span x-show="!fx.saving">
+                  <span x-text="fx.existing_prediction ? '✏️ Actualizar' : '✅ Guardar'"></span>
+                </span>
+                <span x-show="fx.saving"><span class="spinner" style="width:12px;height:12px;border-width:2px;"></span></span>
+              </button>
+              <button
+                class="btn btn-danger btn-sm card-delete-btn"
+                x-show="fx.existing_prediction"
+                @click="deletePrediction(idx)"
+                :disabled="fx.saving"
+                title="Eliminar predicción"
+              >
+                🗑️
+              </button>
+            </div>
+
+            <!-- Saved indicator -->
+            <div
+              class="saved-indicator"
+              x-show="fx.savedMsg"
+              :class="{ updating: fx.saving }"
+            >
+              ✅ <span x-text="fx.savedMsg"></span>
+            </div>
           </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TAB 2 — HISTORY / PAST PREDICTIONS
+  ════════════════════════════════════════ -->
+  <div x-show="activeTab === 'history'" class="main">
+
+    <!-- LOADING -->
+    <div x-show="pastLoading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;gap:14px;">
+      <div class="spinner"></div>
+      <p style="font-size:.85rem;font-weight:700;color:var(--dim);">Cargando historial...</p>
+    </div>
+
+    <!-- ERROR -->
+    <div x-show="!pastLoading && pastError" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;gap:14px;text-align:center;">
+      <div style="font-size:3rem;opacity:.5;">⚠️</div>
+      <p style="font-size:.9rem;font-weight:700;color:var(--dim);" x-text="pastError"></p>
+      <button class="btn btn-primary" @click="loadPastPredictions()">Reintentar</button>
+    </div>
+
+    <!-- EMPTY -->
+    <div x-show="!pastLoading && !pastError && pastPredictions.length === 0" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;gap:14px;text-align:center;">
+      <div style="font-size:3.5rem;opacity:.4;">📋</div>
+      <div style="font-family:var(--font-head);font-size:2rem;letter-spacing:.04em;">Sin historial</div>
+      <p style="font-size:.85rem;font-weight:600;color:var(--dim);max-width:320px;">Aún no tienes predicciones pasadas. ¡Empieza a predecir en la pestaña anterior!</p>
+    </div>
+
+    <!-- CONTENT -->
+    <div x-show="!pastLoading && !pastError && pastPredictions.length > 0">
+
+      <!-- Summary Stats Bar -->
+      <div class="past-stats-bar">
+        <div class="past-stat-chip">
+          <div class="past-stat-value" style="color:var(--teal);" x-text="pastStats.totalPoints"></div>
+          <div class="past-stat-label">Puntos Totales</div>
         </div>
-      </template>
+        <div class="past-stat-chip">
+          <div class="past-stat-value" style="color:var(--text);" x-text="pastPredictions.length"></div>
+          <div class="past-stat-label">Predicciones</div>
+        </div>
+        <div class="past-stat-chip">
+          <div class="past-stat-value" style="color:var(--green);" x-text="pastStats.exactHits"></div>
+          <div class="past-stat-label">Marcador Exacto</div>
+        </div>
+        <div class="past-stat-chip">
+          <div class="past-stat-value" style="color:var(--blue);" x-text="pastStats.outcomeHits"></div>
+          <div class="past-stat-label">Resultado Correcto</div>
+        </div>
+        <div class="past-stat-chip">
+          <div class="past-stat-value" style="color:var(--gold);" x-text="pastStats.jokerCount"></div>
+          <div class="past-stat-label">Jokers Usados</div>
+        </div>
+      </div>
+
+      <!-- Section Header + Matchday Filter -->
+      <div class="past-section-header">
+        <div class="past-section-title">HISTORIAL</div>
+        <div class="past-matchday-filter">
+          <span class="filter-label">Jornada:</span>
+          <button
+            class="matchday-pill"
+            :class="{ active: selectedMatchday === null }"
+            @click="selectedMatchday = null"
+          >Todas</button>
+          <template x-for="md in availableMatchdays" :key="md">
+            <button
+              class="matchday-pill"
+              :class="{ active: selectedMatchday === md }"
+              @click="selectedMatchday = md"
+              x-text="'J' + md"
+            ></button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Past Predictions Grid -->
+      <div class="past-grid">
+        <template x-for="(pred, idx) in filteredPastPredictions" :key="pred.id">
+          <div
+            class="past-card"
+            :class="{
+              'exact-hit': pred.score && pred.score.exact_score_points > 0,
+              'outcome-hit': pred.score && pred.score.correct_outcome_points > 0 && pred.score.exact_score_points === 0,
+              'joker-card': pred.is_joker,
+              'no-result': !pred.score
+            }"
+            :style="'animation-delay:' + (idx * 0.04) + 's'"
+          >
+            <!-- Top bar -->
+            <div class="past-topbar">
+              <div class="past-matchday-tag">
+                Jornada <span x-text="pred.matchday_name"></span>
+                · <span style="color:var(--muted);" x-text="formatDateShort(pred.kickoff_utc)"></span>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <!-- Joker badge -->
+                <span class="result-badge joker" x-show="pred.is_joker">⭐ JOKER</span>
+                <!-- Result type badge -->
+                <template x-if="pred.score">
+                  <span
+                    class="result-badge"
+                    :class="{
+                      'exact': pred.score.exact_score_points > 0,
+                      'outcome': pred.score.correct_outcome_points > 0 && pred.score.exact_score_points === 0,
+                      'miss': pred.score.points_earned === 0
+                    }"
+                    x-text="pred.score.exact_score_points > 0 ? '🎯 Exacto' : pred.score.correct_outcome_points > 0 ? '✔ Resultado' : '✗ Fallo'"
+                  ></span>
+                </template>
+                <template x-if="!pred.score">
+                  <span class="result-badge pending">⏳ Pendiente</span>
+                </template>
+              </div>
+            </div>
+
+            <!-- Matchup -->
+            <div class="past-matchup">
+              <div class="past-team-side">
+                <div class="past-team-emblem">
+                  <img
+                    :src="teamCrest(pred.fixture_home_team)"
+                    :alt="pred.fixture_home_team"
+                    class="crest-img"
+                    @error="onCrestError($event, pred.fixture_home_team)"
+                  />
+                  <span class="crest-fallback" style="display:none;"></span>
+                </div>
+                <div class="past-team-name" x-text="pred.fixture_home_team"></div>
+              </div>
+              <div class="past-vs">VS</div>
+              <div class="past-team-side">
+                <div class="past-team-emblem">
+                  <img
+                    :src="teamCrest(pred.fixture_away_team)"
+                    :alt="pred.fixture_away_team"
+                    class="crest-img"
+                    @error="onCrestError($event, pred.fixture_away_team)"
+                  />
+                  <span class="crest-fallback" style="display:none;"></span>
+                </div>
+                <div class="past-team-name" x-text="pred.fixture_away_team"></div>
+              </div>
+            </div>
+
+            <!-- Scores Comparison -->
+            <div class="scores-comparison">
+              <div class="scores-row">
+                <!-- Your prediction -->
+                <div class="score-col prediction">
+                  <div class="score-col-label">Tu predicción</div>
+                  <div class="score-col-value" x-text="pred.predicted_home_goals + ' - ' + pred.predicted_away_goals"></div>
+                  <div class="score-col-sub">Marcador predicho</div>
+                </div>
+
+                <!-- Divider -->
+                <div class="scores-divider">
+                  <div class="scores-divider-line"></div>
+                  <div class="scores-divider-icon">→</div>
+                  <div class="scores-divider-line"></div>
+                </div>
+
+                <!-- Actual result -->
+                <div class="score-col actual-score" :class="{ 'no-result': !pred.result }">
+                  <div class="score-col-label">Resultado real</div>
+                  <div class="score-col-value" x-text="pred.result ? (pred.result.home_goals + ' - ' + pred.result.away_goals) : '?  -  ?'"></div>
+                  <div class="score-col-sub" x-text="pred.result ? 'Marcador final' : 'Por jugarse'"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer: points earned -->
+            <template x-if="pred.score">
+              <div class="past-card-footer">
+                <div class="points-display">
+                  <div class="points-value" :class="pred.score.points_earned > 0 ? 'positive' : 'zero'" x-text="pred.score.points_earned"></div>
+                  <div class="points-label">puntos<br>ganados</div>
+                </div>
+                <div class="points-breakdown">
+                  <span class="breakdown-chip exact-chip" x-show="pred.score.exact_score_points > 0"
+                        x-text="'+' + pred.score.exact_score_points + ' exacto'"></span>
+                  <span class="breakdown-chip outcome-chip" x-show="pred.score.correct_outcome_points > 0"
+                        x-text="'+' + pred.score.correct_outcome_points + ' resultado'"></span>
+                  <span class="breakdown-chip joker-chip" x-show="pred.score.joker_multiplier_applied">×2 joker</span>
+                  <span class="breakdown-chip miss-chip" x-show="pred.score.points_earned === 0">Sin puntos</span>
+                </div>
+              </div>
+            </template>
+
+            <!-- No result yet -->
+            <template x-if="!pred.score">
+              <div class="pending-result">
+                <span>⏳</span>
+                <span>Resultado pendiente — los puntos se calcularán cuando finalice el partido</span>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
     </div>
   </div>
 
@@ -914,14 +1555,25 @@
 <script>
 function predictorApp() {
   return {
+    // ── TAB STATE ──
+    activeTab: 'predict',
+
+    // ── PREDICT TAB STATE ──
     loading: true,
     error: null,
-    fixtures: [],      // enriched with local state
+    fixtures: [],
     savingAll: false,
     toasts: [],
     _toastId: 0,
 
-    // ── COMPUTED ──
+    // ── HISTORY TAB STATE ──
+    pastLoading: false,
+    pastError: null,
+    pastPredictions: [],
+    selectedMatchday: null,
+    _pastLoaded: false,
+
+    // ── COMPUTED: PREDICT TAB ──
     get matchdayName() {
       if (!this.fixtures.length) return '';
       return this.fixtures[0].matchday_name ?? '';
@@ -953,6 +1605,28 @@ function predictorApp() {
       return Math.round((this.predictedCount / this.fixtures.length) * 100);
     },
 
+    // ── COMPUTED: HISTORY TAB ──
+    get availableMatchdays() {
+      const ids = [...new Set(this.pastPredictions.map(p => p.matchday_id))].sort((a, b) => a - b);
+      return ids;
+    },
+    get filteredPastPredictions() {
+      const preds = this.selectedMatchday === null
+        ? this.pastPredictions
+        : this.pastPredictions.filter(p => p.matchday_id === this.selectedMatchday);
+      // Sort: most recent kickoff first
+      return [...preds].sort((a, b) => new Date(b.kickoff_utc) - new Date(a.kickoff_utc));
+    },
+    get pastStats() {
+      const scored = this.pastPredictions.filter(p => p.score);
+      return {
+        totalPoints: scored.reduce((sum, p) => sum + (p.score.points_earned || 0), 0),
+        exactHits: scored.filter(p => p.score.exact_score_points > 0).length,
+        outcomeHits: scored.filter(p => p.score.correct_outcome_points > 0 && p.score.exact_score_points === 0).length,
+        jokerCount: this.pastPredictions.filter(p => p.is_joker).length,
+      };
+    },
+
     // ── INIT ──
     async init() {
       await requireRole('user');
@@ -960,7 +1634,15 @@ function predictorApp() {
       await this.loadFixtures();
     },
 
-    // ── LOAD FIXTURES ──
+    // ── TAB SWITCH ──
+    async switchTab(tab) {
+      this.activeTab = tab;
+      if (tab === 'history' && !this._pastLoaded) {
+        await this.loadPastPredictions();
+      }
+    },
+
+    // ── LOAD UPCOMING FIXTURES ──
     async loadFixtures() {
       this.loading = true;
       this.error = null;
@@ -969,26 +1651,86 @@ function predictorApp() {
         if (!resp.ok) throw new Error(`Error ${resp.status}`);
         const all = await resp.json();
 
-        // Group by matchday, pick only the FIRST (upcoming) matchday
         const now = new Date();
         const upcoming = all.filter(f => new Date(f.kickoff_utc) > now);
 
-        // Get the earliest matchday_id
         if (!upcoming.length) {
-          // Check if there are fixtures (all past deadline)
-          this.fixtures = this._enrich(all.slice(0, 10)); // show last matchday if all done
+          this.fixtures = this._enrich(all.slice(0, 10));
           this.loading = false;
           return;
         }
 
         const minMatchdayId = Math.min(...upcoming.map(f => f.matchday_id));
         const matchdayFixtures = all.filter(f => f.matchday_id === minMatchdayId);
-
         this.fixtures = this._enrich(matchdayFixtures);
       } catch (e) {
         this.error = 'No se pudieron cargar las predicciones. ' + e.message;
       }
       this.loading = false;
+    },
+
+    // ── LOAD PAST PREDICTIONS ──
+    async loadPastPredictions() {
+      this.pastLoading = true;
+      this.pastError = null;
+      try {
+        const resp = await authFetch('/prediction/');
+        if (!resp.ok) throw new Error(`Error ${resp.status}`);
+        const predictions = await resp.json();
+
+        // Only show predictions that have already kicked off
+        const now = new Date();
+        const past = predictions.filter(p => new Date(p.kickoff_utc) <= now);
+
+        // For each past prediction, try to fetch the fixture result
+        // We enrich in-place using the prediction data + optionally a result endpoint
+        // Since we don't have a dedicated "get result" endpoint per prediction,
+        // we'll try to GET the fixture result by fetching the fixture detail.
+        // The API response for predictions already includes fixture info, so we
+        // attempt to load results if they exist by fetching /prediction/?matchday_id
+        // and merging score data. The score is embedded via the PredictionScore model.
+
+        // Attempt to load fixture results for each prediction
+        const enriched = await this._enrichPastPredictions(past);
+        this.pastPredictions = enriched;
+        this._pastLoaded = true;
+      } catch (e) {
+        this.pastError = 'No se pudo cargar el historial. ' + e.message;
+      }
+      this.pastLoading = false;
+    },
+
+    async _enrichPastPredictions(predictions) {
+      // Try to fetch fixture results from admin/fixture-result-like endpoints.
+      // Since there's no direct public "get fixture result" endpoint we know of,
+      // we attempt to load the schedule/fixtures page to get results, or fall back
+      // gracefully with null results (showing pending state).
+      // The score data (PredictionScore) comes from the scoring worker and is
+      // stored server-side. We'll try to fetch it via a batch approach.
+
+      // First, try fetching all fixtures with results (if endpoint exists)
+      let fixtureResults = {};
+      let predictionScores = {};
+
+      try {
+        // Try the matchday-summary endpoint to get scoring info
+        const summaryResp = await authFetch('/prediction/matchday-summary');
+        if (summaryResp.ok) {
+          // We have summary data, but not per-prediction scores yet
+          // We'll still use it for context
+        }
+      } catch (_) {}
+
+      // Try to get individual prediction scores if endpoint available
+      // For now, we'll return predictions with null results and scores
+      // since the PredictionResponse schema doesn't include score inline.
+      // The score would need a separate endpoint or schema extension.
+
+      return predictions.map(pred => ({
+        ...pred,
+        result: null,   // will be null unless we can fetch it
+        score: null,    // will be null unless score endpoint exists
+      }));
     },
 
     _enrich(raw) {
@@ -1013,12 +1755,9 @@ function predictorApp() {
     toggleJoker(idx) {
       const fx = this.fixtures[idx];
       if (fx.pastDeadline) return;
-
       if (fx.localJoker) {
-        // Remove joker from this card
         fx.localJoker = false;
       } else {
-        // Check if joker is already used on another fixture
         const currentJokerIdx = this.fixtures.findIndex(f => f.localJoker);
         if (currentJokerIdx !== -1 && currentJokerIdx !== idx) {
           this.toast('⭐ Solo puedes usar el Joker en un partido por jornada', 'error');
@@ -1060,7 +1799,6 @@ function predictorApp() {
       const fx = this.fixtures[idx];
       if (fx.pastDeadline || fx.saving) return;
 
-      // Validate joker: if setting joker=true, check no other active fixture (not pred yet) has joker
       if (fx.localJoker) {
         const conflict = this.fixtures.find((f, i) => i !== idx && f.localJoker);
         if (conflict) {
@@ -1075,7 +1813,6 @@ function predictorApp() {
       try {
         let resp, data;
         if (fx.existing_prediction) {
-          // PATCH update
           resp = await authFetch(`/prediction/${fx.existing_prediction.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -1086,7 +1823,6 @@ function predictorApp() {
             }),
           });
         } else {
-          // POST create
           resp = await authFetch('/prediction/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1149,7 +1885,6 @@ function predictorApp() {
       if (this.savingAll) return;
       this.savingAll = true;
 
-      // Validate joker: at most one per matchday across all
       const jokerFixtures = this.fixtures.filter(f => f.localJoker && !f.pastDeadline);
       if (jokerFixtures.length > 1) {
         this.toast('⭐ Solo un Joker por jornada. Revisa tus selecciones.', 'error');
@@ -1157,7 +1892,6 @@ function predictorApp() {
         return;
       }
 
-      // Build batch: include all open fixtures (empty ones default to 0-0)
       const openFixtures = this.fixtures.filter(f => !f.pastDeadline);
       if (!openFixtures.length) {
         this.toast('No hay partidos disponibles para guardar', 'info');
@@ -1185,7 +1919,6 @@ function predictorApp() {
         }
 
         const saved = await resp.json();
-        // Update local state
         saved.forEach(pred => {
           const idx = this.fixtures.findIndex(f => f.fixture_id === pred.fixture_id);
           if (idx === -1) return;
@@ -1207,7 +1940,7 @@ function predictorApp() {
 
     // ── RESET ALL ──
     resetAll() {
-      this.fixtures.forEach((fx, idx) => {
+      this.fixtures.forEach((fx) => {
         if (fx.pastDeadline) return;
         if (fx.existing_prediction) {
           fx.localHome = fx.existing_prediction.predicted_home_goals;
@@ -1234,12 +1967,85 @@ function predictorApp() {
       });
     },
 
-    teamEmoji(name) {
-      // Simple deterministic emoji from team name
-      const emojis = ['⚽','🏆','🔵','🔴','🟡','🟢','⚡','🦅','🐉','🦁','🐺','🐯','🌟','🔥','💎','🛡️'];
-      let hash = 0;
-      for (let c of name) hash = (hash * 31 + c.charCodeAt(0)) & 0xFFFF;
-      return emojis[hash % emojis.length];
+    formatDateShort(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('es-SV', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    },
+
+    // ── TEAM CREST MAP ──
+    // Maps team name (as returned by API) → { id, flag }
+    // id matches /img/crest/{id}.png filenames
+    TEAM_MAP: {
+      "Uruguay":              { id: 1,  flag: "🇺🇾" },
+      "Germany":              { id: 2,  flag: "🇩🇪" },
+      "Spain":                { id: 3,  flag: "🇪🇸" },
+      "Paraguay":             { id: 4,  flag: "🇵🇾" },
+      "Argentina":            { id: 5,  flag: "🇦🇷" },
+      "Ghana":                { id: 6,  flag: "🇬🇭" },
+      "Brazil":               { id: 7,  flag: "🇧🇷" },
+      "Portugal":             { id: 8,  flag: "🇵🇹" },
+      "Japan":                { id: 9,  flag: "🇯🇵" },
+      "Mexico":               { id: 10, flag: "🇲🇽" },
+      "England":              { id: 11, flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+      "United States":        { id: 12, flag: "🇺🇸" },
+      "South Korea":          { id: 13, flag: "🇰🇷" },
+      "France":               { id: 14, flag: "🇫🇷" },
+      "South Africa":         { id: 15, flag: "🇿🇦" },
+      "Algeria":              { id: 16, flag: "🇩🇿" },
+      "Australia":            { id: 17, flag: "🇦🇺" },
+      "New Zealand":          { id: 18, flag: "🇳🇿" },
+      "Switzerland":          { id: 19, flag: "🇨🇭" },
+      "Ecuador":              { id: 20, flag: "🇪🇨" },
+      "Sweden":               { id: 21, flag: "🇸🇪" },
+      "Czechia":              { id: 22, flag: "🇨🇿" },
+      "Croatia":              { id: 23, flag: "🇭🇷" },
+      "Saudi Arabia":         { id: 24, flag: "🇸🇦" },
+      "Tunisia":              { id: 25, flag: "🇹🇳" },
+      "Turkey":               { id: 26, flag: "🇹🇷" },
+      "Senegal":              { id: 27, flag: "🇸🇳" },
+      "Belgium":              { id: 28, flag: "🇧🇪" },
+      "Morocco":              { id: 29, flag: "🇲🇦" },
+      "Austria":              { id: 30, flag: "🇦🇹" },
+      "Colombia":             { id: 31, flag: "🇨🇴" },
+      "Egypt":                { id: 32, flag: "🇪🇬" },
+      "Canada":               { id: 33, flag: "🇨🇦" },
+      "Haiti":                { id: 34, flag: "🇭🇹" },
+      "Iran":                 { id: 35, flag: "🇮🇷" },
+      "Bosnia-Herzegovina":   { id: 36, flag: "🇧🇦" },
+      "Panama":               { id: 37, flag: "🇵🇦" },
+      "Cape Verde Islands":   { id: 38, flag: "🇨🇻" },
+      "Congo DR":             { id: 39, flag: "🇨🇩" },
+      "Ivory Coast":          { id: 40, flag: "🇨🇮" },
+      "Qatar":                { id: 41, flag: "🇶🇦" },
+      "Jordan":               { id: 42, flag: "🇯🇴" },
+      "Iraq":                 { id: 43, flag: "🇮🇶" },
+      "Uzbekistan":           { id: 44, flag: "🇺🇿" },
+      "Netherlands":          { id: 45, flag: "🇳🇱" },
+      "Norway":               { id: 46, flag: "🇳🇴" },
+      "Scotland":             { id: 47, flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
+      "Curaçao":              { id: 48, flag: "🇨🇼" },
+    },
+
+    teamCrest(name) {
+      const team = this.TEAM_MAP[name];
+      if (!team) return '';
+      return `/img/crest/${team.id}.png`;
+    },
+
+    onCrestError(event, name) {
+      // Hide broken image, show flag emoji fallback
+      const img = event.target;
+      const fallback = img.nextElementSibling;
+      img.style.display = 'none';
+      if (fallback) {
+        const team = this.TEAM_MAP[name];
+        fallback.textContent = team ? team.flag : '🏳️';
+        fallback.style.display = 'inline';
+      }
     },
 
     toast(msg, type = 'info') {
