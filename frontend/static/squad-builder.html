@@ -921,8 +921,8 @@
                                     <template x-if="slot.player">
                                         <div class="jersey3d">
                                             <div class="jersey3d-shape">
-                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
-                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(slot.player.club) + ';'">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
                                                     <!-- sleeve highlight -->
                                                     <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                     <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
@@ -963,8 +963,8 @@
                                     <template x-if="slot.player">
                                         <div class="jersey3d">
                                             <div class="jersey3d-shape">
-                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
-                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke-width="1.2"/>
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(slot.player.club) + ';'">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke-width="1.2"/>
                                                     <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                     <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                 </svg>
@@ -1004,8 +1004,8 @@
                                     <template x-if="slot.player">
                                         <div class="jersey3d">
                                             <div class="jersey3d-shape">
-                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
-                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke-width="1.2"/>
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(slot.player.club) + ';'">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke-width="1.2"/>
                                                     <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                     <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                 </svg>
@@ -1045,8 +1045,8 @@
                                     <template x-if="slot.player">
                                         <div class="jersey3d">
                                             <div class="jersey3d-shape">
-                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()">
-                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="currentColor" stroke-width="1.2"/>
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(slot.player.club) + ';'">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke-width="1.2"/>
                                                     <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                     <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                 </svg>
@@ -1144,16 +1144,11 @@
                                             style="cursor: pointer"
                                         >
                                             <div class="jersey-shape">
-                                                <svg
-                                                    viewBox="0 0 60 55"
-                                                    class="jersey-svg"
-                                                    :class="'jersey-color-'+slot.player.pos.toLowerCase()"
-                                                >
-                                                    <path
-                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
-                                                        fill="currentColor"
-                                                        stroke-width="1"
-                                                    />
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(slot.player.club) + ';'">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+                                                    <!-- sleeve highlight -->
+                                                    <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                    <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                 </svg>
                                             </div>
                                             <span
@@ -1223,16 +1218,10 @@
                                             style="cursor: pointer"
                                         >
                                             <div class="jersey-shape">
-                                                <svg
-                                                    viewBox="0 0 60 55"
-                                                    class="jersey-svg"
-                                                    :class="'jersey-color-'+slot.player.pos.toLowerCase()"
-                                                >
-                                                    <path
-                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
-                                                        fill="currentColor"
-                                                        stroke-width="1"
-                                                    />
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(slot.player.club) + ';'">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke-width="1.2"/>
+                                                    <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                    <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                 </svg>
                                             </div>
                                             <span
@@ -1302,16 +1291,10 @@
                                             style="cursor: pointer"
                                         >
                                             <div class="jersey-shape">
-                                                <svg
-                                                    viewBox="0 0 60 55"
-                                                    class="jersey-svg"
-                                                    :class="'jersey-color-'+slot.player.pos.toLowerCase()"
-                                                >
-                                                    <path
-                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
-                                                        fill="currentColor"
-                                                        stroke-width="1"
-                                                    />
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(slot.player.club) + ';'">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke-width="1.2"/>
+                                                    <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                    <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                 </svg>
                                             </div>
                                             <span
@@ -1382,16 +1365,10 @@
                                             style="cursor: pointer"
                                         >
                                             <div class="jersey-shape">
-                                                <svg
-                                                    viewBox="0 0 60 55"
-                                                    class="jersey-svg"
-                                                    :class="'jersey-color-'+slot.player.pos.toLowerCase()"
-                                                >
-                                                    <path
-                                                        d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
-                                                        fill="currentColor"
-                                                        stroke-width="1"
-                                                    />
+                                                <svg viewBox="0 0 60 55" class="jersey3d-svg" :class="'jersey-color-'+slot.player.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(slot.player.club) + ';'">
+                                                    <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke-width="1.2"/>
+                                                    <path d="M10 12 L0 22 L12 26 L15 22 L22 18 Z" fill="rgba(255,255,255,0.12)"/>
+                                                    <path d="M50 12 L60 22 L48 26 L45 22 L38 18 Z" fill="rgba(255,255,255,0.12)"/>
                                                 </svg>
                                             </div>
                                             <span
@@ -1482,16 +1459,8 @@
                         >
                             <template x-if="bench !== null">
                                 <div class="bench-player">
-                                    <svg
-                                        viewBox="0 0 60 55"
-                                        class="bench-jersey"
-                                        :class="'jersey-color-'+bench.pos.toLowerCase()"
-                                    >
-                                        <path
-                                            d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
-                                            fill="currentColor"
-                                            stroke-width="1"
-                                        />
+                                    <svg viewBox="0 0 60 55" class="bench-jersey" :class="'jersey-color-'+bench.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(bench.club) + ';'">
+                                        <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke-width="1" />
                                     </svg>
                                     <span
                                         class="bench-name"
@@ -1724,18 +1693,10 @@
                         @click="!isLocked && togglePlayer(p)"
                     >
                         <div class="row-jersey-wrap">
-                            <svg
-                                viewBox="0 0 60 55"
-                                class="row-jersey"
-                                :class="'jersey-color-'+p.pos.toLowerCase()"
-                            >
-                                <path
-                                    d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
-                                    fill="currentColor"
-                                    stroke="rgba(255,255,255,0.25)"
-                                    stroke-width="1"
-                                />
+                            <svg viewBox="0 0 60 55" class="row-jersey" :class="'jersey-color-'+p.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(p.club) + ';'">
+                                <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke="rgba(255,255,255,0.25)" stroke-width="1" />
                             </svg>
+
                         </div>
                         <div class="row-info">
                             <div class="row-name" x-text="p.name"></div>
@@ -1833,17 +1794,9 @@
                     </div>
                     <template x-for="p in startersByPos(pos)" :key="p.id">
                         <div class="squad-row">
-                            <svg
-                                viewBox="0 0 60 55"
-                                class="squad-jersey"
-                                :class="'jersey-color-'+p.pos.toLowerCase()"
-                            >
-                                <path
-                                    d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
-                                    fill="currentColor"
-                                    stroke="rgba(255,255,255,0.25)"
-                                    stroke-width="1"
-                                />
+                            <!-- In the squad tab -->
+                            <svg viewBox="0 0 60 55" class="squad-jersey" :class="'jersey-color-'+p.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(p.club) + ';'">
+                                <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke="rgba(255,255,255,0.25)" stroke-width="1" />
                             </svg>
                             <div class="squad-info">
                                 <span class="squad-name" x-text="p.name"></span>
@@ -1884,18 +1837,10 @@
                 </div>
                 <template x-for="p in benchPlayers" :key="p.id">
                     <div class="squad-row">
-                        <svg
-                            viewBox="0 0 60 55"
-                            class="squad-jersey"
-                            :class="'jersey-color-'+p.pos.toLowerCase()"
-                        >
-                            <path
-                                d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z"
-                                fill="currentColor"
-                                stroke="rgba(255,255,255,0.25)"
-                                stroke-width="1"
-                            />
+                        <svg viewBox="0 0 60 55" class="bench-jersey" :class="'jersey-color-'+bench.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(bench.club) + ';'">
+                            <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke-width="1" />
                         </svg>
+
                         <div class="squad-info">
                             <span class="squad-name" x-text="p.name"></span>
                             <span class="squad-club" x-text="p.club"></span>
@@ -1956,7 +1901,7 @@
 
         <script>
             requireRole('user')
-            setupNavAuth(); 
+            setupNavAuth();
 
             // ─── PITCH 3D ALPINE COMPONENT ───────────────────────────────────────────────
             function pitch3D() {
@@ -2218,6 +2163,57 @@
                     ],
 
                     players: [],
+
+                    TEAM_MAP: {
+                      "Uruguay":            { id: 1,  color: "#6CB4EE" }, // Sky Blue
+                      "Germany":            { id: 2,  color: "#FFFFFF" }, // White
+                      "Spain":              { id: 3,  color: "#C60B1E" }, // Red
+                      "Paraguay":           { id: 4,  color: "#D52B1E" }, // Red
+                      "Argentina":          { id: 5,  color: "#75AADB" }, // Sky Blue
+                      "Ghana":              { id: 6,  color: "#FFFFFF" }, // White
+                      "Brazil":             { id: 7,  color: "#F7E017" }, // Yellow
+                      "Portugal":           { id: 8,  color: "#C8102E" }, // Red
+                      "Japan":              { id: 9,  color: "#0033A0" }, // Blue
+                      "Mexico":             { id: 10, color: "#006847" }, // Green
+                      "England":            { id: 11, color: "#FFFFFF" }, // White
+                      "United States":      { id: 12, color: "#1E3A8A" }, // Navy Blue
+                      "South Korea":        { id: 13, color: "#E10600" }, // Red
+                      "France":             { id: 14, color: "#1D428A" }, // Blue
+                      "South Africa":       { id: 15, color: "#F7E017" }, // Yellow
+                      "Algeria":            { id: 16, color: "#FFFFFF" }, // White
+                      "Australia":          { id: 17, color: "#F7C600" }, // Gold
+                      "New Zealand":        { id: 18, color: "#000000" }, // Black
+                      "Switzerland":        { id: 19, color: "#DA291C" }, // Red
+                      "Ecuador":            { id: 20, color: "#F7E017" }, // Yellow
+                      "Sweden":             { id: 21, color: "#FFCD00" }, // Yellow
+                      "Czechia":            { id: 22, color: "#C8102E" }, // Red
+                      "Croatia":            { id: 23, color: "#FFFFFF" }, // White
+                      "Saudi Arabia":       { id: 24, color: "#006C35" }, // Green
+                      "Tunisia":            { id: 25, color: "#E70013" }, // Red
+                      "Turkey":             { id: 26, color: "#FFFFFF" }, // White
+                      "Senegal":            { id: 27, color: "#FFFFFF" }, // White
+                      "Belgium":            { id: 28, color: "#D0103A" }, // Red
+                      "Morocco":            { id: 29, color: "#C1272D" }, // Red
+                      "Austria":            { id: 30, color: "#ED2939" }, // Red
+                      "Colombia":           { id: 31, color: "#FCD116" }, // Yellow
+                      "Egypt":              { id: 32, color: "#E41E20" }, // Red
+                      "Canada":             { id: 33, color: "#D80621" }, // Red
+                      "Haiti":              { id: 34, color: "#0038A8" }, // Blue
+                      "Iran":               { id: 35, color: "#FFFFFF" }, // White
+                      "Bosnia-Herzegovina": { id: 36, color: "#0057B8" }, // Blue
+                      "Panama":             { id: 37, color: "#C8102E" }, // Red
+                      "Cape Verde Islands": { id: 38, color: "#003893" }, // Blue
+                      "Congo DR":           { id: 39, color: "#00A3E0" }, // Sky Blue
+                      "Ivory Coast":        { id: 40, color: "#F77F00" }, // Orange
+                      "Qatar":              { id: 41, color: "#8A1538" }, // Maroon
+                      "Jordan":             { id: 42, color: "#FFFFFF" }, // White
+                      "Iraq":               { id: 43, color: "#FFFFFF" }, // White
+                      "Uzbekistan":         { id: 44, color: "#FFFFFF" }, // White
+                      "Netherlands":        { id: 45, color: "#FF6F00" }, // Orange
+                      "Norway":             { id: 46, color: "#BA0C2F" }, // Red
+                      "Scotland":           { id: 47, color: "#005EB8" }, // Blue
+                      "Curaçao":            { id: 48, color: "#003DA5" }, // Blue
+                    },
 
                     // ── INIT ──────────────────────────────────────────────────────────────────
                     async init() {
@@ -2749,9 +2745,9 @@
                         );
                         if (this.wildcardPlayerId === player.id)
                             this.wildcardPlayerId = null;
-                        
+
                         if (this.pendingSlot) this.pendingSlot = null;
-                        
+
                         this.normalizeSquad()
                         this.saveToLocalStorage();
                     },
@@ -2768,7 +2764,7 @@
 
                     normalizeSquad() {
                         if (!this.selectedPlayers.length) return;
-                        
+
                         // Starter limits per position (from current formation)
                         const starterLimits = {
                             GK: 1,
@@ -2776,13 +2772,13 @@
                             MF: this.currentFormation.mf,
                             FW: this.currentFormation.fw
                         };
-                        
+
                         // Group players by position, preserving original relative order within each group
                         const posGroups = { GK: [], DF: [], MF: [], FW: [] };
                         for (const p of this.selectedPlayers) {
                             posGroups[p.pos].push(p);
                         }
-                        
+
                         // Build new starters array (first 11) according to starterLimits
                         const newStarters = [];
                         for (const pos of ['GK', 'DF', 'MF', 'FW']) {
@@ -2794,21 +2790,21 @@
                             // Remaining players of this position go to bench (if any)
                             posGroups[pos] = available.slice(limit);
                         }
-                        
+
                         // Collect all remaining players (those not used as starters)
                         const remaining = [];
                         for (const pos of ['GK', 'DF', 'MF', 'FW']) {
                             remaining.push(...posGroups[pos]);
                         }
-                        
+
                         // Bench can hold max 4 players (the rest are never removed, but we cap at 4 because squad max is 15)
                         const newBench = remaining.slice(0, 4);
-                        
+
                         // Rebuild selectedPlayers: starters first (exactly 11, possibly with nulls? we keep only actual players)
                         // If we have fewer than 11 starters (incomplete squad), fill with undefined? No, just keep as many as we have.
                         // The important part is that the first N players are the correct starters.
                         this.selectedPlayers = [...newStarters, ...newBench];
-                        
+
                         // If total players exceed 15, the extra ones are dropped (should not happen with proper UI constraints)
                         if (this.selectedPlayers.length > 15) {
                             this.selectedPlayers = this.selectedPlayers.slice(0, 15);
@@ -2822,15 +2818,15 @@
                             MF: this.currentFormation.mf,
                             FW: this.currentFormation.fw,
                         };
-                        
+
                         // 1. Collect all current players (full squad)
                         const allPlayers = [...this.selectedPlayers];
                         if (allPlayers.length === 0) return;
-                        
+
                         // 2. Prepare groups: we will fill starters per position respecting limits
                         const newStarters = { GK: [], DF: [], MF: [], FW: [] };
                         const leftoverPool = []; // players who didn't get a starter slot
-                        
+
                         // 3. First pass: assign players to starters up to the limit, preserving original order
                         for (const player of allPlayers) {
                             const pos = player.pos;
@@ -2840,7 +2836,7 @@
                                 leftoverPool.push(player);
                             }
                         }
-                        
+
                         // 4. Build the final starters array (order: GK, DF, MF, FW – same as formation display)
                         const orderedStarters = [
                             ...newStarters.GK,
@@ -2848,10 +2844,10 @@
                             ...newStarters.MF,
                             ...newStarters.FW
                         ];
-                        
+
                         // 5. Bench: take up to 4 players from leftoverPool (in the order they appear)
                         const bench = leftoverPool.slice(0, 4);
-                        
+
                         // 6. Log any players that were moved from starter to bench due to limit changes
                         const previousStarters = this.starters;
                         const previousStarterIds = new Set(previousStarters.map(p => p.id));
@@ -2860,15 +2856,15 @@
                             const posMsg = [...new Set(movedToBench.map(p => p.pos))].join(', ');
                             this.toast(`Formación cambiada: ${movedToBench.length} jugador(es) de ${posMsg} movido(s) al banco.`);
                         }
-                        
+
                         // 7. Update selectedPlayers (starters first, then bench)
                         this.selectedPlayers = [...orderedStarters, ...bench];
-                        
+
                         // 8. Ensure we don't exceed 15 players (should not happen, but safe)
                         if (this.selectedPlayers.length > 15) {
                             this.selectedPlayers = this.selectedPlayers.slice(0, 15);
                         }
-                        
+
                         this.normalizeSquad(); // optional, but ensures consistency
                         this.saveToLocalStorage();
                     },
@@ -3022,6 +3018,10 @@
                             el.classList.remove("show");
                             setTimeout(() => el.remove(), 300);
                         }, 2700);
+                    },
+
+                    getTeamColor(teamName) {
+                        return this.TEAM_MAP[teamName]?.color || "#FFFFFF";
                     },
 
                     // ── POINTS TAB ────────────────────────────────────────────────────────────
