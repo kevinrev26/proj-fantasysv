@@ -470,23 +470,13 @@
     }
 
     /* highlighted row (current user) */
-    .current-user-row {
+    .current-user-row td {
       background: linear-gradient(90deg, rgba(13, 71, 255, 0.15), rgba(123, 44, 255, 0.1));
-      border-left: 4px solid var(--primary-blue);
-      box-shadow: inset 0 0 0 1px rgba(13, 71, 255, 0.2);
-      position: relative;
-      z-index: 2;
+      border-bottom: 1px solid rgba(13, 71, 255, 0.3);
     }
 
-    .current-user-row::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, transparent, rgba(13, 71, 255, 0.05), transparent);
-      z-index: 1;
+    .current-user-row td:first-child {
+      border-left: 4px solid var(--primary-blue);
     }
 
     .user-badge {
