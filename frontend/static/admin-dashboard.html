@@ -447,6 +447,65 @@
                     Import</button>
                 <div class="console" id="log-teams"></div>
             </div>
+
+            <!-- Interactive Team Manager -->
+            <div class="card">
+                <h2>🛡️ Interactive Team Manager</h2>
+                <div class="instructions">
+                    Select a Season and League to manage teams manually. You can set the tournament phase where a team is eliminated, which automatically deactivates their players.
+                </div>
+
+                <div class="form-group" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1rem;">
+                    <div>
+                        <label for="team-manager-season">Season</label>
+                        <select id="team-manager-season" onchange="loadLeaguesForTeamSeason()" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:200px;outline:none;">
+                            <option value="">— select season —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="team-manager-league">League</label>
+                        <select id="team-manager-league" onchange="loadTeamsForSelectedLeague()" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:200px;outline:none;">
+                            <option value="">— select league —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Create form -->
+                <details style="margin-bottom:1.2rem;" id="team-create-details">
+                    <summary style="cursor:pointer;font-weight:700;color:var(--secondary-color);padding:6px 0;">➕ Create new team</summary>
+                    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                        <div>
+                            <label for="team-new-name">Team Name</label>
+                            <input id="team-new-name" type="text" placeholder="e.g. Real Madrid"
+                                style="background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;font-size:0.9rem;width:200px;outline:none;">
+                        </div>
+                        <button onclick="createTeam()" style="margin-bottom:0;">Create</button>
+                    </div>
+                </details>
+
+                <!-- Teams table -->
+                <div id="team-table-wrap" style="display:none;overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                        <thead>
+                            <tr style="background:var(--surface-color-light);">
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);width:80px;">ID</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">Name</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">Eliminated In Phase</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);width:180px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="team-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="team-empty" style="display:none;color:var(--text-muted);padding:1rem 0;font-size:0.9rem;">No teams found for this league.</div>
+                <div id="team-error" style="display:none;margin-top:1rem;background:rgba(255,51,102,0.08);border-left:4px solid var(--danger-color);padding:.8rem 1.2rem;border-radius:0 8px 8px 0;color:var(--danger-color);font-size:0.9rem;"></div>
+            </div>
         </section>
 
         <!-- PLAYERS -->
@@ -465,6 +524,108 @@
                     onclick="processCSV('csv-players', '/admin/teams/{team_id}/players', ['name', 'position', 'tier', 'credit_value'])">Run
                     Import</button>
                 <div class="console" id="log-players"></div>
+            </div>
+
+            <!-- Interactive Player Manager -->
+            <div class="card">
+                <h2>🏃 Interactive Player Manager</h2>
+                <div class="instructions">
+                    Select a Season, League, and Team to manage players manually. You can toggle player active status, edit name, position, tier, credit value, or delete players.
+                </div>
+
+                <div class="form-group" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1rem;">
+                    <div>
+                        <label for="player-manager-season">Season</label>
+                        <select id="player-manager-season" onchange="loadLeaguesForPlayerSeason()" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:180px;outline:none;">
+                            <option value="">— select season —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="player-manager-league">League</label>
+                        <select id="player-manager-league" onchange="loadTeamsForPlayerLeague()" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:180px;outline:none;">
+                            <option value="">— select league —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="player-manager-team">Team</label>
+                        <select id="player-manager-team" onchange="loadPlayersForSelectedTeam()" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:180px;outline:none;">
+                            <option value="">— select team —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Create form -->
+                <details style="margin-bottom:1.2rem;" id="player-create-details">
+                    <summary style="cursor:pointer;font-weight:700;color:var(--secondary-color);padding:6px 0;">➕ Create new player</summary>
+                    <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:10px;align-items:flex-end;">
+                        <div>
+                            <label for="player-new-name">Name</label>
+                            <input id="player-new-name" type="text" placeholder="e.g. Lionel Messi"
+                                style="background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;font-size:0.9rem;width:100%;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label for="player-new-position">Position</label>
+                            <select id="player-new-position" style="
+                                background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                                color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                                font-size:0.9rem;width:100%;outline:none;">
+                                <option value="GK">GK</option>
+                                <option value="DF">DF</option>
+                                <option value="MF">MF</option>
+                                <option value="FW">FW</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="player-new-tier">Tier</label>
+                            <select id="player-new-tier" style="
+                                background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                                color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                                font-size:0.9rem;width:100%;outline:none;">
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="player-new-credits">Credit Value</label>
+                            <input id="player-new-credits" type="number" min="1" max="100" value="10"
+                                style="background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;font-size:0.9rem;width:100%;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <button onclick="createPlayer()" style="margin-bottom:0;width:100%;">Create</button>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- Players table -->
+                <div id="player-table-wrap" style="display:none;overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                        <thead>
+                            <tr style="background:var(--surface-color-light);">
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);width:80px;">ID</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">Name</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);width:100px;">Position</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);width:80px;">Tier</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);width:100px;">Credits</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);width:100px;">Active</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);width:180px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="player-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="player-empty" style="display:none;color:var(--text-muted);padding:1rem 0;font-size:0.9rem;">No players found for this team.</div>
+                <div id="player-error" style="display:none;margin-top:1rem;background:rgba(255,51,102,0.08);border-left:4px solid var(--danger-color);padding:.8rem 1.2rem;border-radius:0 8px 8px 0;color:var(--danger-color);font-size:0.9rem;"></div>
             </div>
         </section>
 
@@ -502,6 +663,89 @@
                 <button onclick="processCSV('csv-phases', '/admin/seasons/{season_id}/phases', ['name'])">Run
                     Import</button>
                 <div class="console" id="log-phases"></div>
+            </div>
+
+            <!-- Interactive Phase Manager -->
+            <div class="card">
+                <h2>🏆 Interactive Phase & Elimination Manager</h2>
+                <div class="instructions">
+                    Select a season to view, create, edit, or delete tournament phases, and manage team eliminations for each phase.
+                </div>
+
+                <div class="form-group" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:1rem;">
+                    <div>
+                        <label for="phase-manager-season">Season</label>
+                        <select id="phase-manager-season" onchange="loadPhasesForSelectedSeason()" style="
+                            background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                            color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                            font-size:0.9rem;min-width:200px;outline:none;">
+                            <option value="">— select season —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Create form -->
+                <details style="margin-bottom:1.2rem;" id="phase-create-details">
+                    <summary style="cursor:pointer;font-weight:700;color:var(--secondary-color);padding:6px 0;">➕ Create new phase</summary>
+                    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                        <div>
+                            <label for="phase-new-name">Phase Name</label>
+                            <select id="phase-new-name" style="
+                                background:var(--bg-color);border:1px solid rgba(255,255,255,0.1);
+                                color:var(--text-color);padding:0.7rem 1rem;border-radius:8px;
+                                font-size:0.9rem;min-width:200px;outline:none;">
+                                <option value="round_of_64">round_of_64</option>
+                                <option value="round_of_32">round_of_32</option>
+                                <option value="round_of_16">round_of_16</option>
+                                <option value="group">group</option>
+                                <option value="quarterfinal">quarterfinal</option>
+                                <option value="semifinal">semifinal</option>
+                                <option value="final">final</option>
+                            </select>
+                        </div>
+                        <button onclick="createPhase()" style="margin-bottom:0;">Create</button>
+                    </div>
+                </details>
+
+                <!-- Phases table -->
+                <div id="phase-table-wrap" style="display:none;overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                        <thead>
+                            <tr style="background:var(--surface-color-light);">
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);width:80px;">ID</th>
+                                <th style="padding:.65rem 1rem;text-align:left;color:var(--text-muted);">Name</th>
+                                <th style="padding:.65rem 1rem;text-align:center;color:var(--text-muted);width:350px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="phase-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="phase-empty" style="display:none;color:var(--text-muted);padding:1rem 0;font-size:0.9rem;">No phases found for this season.</div>
+                <div id="phase-error" style="display:none;margin-top:1rem;background:rgba(255,51,102,0.08);border-left:4px solid var(--danger-color);padding:.8rem 1.2rem;border-radius:0 8px 8px 0;color:var(--danger-color);font-size:0.9rem;"></div>
+            </div>
+
+            <!-- Eliminations Modal -->
+            <div id="elim-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)closeElimModal()">
+                <div style="background:var(--surface-color);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem;width:550px;max-width:95vw;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;">
+                    <h3 id="elim-modal-title" style="margin:0 0 0.5rem;font-size:1.1rem;color:var(--secondary-color);">Manage Team Eliminations</h3>
+                    <p id="elim-modal-subtitle" style="margin:0 0 1.5rem;font-size:0.9rem;color:var(--text-muted);"></p>
+                    
+                    <input type="hidden" id="elim-modal-phase-id">
+                    
+                    <div id="elim-modal-loading" style="text-align:center;padding:2rem;color:var(--text-muted);">
+                        ⏳ Loading teams and elimination states...
+                    </div>
+                    
+                    <div id="elim-teams-list" style="display:none;flex:1;overflow-y:auto;max-height:350px;margin-bottom:1.5rem;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:0.5rem;">
+                        <!-- Checkboxes will be populated here -->
+                    </div>
+
+                    <div id="elim-modal-error" style="display:none;background:rgba(255,51,102,0.08);border-left:4px solid var(--danger-color);padding:.7rem 1rem;border-radius:0 8px 8px 0;color:var(--danger-color);font-size:0.85rem;margin-bottom:1rem;"></div>
+
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <button onclick="closeElimModal()" style="background:var(--primary-color);color:#fff;border:none;border-radius:8px;padding:0.65rem 1.6rem;cursor:pointer;font-size:0.9rem;font-weight:700;">Close</button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1361,7 +1605,738 @@
             document.querySelector('[data-target="export-sec"]').addEventListener('click', () => {
                 if (document.getElementById('export-season').options.length === 1) loadSeasonsForExport();
             });
+
+            document.querySelector('[data-target="phases-sec"]').addEventListener('click', () => {
+                loadSeasonsForPhaseManager();
+            });
+            document.querySelector('[data-target="teams-sec"]').addEventListener('click', () => {
+                loadSeasonsForTeamManager();
+            });
+            document.querySelector('[data-target="players-sec"]').addEventListener('click', () => {
+                loadSeasonsForPlayerManager();
+            });
         })();
+
+        // ── Phase Manager CRUD & Eliminations ────────────────────────────────────
+        let _pmPhases = [];
+        let _pmSeasonTeams = [];
+
+        async function loadSeasonsForPhaseManager() {
+            try {
+                const res = await authFetch('/seasons/');
+                if (!res.ok) return;
+                const data = await res.json();
+                const sel = document.getElementById('phase-manager-season');
+                sel.innerHTML = '<option value="">— select season —</option>';
+                (data.seasons || []).forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.id; o.textContent = s.name;
+                    sel.appendChild(o);
+                });
+            } catch (_) {}
+        }
+
+        async function loadPhasesForSelectedSeason() {
+            const seasonId = document.getElementById('phase-manager-season').value;
+            const tableWrap = document.getElementById('phase-table-wrap');
+            const emptyEl = document.getElementById('phase-empty');
+            const errEl = document.getElementById('phase-error');
+            
+            tableWrap.style.display = 'none';
+            emptyEl.style.display = 'none';
+            errEl.style.display = 'none';
+            
+            if (!seasonId) return;
+
+            try {
+                const res = await authFetch(`/admin/phases?season_id=${seasonId}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                _pmPhases = await res.json();
+                renderPhasesTable();
+            } catch (e) {
+                errEl.textContent = `Error loading phases: ${e.message}`;
+                errEl.style.display = 'block';
+            }
+        }
+
+        function renderPhasesTable() {
+            const tbody = document.getElementById('phase-tbody');
+            const tableWrap = document.getElementById('phase-table-wrap');
+            const emptyEl = document.getElementById('phase-empty');
+            tbody.innerHTML = '';
+
+            if (!_pmPhases.length) {
+                emptyEl.style.display = 'block';
+                return;
+            }
+            tableWrap.style.display = 'block';
+
+            _pmPhases.forEach(phase => {
+                const tr = document.createElement('tr');
+                tr.id = `phase-row-${phase.id}`;
+                tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                tr.innerHTML = phaseRowHtml(phase);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function phaseRowHtml(p) {
+            return `
+                <td style="padding:.6rem 1rem;color:var(--text-muted);">${p.id}</td>
+                <td style="padding:.6rem 1rem;font-weight:600;">${escHtml(p.name)}</td>
+                <td style="padding:.6rem 1rem;text-align:center;display:flex;gap:6px;justify-content:center;">
+                    <button onclick="openElimModal(${p.id}, '${escHtml(p.name)}')"
+                        style="background:rgba(0,240,255,0.1);color:var(--secondary-color);border:1px solid rgba(0,240,255,0.2);border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:0.82rem;font-weight:600;">🛡️ Manage Eliminations</button>
+                    <button onclick="phaseStartEdit(${p.id})"
+                        style="background:rgba(255,200,80,.12);color:#ffc850;border:none;border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:0.82rem;">✏️ Edit</button>
+                    <button onclick="deletePhase(${p.id})"
+                        style="background:rgba(255,80,80,.12);color:#ff5050;border:none;border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:0.82rem;">✕</button>
+                </td>`;
+        }
+
+        function phaseStartEdit(id) {
+            const p = _pmPhases.find(x => x.id === id);
+            if (!p) return;
+            const tr = document.getElementById(`phase-row-${id}`);
+            const options = ["round_of_64", "round_of_32", "round_of_16", "group", "quarterfinal", "semifinal", "final"];
+            tr.innerHTML = `
+                <td style="padding:.5rem .8rem;color:var(--text-muted);">${id}</td>
+                <td style="padding:.5rem .8rem;">
+                    <select id="phase-edit-name-${id}"
+                        style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
+                            color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.82rem;">
+                        ${options.map(o => `<option value="${o}" ${p.name === o ? 'selected' : ''}>${o}</option>`).join('')}
+                    </select>
+                </td>
+                <td style="padding:.5rem .8rem;display:flex;gap:6px;justify-content:center;">
+                    <button onclick="savePhaseEdit(${id})"
+                        style="background:var(--secondary-color);color:#0d1b2e;border:none;border-radius:6px;
+                            padding:4px 12px;cursor:pointer;font-size:.82rem;font-weight:700;">💾</button>
+                    <button onclick="cancelPhaseEdit(${id})"
+                        style="background:rgba(255,255,255,.07);color:var(--text-muted);border:none;border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:.82rem;">✕</button>
+                </td>`;
+        }
+
+        function cancelPhaseEdit(id) {
+            const p = _pmPhases.find(x => x.id === id);
+            const tr = document.getElementById(`phase-row-${id}`);
+            if (p && tr) tr.innerHTML = phaseRowHtml(p);
+        }
+
+        async function savePhaseEdit(id) {
+            const name = document.getElementById(`phase-edit-name-${id}`)?.value;
+            try {
+                const res = await authFetch(`/admin/phases/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                const updated = await res.json();
+                const idx = _pmPhases.findIndex(x => x.id === id);
+                if (idx !== -1) _pmPhases[idx] = updated;
+                cancelPhaseEdit(id);
+            } catch (e) {
+                alert(`Save failed: ${e.message}`);
+            }
+        }
+
+        async function deletePhase(id) {
+            if (!confirm(`Delete tournament phase #${id}?`)) return;
+            try {
+                const res = await authFetch(`/admin/phases/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                _pmPhases = _pmPhases.filter(x => x.id !== id);
+                renderPhasesTable();
+            } catch (e) {
+                alert(`Delete failed: ${e.message}`);
+            }
+        }
+
+        async function createPhase() {
+            const seasonId = document.getElementById('phase-manager-season').value;
+            const name = document.getElementById('phase-new-name').value;
+            if (!seasonId) return alert('Select a season first');
+            try {
+                const res = await authFetch(`/admin/seasons/${seasonId}/phases`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                await loadPhasesForSelectedSeason();
+            } catch (e) {
+                alert(`Create failed: ${e.message}`);
+            }
+        }
+
+        // ── Eliminations Modal ───────────────────────────────────────────────────
+        async function openElimModal(phaseId, phaseName) {
+            const seasonId = document.getElementById('phase-manager-season').value;
+            document.getElementById('elim-modal-phase-id').value = phaseId;
+            document.getElementById('elim-modal-title').textContent = `🛡️ Manage Team Eliminations — ${phaseName}`;
+            document.getElementById('elim-modal-subtitle').textContent = `Teams eliminated in this phase will have all their players deactivated in the database.`;
+            document.getElementById('elim-modal-loading').style.display = 'block';
+            document.getElementById('elim-teams-list').style.display = 'none';
+            document.getElementById('elim-modal-error').style.display = 'none';
+            document.getElementById('elim-modal-overlay').style.display = 'flex';
+
+            try {
+                const res = await authFetch(`/admin/teams?season_id=${seasonId}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                _pmSeasonTeams = await res.json();
+                renderElimTeams(phaseId);
+            } catch (e) {
+                const errEl = document.getElementById('elim-modal-error');
+                errEl.textContent = `Failed to load teams: ${e.message}`;
+                errEl.style.display = 'block';
+                document.getElementById('elim-modal-loading').style.display = 'none';
+            }
+        }
+
+        function closeElimModal() {
+            document.getElementById('elim-modal-overlay').style.display = 'none';
+        }
+
+        function renderElimTeams(phaseId) {
+            const container = document.getElementById('elim-teams-list');
+            document.getElementById('elim-modal-loading').style.display = 'none';
+            container.style.display = 'block';
+            container.innerHTML = '';
+
+            if (!_pmSeasonTeams.length) {
+                container.innerHTML = '<div style="color:var(--text-muted);padding:1rem;text-align:center;">No teams found for this season.</div>';
+                return;
+            }
+
+            _pmSeasonTeams.sort((a,b) => a.name.localeCompare(b.name)).forEach(t => {
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.justifyContent = 'space-between';
+                div.style.padding = '0.5rem';
+                div.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+
+                const isThisPhase = t.eliminated_in_phase_id === phaseId;
+                const isOtherPhase = t.eliminated_in_phase_id !== null && t.eliminated_in_phase_id !== phaseId;
+                
+                let checkState = '';
+                if (isThisPhase) checkState = 'checked';
+                
+                let labelExtra = '';
+                let disabledAttr = '';
+                if (isOtherPhase) {
+                    labelExtra = ` <span style="font-size:0.75rem;color:var(--danger-color);font-weight:600;">(Eliminated in other phase)</span>`;
+                    disabledAttr = 'disabled';
+                }
+
+                div.innerHTML = `
+                    <label style="cursor:pointer;flex:1;display:flex;align-items:center;gap:10px;">
+                        <input type="checkbox" ${checkState} ${disabledAttr} onchange="toggleTeamElimination(this, ${t.id}, ${phaseId})" style="cursor:pointer;">
+                        <span>${escHtml(t.name)}${labelExtra}</span>
+                    </label>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function toggleTeamElimination(checkbox, teamId, phaseId) {
+            const errEl = document.getElementById('elim-modal-error');
+            errEl.style.display = 'none';
+            checkbox.disabled = true;
+
+            try {
+                const action = checkbox.checked ? 'eliminate' : 'restore';
+                const res = await authFetch(`/admin/phase/${phaseId}/${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ team_ids: [teamId] })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `HTTP ${res.status}`);
+                }
+
+                const idx = _pmSeasonTeams.findIndex(t => t.id === teamId);
+                if (idx !== -1) {
+                    _pmSeasonTeams[idx].eliminated_in_phase_id = checkbox.checked ? phaseId : null;
+                }
+            } catch (e) {
+                checkbox.checked = !checkbox.checked;
+                errEl.textContent = `Operation failed: ${e.message}`;
+                errEl.style.display = 'block';
+            } finally {
+                checkbox.disabled = false;
+            }
+        }
+
+        // ── Team Manager CRUD ────────────────────────────────────────────────────
+        let _tmTeams = [];
+        let _tmPhases = [];
+
+        async function loadSeasonsForTeamManager() {
+            try {
+                const res = await authFetch('/seasons/');
+                if (!res.ok) return;
+                const data = await res.json();
+                const sel = document.getElementById('team-manager-season');
+                sel.innerHTML = '<option value="">— select season —</option>';
+                (data.seasons || []).forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.id; o.textContent = s.name;
+                    sel.appendChild(o);
+                });
+            } catch (_) {}
+        }
+
+        async function loadLeaguesForTeamSeason() {
+            const seasonId = document.getElementById('team-manager-season').value;
+            const leagueSel = document.getElementById('team-manager-league');
+            leagueSel.innerHTML = '<option value="">— select league —</option>';
+            document.getElementById('team-table-wrap').style.display = 'none';
+            document.getElementById('team-empty').style.display = 'none';
+            
+            if (!seasonId) return;
+
+            try {
+                const resPhases = await authFetch(`/admin/phases?season_id=${seasonId}`);
+                if (resPhases.ok) _tmPhases = await resPhases.json();
+
+                const resLeagues = await authFetch(`/seasons/${seasonId}/leagues`);
+                if (resLeagues.ok) {
+                    const data = await resLeagues.json();
+                    (data.leagues || []).forEach(l => {
+                        const o = document.createElement('option');
+                        o.value = l.id; o.textContent = l.name;
+                        leagueSel.appendChild(o);
+                    });
+                }
+            } catch (_) {}
+        }
+
+        async function loadTeamsForSelectedLeague() {
+            const leagueId = document.getElementById('team-manager-league').value;
+            const tableWrap = document.getElementById('team-table-wrap');
+            const emptyEl = document.getElementById('team-empty');
+            const errEl = document.getElementById('team-error');
+            
+            tableWrap.style.display = 'none';
+            emptyEl.style.display = 'none';
+            errEl.style.display = 'none';
+            
+            if (!leagueId) return;
+
+            try {
+                const res = await authFetch(`/admin/teams?league_id=${leagueId}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                _tmTeams = await res.json();
+                renderTeamsTable();
+            } catch (e) {
+                errEl.textContent = `Error loading teams: ${e.message}`;
+                errEl.style.display = 'block';
+            }
+        }
+
+        function renderTeamsTable() {
+            const tbody = document.getElementById('team-tbody');
+            const tableWrap = document.getElementById('team-table-wrap');
+            const emptyEl = document.getElementById('team-empty');
+            tbody.innerHTML = '';
+
+            if (!_tmTeams.length) {
+                emptyEl.style.display = 'block';
+                return;
+            }
+            tableWrap.style.display = 'block';
+
+            _tmTeams.forEach(team => {
+                const tr = document.createElement('tr');
+                tr.id = `team-row-${team.id}`;
+                tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                tr.innerHTML = teamRowHtml(team);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function teamRowHtml(t) {
+            const elimOptions = _tmPhases.map(p => `
+                <option value="${p.id}" ${t.eliminated_in_phase_id === p.id ? 'selected' : ''}>${escHtml(p.name)}</option>
+            `).join('');
+            
+            return `
+                <td style="padding:.6rem 1rem;color:var(--text-muted);">${t.id}</td>
+                <td style="padding:.6rem 1rem;font-weight:600;">${escHtml(t.name)}</td>
+                <td style="padding:.6rem 1rem;">
+                    <select onchange="changeTeamEliminationPhase(${t.id}, this.value)" style="
+                        background:var(--bg-color);border:1px solid rgba(255,255,255,0.15);color:var(--text-color);
+                        padding:4px 8px;border-radius:6px;font-size:0.82rem;cursor:pointer;">
+                        <option value="">— Active —</option>
+                        ${elimOptions}
+                    </select>
+                </td>
+                <td style="padding:.6rem 1rem;text-align:center;display:flex;gap:6px;justify-content:center;">
+                    <button onclick="teamStartEdit(${t.id})"
+                        style="background:rgba(255,200,80,.12);color:#ffc850;border:none;border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:0.82rem;">✏️ Edit</button>
+                    <button onclick="deleteTeam(${t.id})"
+                        style="background:rgba(255,80,80,.12);color:#ff5050;border:none;border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:0.82rem;">✕</button>
+                </td>`;
+        }
+
+        function teamStartEdit(id) {
+            const t = _tmTeams.find(x => x.id === id);
+            if (!t) return;
+            const tr = document.getElementById(`team-row-${id}`);
+            tr.innerHTML = `
+                <td style="padding:.5rem .8rem;color:var(--text-muted);">${id}</td>
+                <td style="padding:.5rem .8rem;">
+                    <input id="team-edit-name-${id}" value="${escHtml(t.name)}"
+                        style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
+                            color:var(--text-color);padding:4px 8px;border-radius:6px;font-size:.88rem;width:200px;">
+                </td>
+                <td></td>
+                <td style="padding:.5rem .8rem;display:flex;gap:6px;justify-content:center;">
+                    <button onclick="saveTeamEdit(${id})"
+                        style="background:var(--secondary-color);color:#0d1b2e;border:none;border-radius:6px;
+                            padding:4px 12px;cursor:pointer;font-size:.82rem;font-weight:700;">💾</button>
+                    <button onclick="cancelTeamEdit(${id})"
+                        style="background:rgba(255,255,255,.07);color:var(--text-muted);border:none;border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:.82rem;">✕</button>
+                </td>`;
+        }
+
+        function cancelTeamEdit(id) {
+            const t = _tmTeams.find(x => x.id === id);
+            const tr = document.getElementById(`team-row-${id}`);
+            if (t && tr) tr.innerHTML = teamRowHtml(t);
+        }
+
+        async function saveTeamEdit(id) {
+            const name = document.getElementById(`team-edit-name-${id}`)?.value?.trim();
+            if (!name) return alert('Name is required');
+            try {
+                const res = await authFetch(`/admin/teams/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                const updated = await res.json();
+                const idx = _tmTeams.findIndex(x => x.id === id);
+                if (idx !== -1) _tmTeams[idx] = updated;
+                cancelTeamEdit(id);
+            } catch (e) {
+                alert(`Save failed: ${e.message}`);
+            }
+        }
+
+        async function deleteTeam(id) {
+            if (!confirm(`Delete team #${id}?`)) return;
+            try {
+                const res = await authFetch(`/admin/teams/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                _tmTeams = _tmTeams.filter(x => x.id !== id);
+                renderTeamsTable();
+            } catch (e) {
+                alert(`Delete failed: ${e.message}`);
+            }
+        }
+
+        async function changeTeamEliminationPhase(teamId, phaseId) {
+            try {
+                const val = phaseId ? parseInt(phaseId) : null;
+                const res = await authFetch(`/admin/teams/${teamId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ eliminated_in_phase_id: val }),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                const updated = await res.json();
+                const idx = _tmTeams.findIndex(x => x.id === teamId);
+                if (idx !== -1) _tmTeams[idx] = updated;
+                
+                const tr = document.getElementById(`team-row-${teamId}`);
+                if (tr) tr.innerHTML = teamRowHtml(_tmTeams[idx]);
+            } catch (e) {
+                alert(`Failed to update elimination status: ${e.message}`);
+                loadTeamsForSelectedLeague();
+            }
+        }
+
+        async function createTeam() {
+            const leagueId = document.getElementById('team-manager-league').value;
+            const name = document.getElementById('team-new-name').value.trim();
+            if (!leagueId) return alert('Select a league first');
+            if (!name) return alert('Team name is required');
+            try {
+                const res = await authFetch(`/admin/leagues/${leagueId}/teams`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name }),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                document.getElementById('team-new-name').value = '';
+                await loadTeamsForSelectedLeague();
+            } catch (e) {
+                alert(`Create failed: ${e.message}`);
+            }
+        }
+
+        // ── Player Manager CRUD ──────────────────────────────────────────────────
+        let _pmPlayers = [];
+
+        async function loadSeasonsForPlayerManager() {
+            try {
+                const res = await authFetch('/seasons/');
+                if (!res.ok) return;
+                const data = await res.json();
+                const sel = document.getElementById('player-manager-season');
+                sel.innerHTML = '<option value="">— select season —</option>';
+                (data.seasons || []).forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.id; o.textContent = s.name;
+                    sel.appendChild(o);
+                });
+            } catch (_) {}
+        }
+
+        async function loadLeaguesForPlayerSeason() {
+            const seasonId = document.getElementById('player-manager-season').value;
+            const leagueSel = document.getElementById('player-manager-league');
+            leagueSel.innerHTML = '<option value="">— select league —</option>';
+            document.getElementById('player-manager-team').innerHTML = '<option value="">— select team —</option>';
+            document.getElementById('player-table-wrap').style.display = 'none';
+            document.getElementById('player-empty').style.display = 'none';
+            if (!seasonId) return;
+
+            try {
+                const res = await authFetch(`/seasons/${seasonId}/leagues`);
+                if (res.ok) {
+                    const data = await res.json();
+                    (data.leagues || []).forEach(l => {
+                        const o = document.createElement('option');
+                        o.value = l.id; o.textContent = l.name;
+                        leagueSel.appendChild(o);
+                    });
+                }
+            } catch (_) {}
+        }
+
+        async function loadTeamsForPlayerLeague() {
+            const leagueId = document.getElementById('player-manager-league').value;
+            const teamSel = document.getElementById('player-manager-team');
+            teamSel.innerHTML = '<option value="">— select team —</option>';
+            document.getElementById('player-table-wrap').style.display = 'none';
+            document.getElementById('player-empty').style.display = 'none';
+            if (!leagueId) return;
+
+            try {
+                const res = await authFetch(`/admin/teams?league_id=${leagueId}`);
+                if (res.ok) {
+                    const teams = await res.json();
+                    teams.forEach(t => {
+                        const o = document.createElement('option');
+                        o.value = t.id; o.textContent = t.name;
+                        teamSel.appendChild(o);
+                    });
+                }
+            } catch (_) {}
+        }
+
+        async function loadPlayersForSelectedTeam() {
+            const teamId = document.getElementById('player-manager-team').value;
+            const tableWrap = document.getElementById('player-table-wrap');
+            const emptyEl = document.getElementById('player-empty');
+            const errEl = document.getElementById('player-error');
+            
+            tableWrap.style.display = 'none';
+            emptyEl.style.display = 'none';
+            errEl.style.display = 'none';
+            
+            if (!teamId) return;
+
+            try {
+                const res = await authFetch(`/admin/players?team_id=${teamId}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                _pmPlayers = await res.json();
+                renderPlayersTable();
+            } catch (e) {
+                errEl.textContent = `Error loading players: ${e.message}`;
+                errEl.style.display = 'block';
+            }
+        }
+
+        function renderPlayersTable() {
+            const tbody = document.getElementById('player-tbody');
+            const tableWrap = document.getElementById('player-table-wrap');
+            const emptyEl = document.getElementById('player-empty');
+            tbody.innerHTML = '';
+
+            if (!_pmPlayers.length) {
+                emptyEl.style.display = 'block';
+                return;
+            }
+            tableWrap.style.display = 'block';
+
+            _pmPlayers.forEach(player => {
+                const tr = document.createElement('tr');
+                tr.id = `player-row-${player.id}`;
+                tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                tr.innerHTML = playerRowHtml(player);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function playerRowHtml(p) {
+            return `
+                <td style="padding:.6rem 1rem;color:var(--text-muted);">${p.id}</td>
+                <td style="padding:.6rem 1rem;font-weight:600;">${escHtml(p.name)}</td>
+                <td style="padding:.6rem 1rem;color:var(--text-muted);">${escHtml(p.position)}</td>
+                <td style="padding:.6rem 1rem;text-align:left;">${escHtml(p.tier)}</td>
+                <td style="padding:.6rem 1rem;text-align:left;">${p.credit_value}</td>
+                <td style="padding:.6rem 1rem;text-align:center;">
+                    <input type="checkbox" ${p.is_active ? 'checked' : ''} onchange="togglePlayerActive(${p.id}, this.checked)" style="cursor:pointer;">
+                </td>
+                <td style="padding:.6rem 1rem;text-align:center;display:flex;gap:6px;justify-content:center;">
+                    <button onclick="playerStartEdit(${p.id})"
+                        style="background:rgba(255,200,80,.12);color:#ffc850;border:none;border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:0.82rem;">✏️ Edit</button>
+                    <button onclick="deletePlayer(${p.id})"
+                        style="background:rgba(255,80,80,.12);color:#ff5050;border:none;border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:0.82rem;">✕</button>
+                </td>`;
+        }
+
+        function playerStartEdit(id) {
+            const p = _pmPlayers.find(x => x.id === id);
+            if (!p) return;
+            const tr = document.getElementById(`player-row-${id}`);
+            const positions = ["GK", "DF", "MF", "FW"];
+            const tiers = ["A", "B", "C", "D"];
+            tr.innerHTML = `
+                <td style="padding:.5rem .8rem;color:var(--text-muted);">${id}</td>
+                <td style="padding:.5rem .8rem;">
+                    <input id="player-edit-name-${id}" value="${escHtml(p.name)}"
+                        style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
+                            color:var(--text-color);padding:4px 8px;border-radius:6px;font-size:.88rem;width:120px;">
+                </td>
+                <td style="padding:.5rem .8rem;">
+                    <select id="player-edit-pos-${id}"
+                        style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
+                            color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.82rem;">
+                        ${positions.map(pos => `<option value="${pos}" ${p.position === pos ? 'selected' : ''}>${pos}</option>`).join('')}
+                    </select>
+                </td>
+                <td style="padding:.5rem .8rem;">
+                    <select id="player-edit-tier-${id}"
+                        style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
+                            color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.82rem;">
+                        ${tiers.map(t => `<option value="${t}" ${p.tier === t ? 'selected' : ''}>${t}</option>`).join('')}
+                    </select>
+                </td>
+                <td style="padding:.5rem .8rem;">
+                    <input id="player-edit-credits-${id}" type="number" min="1" max="100" value="${p.credit_value}"
+                        style="background:var(--bg-color);border:1px solid rgba(255,255,255,.15);
+                            color:var(--text-color);padding:4px 6px;border-radius:6px;font-size:.8rem;width:50px;">
+                </td>
+                <td></td>
+                <td style="padding:.5rem .8rem;display:flex;gap:6px;justify-content:center;">
+                    <button onclick="savePlayerEdit(${id})"
+                        style="background:var(--secondary-color);color:#0d1b2e;border:none;border-radius:6px;
+                            padding:4px 12px;cursor:pointer;font-size:.82rem;font-weight:700;">💾</button>
+                    <button onclick="cancelPlayerEdit(${id})"
+                        style="background:rgba(255,255,255,.07);color:var(--text-muted);border:none;border-radius:6px;
+                            padding:4px 10px;cursor:pointer;font-size:.82rem;">✕</button>
+                </td>`;
+        }
+
+        function cancelPlayerEdit(id) {
+            const p = _pmPlayers.find(x => x.id === id);
+            const tr = document.getElementById(`player-row-${id}`);
+            if (p && tr) tr.innerHTML = playerRowHtml(p);
+        }
+
+        async function savePlayerEdit(id) {
+            const name = document.getElementById(`player-edit-name-${id}`)?.value?.trim();
+            const position = document.getElementById(`player-edit-pos-${id}`)?.value;
+            const tier = document.getElementById(`player-edit-tier-${id}`)?.value;
+            const credit_value = parseInt(document.getElementById(`player-edit-credits-${id}`)?.value);
+
+            if (!name) return alert('Name is required');
+            try {
+                const res = await authFetch(`/admin/players/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, position, tier, credit_value }),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                const updated = await res.json();
+                const idx = _pmPlayers.findIndex(x => x.id === id);
+                if (idx !== -1) _pmPlayers[idx] = updated;
+                cancelPlayerEdit(id);
+            } catch (e) {
+                alert(`Save failed: ${e.message}`);
+            }
+        }
+
+        async function togglePlayerActive(id, is_active) {
+            try {
+                const res = await authFetch(`/admin/players/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active }),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                const updated = await res.json();
+                const idx = _pmPlayers.findIndex(x => x.id === id);
+                if (idx !== -1) _pmPlayers[idx] = updated;
+            } catch (e) {
+                alert(`Failed to update status: ${e.message}`);
+                loadPlayersForSelectedTeam();
+            }
+        }
+
+        async function deletePlayer(id) {
+            if (!confirm(`Delete player #${id}?`)) return;
+            try {
+                const res = await authFetch(`/admin/players/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                _pmPlayers = _pmPlayers.filter(x => x.id !== id);
+                renderPlayersTable();
+            } catch (e) {
+                alert(`Delete failed: ${e.message}`);
+            }
+        }
+
+        async function createPlayer() {
+            const teamId = document.getElementById('player-manager-team').value;
+            const name = document.getElementById('player-new-name').value.trim();
+            const position = document.getElementById('player-new-position').value;
+            const tier = document.getElementById('player-new-tier').value;
+            const creditValue = parseInt(document.getElementById('player-new-credits').value) || 10;
+            if (!teamId) return alert('Select a team first');
+            if (!name) return alert('Player name is required');
+            try {
+                const res = await authFetch(`/admin/teams/${teamId}/players`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, position, tier, credit_value: creditValue }),
+                });
+                if (!res.ok) throw new Error((await res.json()).detail || `HTTP ${res.status}`);
+                document.getElementById('player-new-name').value = '';
+                document.getElementById('player-new-credits').value = '10';
+                await loadPlayersForSelectedTeam();
+            } catch (e) {
+                alert(`Create failed: ${e.message}`);
+            }
+        }
+
 
     </script>
 </body>

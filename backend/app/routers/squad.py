@@ -24,20 +24,20 @@ Inter-matchday transfer rules
 
 from __future__ import annotations
 
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .. import models
-from .auth import get_redis
 from ..database import get_db
+from ..dependencies import get_current_user
 from ..services.lock_guard import assert_matchday_unlocked
 from ..services.matchday_lock_service import process_matchday_lock
-from ..dependencies import get_current_user
+from .auth import get_redis
 
 router = APIRouter(prefix="/squad", tags=["squad"])
 
@@ -144,69 +144,69 @@ def _get_config_int(db: Session, key: str, default: int) -> int:
 # ---------------------------------------------------------------------------
 # Inter-matchday free-transfer carry-over logic
 # ---------------------------------------------------------------------------
+# COMMENTED BECAUSE THIS FUNCTIONALITY IS NOT REQUIRED FOR THIS VERSION
 
+# def _compute_available_free_transfers(
+#     db: Session,
+#     team: models.FantasyTeam,
+#     matchday: models.Matchday,
+#     base_allowance: int,
+# ) -> int:
+#     """
+#     Compute how many free transfers are available for *matchday*.
 
-def _compute_available_free_transfers(
-    db: Session,
-    team: models.FantasyTeam,
-    matchday: models.Matchday,
-    base_allowance: int,
-) -> int:
-    """
-    Compute how many free transfers are available for *matchday*.
+#     Rules
+#     ─────
+#     1. Count how many free transfers were *used* in the previous closed matchday.
+#     2. Unused free transfers from the previous matchday carry over by 1 (max 1 banked).
+#        → available = base_allowance + min(1, unused_in_prev_matchday)
+#     3. At a league-phase boundary, the carry-over bank is discarded:
+#        → available = base_allowance   (fresh start for the new phase)
+#     4. Subtract transfers already used in the current matchday.
+#     5. Floor at 0.
 
-    Rules
-    ─────
-    1. Count how many free transfers were *used* in the previous closed matchday.
-    2. Unused free transfers from the previous matchday carry over by 1 (max 1 banked).
-       → available = base_allowance + min(1, unused_in_prev_matchday)
-    3. At a league-phase boundary, the carry-over bank is discarded:
-       → available = base_allowance   (fresh start for the new phase)
-    4. Subtract transfers already used in the current matchday.
-    5. Floor at 0.
+#     Phase boundary detection
+#     ────────────────────────
+#     The schema does not attach TournamentPhase to Matchday directly.
+#     We use the heuristic: if the matchday name changes prefix (e.g. "MD1" vs
+#     "Group MD1"), treat it as a phase change.  Operators can also set the
+#     SystemConfig key FORCE_TRANSFER_RESET_MATCHDAY_IDS to a comma-separated
+#     list of matchday IDs that should trigger a reset.
+#     """
+#     prev = _last_closed_matchday(db, matchday.season_id, matchday.id)
 
-    Phase boundary detection
-    ────────────────────────
-    The schema does not attach TournamentPhase to Matchday directly.
-    We use the heuristic: if the matchday name changes prefix (e.g. "MD1" vs
-    "Group MD1"), treat it as a phase change.  Operators can also set the
-    SystemConfig key FORCE_TRANSFER_RESET_MATCHDAY_IDS to a comma-separated
-    list of matchday IDs that should trigger a reset.
-    """
-    prev = _last_closed_matchday(db, matchday.season_id, matchday.id)
+#     # Check operator-forced phase reset list
+#     reset_ids_raw = _get_config_str(db, "FORCE_TRANSFER_RESET_MATCHDAY_IDS", "")
+#     forced_reset_ids = {
+#         int(x.strip()) for x in reset_ids_raw.split(",") if x.strip().isdigit()
+#     }
+#     is_phase_boundary = matchday.id in forced_reset_ids
 
-    # Check operator-forced phase reset list
-    reset_ids_raw = _get_config_str(db, "FORCE_TRANSFER_RESET_MATCHDAY_IDS", "")
-    forced_reset_ids = {
-        int(x.strip()) for x in reset_ids_raw.split(",") if x.strip().isdigit()
-    }
-    is_phase_boundary = matchday.id in forced_reset_ids
+#     carryover = 0
+#     if not is_phase_boundary and prev is not None:
+#         prev_used = (
+#             db.query(func.count(models.Transfer.id))
+#             .filter(
+#                 models.Transfer.fantasy_team_id == team.id,
+#                 models.Transfer.matchday_id == prev.id,
+#             )
+#             .scalar()
+#         ) or 0
+#         unused_prev = max(0, base_allowance - prev_used)
+#         carryover = min(1, unused_prev)  # bank at most 1
 
-    carryover = 0
-    if not is_phase_boundary and prev is not None:
-        prev_used = (
-            db.query(func.count(models.Transfer.id))
-            .filter(
-                models.Transfer.fantasy_team_id == team.id,
-                models.Transfer.matchday_id == prev.id,
-            )
-            .scalar()
-        ) or 0
-        unused_prev = max(0, base_allowance - prev_used)
-        carryover = min(1, unused_prev)  # bank at most 1
+#     total_available = base_allowance + carryover
 
-    total_available = base_allowance + carryover
+#     already_used = (
+#         db.query(func.count(models.Transfer.id))
+#         .filter(
+#             models.Transfer.fantasy_team_id == team.id,
+#             models.Transfer.matchday_id == matchday.id,
+#         )
+#         .scalar()
+#     ) or 0
 
-    already_used = (
-        db.query(func.count(models.Transfer.id))
-        .filter(
-            models.Transfer.fantasy_team_id == team.id,
-            models.Transfer.matchday_id == matchday.id,
-        )
-        .scalar()
-    ) or 0
-
-    return max(0, total_available - already_used)
+#     return max(0, total_available - already_used)
 
 
 def _get_config_str(db: Session, key: str, default: str) -> str:
@@ -255,9 +255,9 @@ def get_all_players(db: Session = Depends(get_db)):
 
 @router.get("/")
 def get_squad(
-    request: Request, 
+    request: Request,
     current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     user_id = current_user.id
     season = _active_season(db)
@@ -267,22 +267,25 @@ def get_squad(
     # Evaluate and flip the lock for the entire matchday if the deadline has passed.
     # This is idempotent and covers all fixtures — the lock time is derived from the
     # earliest kickoff across ALL fixtures in the matchday (see matchday_lock_service).
-    if matchday:
-        process_matchday_lock(matchday, db)
+    # COMMENTED because we do not want transfer limit in this version.
+    # if matchday:
+    #     process_matchday_lock(matchday, db)
 
-    base_allowance = _get_config_int(db, "free_transfers_per_matchday", 1)
+    # base_allowance = _get_config_int(db, "free_transfers_per_matchday", 1)
 
-    free_remaining = base_allowance
-    if matchday and team:
-        free_remaining = _compute_available_free_transfers(
-            db, team, matchday, base_allowance
-        )
+    # free_remaining = base_allowance
+    # if matchday and team:
+    #     free_remaining = _compute_available_free_transfers(
+    #         db, team, matchday, base_allowance
+    #     )
 
     if not team:
         return {
             "squad": [],
             "budget": 100,
-            "free_transfers_remaining": base_allowance,
+            # Default formation id.
+            "formation_id": "4-4-2",
+            # "free_transfers_remaining": base_allowance,
             "is_locked": matchday.is_locked if matchday else False,
             "deadline": (
                 _earliest_non_finished_fixture_match(db, matchday.id).isoformat()
@@ -307,17 +310,18 @@ def get_squad(
     return {
         "squad": players,
         "budget": 100 - total_cost,
-        "free_transfers_remaining": free_remaining,
+        "formation_id": team.formation_id,
+        # "free_transfers_remaining": free_remaining,
         "is_locked": matchday.is_locked if matchday else False,
-        "deadline": matchday.lock_at_utc if matchday else False
+        "deadline": matchday.lock_at_utc if matchday else False,
     }
 
 
 @router.get("/points")
 def get_squad_points(
-    request: Request, 
+    request: Request,
     current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Return fantasy points for the current user's squad for the most recent
@@ -407,9 +411,9 @@ def get_squad_points(
 
 @router.get("/points/all-matchdays")
 def get_points_all_matchdays(
-    request: Request, 
+    request: Request,
     current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Return per-matchday fantasy points for the current user's squad,
@@ -495,9 +499,9 @@ def get_points_all_matchdays(
 
 @router.get("/leaderboard")
 def get_leaderboard(
-    request: Request, 
+    request: Request,
     current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     user_id = current_user.id
     season = (
@@ -591,43 +595,47 @@ def update_squad(
         db.add(team)
         db.flush()
 
-    base_allowance = _get_config_int(db, "free_transfers_per_matchday", 1)
+    team.formation_id = payload.formation_id
 
-    current_fps = {
-        fp.player_id: fp
-        for fp in db.query(models.FantasyPlayer)
-        .filter(models.FantasyPlayer.fantasy_team_id == team.id)
-        .all()
-    }
-    new_player_ids = {p.player_id for p in payload.players}
-    old_player_ids = set(current_fps.keys())
+    # COMMENTED, SEE _compute_available_free_transfers
+    # base_allowance = _get_config_int(db, "free_transfers_per_matchday", 1)
 
-    removed_ids = old_player_ids - new_player_ids
-    added_ids = new_player_ids - old_player_ids
+    # current_fps = {
+    #     fp.player_id: fp
+    #     for fp in db.query(models.FantasyPlayer)
+    #     .filter(models.FantasyPlayer.fantasy_team_id == team.id)
+    #     .all()
+    # }
+    # new_player_ids = {p.player_id for p in payload.players}
+    # old_player_ids = set(current_fps.keys())
 
-    is_initialization = len(old_player_ids) == 0
-    total_penalty = 0
+    # removed_ids = old_player_ids - new_player_ids
+    # added_ids = new_player_ids - old_player_ids
 
-    if not is_initialization:
-        available_free = _compute_available_free_transfers(
-            db, team, matchday, base_allowance
-        )
-        # Count paid transfers
-        non_eliminated_removals = 0
-        if removed_ids:
-            removed_players = (
-                db.query(models.Player)
-                .filter(models.Player.id.in_(list(removed_ids)))
-                .all()
-            )
-            for p in removed_players:
-                if p.team and p.team.eliminated_in_phase_id is not None:
-                    pass  # free swap for eliminated player
-                else:
-                    non_eliminated_removals += 1
+    # is_initialization = len(old_player_ids) == 0
+    # COMMENTED, SEE _compute_available_free_transfers
+    # total_penalty = 0
 
-        paid = max(0, non_eliminated_removals - available_free)
-        total_penalty = paid * 4
+    # if not is_initialization:
+    #     available_free = _compute_available_free_transfers(
+    #         db, team, matchday, base_allowance
+    #     )
+    #     # Count paid transfers
+    #     non_eliminated_removals = 0
+    #     if removed_ids:
+    #         removed_players = (
+    #             db.query(models.Player)
+    #             .filter(models.Player.id.in_(list(removed_ids)))
+    #             .all()
+    #         )
+    #         for p in removed_players:
+    #             if p.team and p.team.eliminated_in_phase_id is not None:
+    #                 pass  # free swap for eliminated player
+    #             else:
+    #                 non_eliminated_removals += 1
+
+    #     paid = max(0, non_eliminated_removals - available_free)
+    #     total_penalty = paid * 4
 
     # Replace squad
     db.query(models.FantasyPlayer).filter(
@@ -650,55 +658,58 @@ def update_squad(
             )
         )
 
+    # COMMENTED, SEE _compute_available_free_transfers
     # Record transfer history
-    if not is_initialization and (added_ids or removed_ids):
-        list_rem = list(removed_ids)
-        list_add = list(added_ids)
-        paid_left = max(
-            0,
-            len(list_rem)
-            - _compute_available_free_transfers(db, team, matchday, base_allowance),
-        )
+    # if not is_initialization and (added_ids or removed_ids):
+    #     list_rem = list(removed_ids)
+    #     list_add = list(added_ids)
+    #     paid_left = max(
+    #         0,
+    #         len(list_rem)
+    #         - _compute_available_free_transfers(db, team, matchday, base_allowance),
+    #     )
 
-        for i in range(max(len(list_rem), len(list_add))):
-            r_id = list_rem[i] if i < len(list_rem) else None
-            a_id = list_add[i] if i < len(list_add) else None
-            if r_id and a_id:
-                cost = 4 if paid_left > 0 else 0
-                if paid_left > 0:
-                    paid_left -= 1
-                db.add(
-                    models.Transfer(
-                        fantasy_team_id=team.id,
-                        matchday_id=matchday.id,
-                        player_out_id=r_id,
-                        player_in_id=a_id,
-                        cost=cost,
-                    )
-                )
-
-    if total_penalty > 0:
-        ts = (
-            db.query(models.TeamScore)
-            .filter(
-                models.TeamScore.fantasy_team_id == team.id,
-                models.TeamScore.matchday_id == matchday.id,
-            )
-            .first()
-        )
-        if not ts:
-            ts = models.TeamScore(
-                fantasy_team_id=team.id,
-                matchday_id=matchday.id,
-                points_this_matchday=0,
-                cumulative_points=0,
-                transfer_penalty=0,
-            )
-            db.add(ts)
-        ts.transfer_penalty += total_penalty
+    #     for i in range(max(len(list_rem), len(list_add))):
+    #         r_id = list_rem[i] if i < len(list_rem) else None
+    #         a_id = list_add[i] if i < len(list_add) else None
+    #         if r_id and a_id:
+    #             cost = 4 if paid_left > 0 else 0
+    #             if paid_left > 0:
+    #                 paid_left -= 1
+    #             db.add(
+    #                 models.Transfer(
+    #                     fantasy_team_id=team.id,
+    #                     matchday_id=matchday.id,
+    #                     player_out_id=r_id,
+    #                     player_in_id=a_id,
+    #                     cost=cost,
+    #                 )
+    #             )
+    # COMMENTED, SEE _compute_available_free_transfers
+    # if total_penalty > 0:
+    #     ts = (
+    #         db.query(models.TeamScore)
+    #         .filter(
+    #             models.TeamScore.fantasy_team_id == team.id,
+    #             models.TeamScore.matchday_id == matchday.id,
+    #         )
+    #         .first()
+    #     )
+    #     if not ts:
+    #         ts = models.TeamScore(
+    #             fantasy_team_id=team.id,
+    #             matchday_id=matchday.id,
+    #             points_this_matchday=0,
+    #             cumulative_points=0,
+    #             transfer_penalty=0,
+    #         )
+    #         db.add(ts)
+    #     ts.transfer_penalty += total_penalty
 
     db.commit()
-    return {"status": "success", "penalty_incurred": total_penalty}
+    # COMMENTED, SEE _compute_available_free_transfers
+    # return {"status": "success", "penalty_incurred": total_penalty}
+    return {"status": "success"}
 
 
 @router.post("/captain")
@@ -840,7 +851,9 @@ def get_global_leaderboard(
     predictor_rows = (
         db.query(
             models.PredictionMatchdayStats.user_id,
-            func.sum(models.PredictionMatchdayStats.total_points).label("predictor_total"),
+            func.sum(models.PredictionMatchdayStats.total_points).label(
+                "predictor_total"
+            ),
         )
         .join(
             models.Matchday,
@@ -850,7 +863,9 @@ def get_global_leaderboard(
         .group_by(models.PredictionMatchdayStats.user_id)
         .all()
     )
-    predictor_by_user: dict[int, int] = {r.user_id: r.predictor_total for r in predictor_rows}
+    predictor_by_user: dict[int, int] = {
+        r.user_id: r.predictor_total for r in predictor_rows
+    }
 
     # ── 3. Build leaderboard ─────────────────────────────────────────────────
     leaderboard = []
@@ -901,11 +916,12 @@ def get_global_leaderboard(
 
     return {"leaderboard": leaderboard}
 
+
 @router.get("/matchday_leaderboard")
 def get_matchday_leaderboard(
-    request: Request, 
+    request: Request,
     current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Return the leaderboard for each matchday and aggregate for each one of them.
@@ -968,11 +984,11 @@ def get_matchday_leaderboard(
 
 @router.get("/weekly_leaderboard")
 def get_weekly_leaderboard(
-    request: Request, 
+    request: Request,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
     start_date: date = Query(None),
-    end_date: date = Query(None)
+    end_date: date = Query(None),
 ):
     user_id = current_user.id
     season = (
@@ -988,9 +1004,7 @@ def get_weekly_leaderboard(
 
     leaderboard_entries = (
         db.query(models.LeaderboardWeeklyEntry)
-        .filter(
-            models.LeaderboardWeeklyEntry.date.between(start_date, end_date)
-        )
+        .filter(models.LeaderboardWeeklyEntry.date.between(start_date, end_date))
         .all()
     )
 
@@ -1014,3 +1028,124 @@ def get_weekly_leaderboard(
         entry["rank"] = idx + 1
 
     return {"leaderboard": leaderboard}
+
+
+# ---------------------------------------------------------------------------
+# NEW ENDPOINTS FOR PLAYER POINTS
+# ---------------------------------------------------------------------------
+
+
+@router.get("/points/{matchday_id}")
+def get_player_points_for_matchday(
+    matchday_id: int,
+    request: Request,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Return fantasy points for the current user's squad for a specific matchday.
+    """
+    user_id = current_user.id
+    season = _active_season(db)
+    team = _fantasy_team(db, user_id, season.id)
+
+    if not team:
+        return {"players": []}
+
+    # Get all player points for this matchday and team
+    player_points = (
+        db.query(models.PlayerPoints)
+        .join(
+            models.FantasyPlayer,
+            models.PlayerPoints.fantasy_player_id == models.FantasyPlayer.id,
+        )
+        .filter(
+            models.PlayerPoints.matchday_id == matchday_id,
+            models.FantasyPlayer.fantasy_team_id == team.id,
+        )
+        .all()
+    )
+
+    # Build response with player details
+    result = []
+    for pp in player_points:
+        fp = pp.fantasy_player
+        p = fp.player
+        result.append(
+            {
+                "player_id": p.id,
+                "name": p.name,
+                "pos": p.position.value,
+                "club": p.team.name if p.team else "",
+                "slot": fp.slot.value,
+                "is_x2_joker": fp.is_x2_joker,
+                "points": pp.points,
+            }
+        )
+
+    return {"players": result}
+
+
+@router.get("/players/points")
+def get_player_points_all_matchdays(
+    request: Request,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Return points for the current user's squad across all matchdays.
+    """
+    user_id = current_user.id
+    season = _active_season(db)
+    team = _fantasy_team(db, user_id, season.id)
+
+    if not team:
+        return {"matchdays": []}
+
+    # Get all matchdays with player points for this team
+    matchday_points = (
+        db.query(models.Matchday, models.PlayerPoints, models.FantasyPlayer)
+        .join(
+            models.PlayerPoints, models.PlayerPoints.matchday_id == models.Matchday.id
+        )
+        .join(
+            models.FantasyPlayer,
+            models.PlayerPoints.fantasy_player_id == models.FantasyPlayer.id,
+        )
+        .filter(models.FantasyPlayer.fantasy_team_id == team.id)
+        .order_by(models.Matchday.id.asc())
+        .all()
+    )
+
+    # Group by matchday
+    result = []
+    matchday_map = {}
+
+    for matchday, player_point, fantasy_player in matchday_points:
+        if matchday.id not in matchday_map:
+            matchday_map[matchday.id] = {
+                "matchday": {
+                    "id": matchday.id,
+                    "name": matchday.name,
+                    "status": matchday.status.value,
+                },
+                "players": [],
+            }
+
+        p = fantasy_player.player
+        matchday_map[matchday.id]["players"].append(
+            {
+                "player_id": p.id,
+                "name": p.name,
+                "pos": p.position.value,
+                "club": p.team.name if p.team else "",
+                "slot": fantasy_player.slot.value,
+                "is_x2_joker": fantasy_player.is_x2_joker,
+                "points": player_point.points,
+            }
+        )
+
+    # Convert to list
+    result = list(matchday_map.values())
+
+    return {"matchdays": result}

@@ -1,19 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
-from .. import models, schemas, security
-from ..database import get_db
-from ..security import get_current_user_id_from_token
-from ..config import settings
 import redis
 import structlog
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+
+from .. import models, schemas, security
+from ..config import settings
+from ..database import get_db
+from ..security import get_current_user_id_from_token
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["Authentication"]
-)
+router = APIRouter(prefix="/auth", tags=["Authentication"])
+
 
 # ── Redis client (same instance used by the rest of the app) ─────────────────
 def get_redis():
@@ -43,7 +42,11 @@ def is_token_blocklisted(token: str) -> bool:
 
 
 # ── Register ─────────────────────────────────────────────────────────────────
-@router.post("/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=schemas.UserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if not (3 <= len(user.username) <= 20):
         raise HTTPException(status_code=422, detail="Username must be 3-20 characters")
@@ -54,11 +57,15 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if len(user.password) < 8:
         raise HTTPException(status_code=422, detail="Password must be 8+ characters")
 
-    existing_email = db.query(models.User).filter(models.User.email == user.email).first()
+    existing_email = (
+        db.query(models.User).filter(models.User.email == user.email).first()
+    )
     if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    existing_username = db.query(models.User).filter(models.User.username == user.username).first()
+    existing_username = (
+        db.query(models.User).filter(models.User.username == user.username).first()
+    )
     if existing_username:
         raise HTTPException(status_code=400, detail="Username already taken")
 
@@ -79,15 +86,23 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 # ── Activate ─────────────────────────────────────────────────────────────────
 @router.post("/activate", response_model=schemas.UserResponse)
-def activate_account(payload: schemas.ActivateAccountRequest, db: Session = Depends(get_db)):
+def activate_account(
+    payload: schemas.ActivateAccountRequest, db: Session = Depends(get_db)
+):
     """Activate a user account using the one-time token."""
-    user = db.query(models.User).filter(
-        models.User.activation_token == payload.token,
-        models.User.is_active == False
-    ).first()
+    user = (
+        db.query(models.User)
+        .filter(
+            models.User.activation_token == payload.token,
+            models.User.is_active == False,
+        )
+        .first()
+    )
 
     if not user:
-        raise HTTPException(status_code=400, detail="Invalid or already used activation token.")
+        raise HTTPException(
+            status_code=400, detail="Invalid or already used activation token."
+        )
 
     user.is_active = True
     user.activation_token = None
@@ -99,9 +114,7 @@ def activate_account(payload: schemas.ActivateAccountRequest, db: Session = Depe
 # ── Onboarding ────────────────────────────────────────────────────────────────
 @router.post("/onboarding", response_model=schemas.TeamResponse)
 def complete_onboarding(
-    payload: schemas.SetTeamNameRequest,
-    request: Request,
-    db: Session = Depends(get_db)
+    payload: schemas.SetTeamNameRequest, request: Request, db: Session = Depends(get_db)
 ):
     """Complete onboarding by creating a fantasy team."""
     user_id = get_current_user_id_from_token(request)
@@ -113,7 +126,9 @@ def complete_onboarding(
 
     team_name = payload.team_name.strip()
     if len(team_name) < 2 or len(team_name) > 50:
-        raise HTTPException(status_code=400, detail="Team name must be between 2 and 50 characters")
+        raise HTTPException(
+            status_code=400, detail="Team name must be between 2 and 50 characters"
+        )
 
     league = db.query(models.League).first()
     if not league:
@@ -122,7 +137,9 @@ def complete_onboarding(
     fantasy_team = models.FantasyTeam(
         name=team_name,
         user_id=user_id,
-        season_id=league.season_id
+        season_id=league.season_id,
+        # create a default 4-4-2 formation
+        formation_id="4-4-2",
     )
     db.add(fantasy_team)
     db.commit()
@@ -149,14 +166,20 @@ def get_current_user_profile(request: Request, db: Session = Depends(get_db)):
 # ── Login ─────────────────────────────────────────────────────────────────────
 @router.post("/login", response_model=schemas.Token)
 def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
-    user = db.query(models.User).filter(
-        (models.User.email == form_data.username) | (models.User.username == form_data.username)
-    ).first()
+    user = (
+        db.query(models.User)
+        .filter(
+            (models.User.email == form_data.username)
+            | (models.User.username == form_data.username)
+        )
+        .first()
+    )
 
-    if not user or not security.verify_password(form_data.password, user.hashed_password):
+    if not user or not security.verify_password(
+        form_data.password, user.hashed_password
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -169,15 +192,15 @@ def login_for_access_token(
             detail="Account not activated. Please check your email.",
         )
 
-    access_token  = security.create_access_token_for_user(user)
+    access_token = security.create_access_token_for_user(user)
     refresh_token = security.create_refresh_token_for_user(user)
 
     logger.info("User logged in", user_id=user.id, username=user.username)
 
     return {
-        "access_token":  access_token,
+        "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type":    "bearer",
+        "token_type": "bearer",
     }
 
 
@@ -205,6 +228,7 @@ def logout(request: Request):
     if jti and exp:
         try:
             import time
+
             ttl = max(int(exp - time.time()), 1)  # seconds until natural expiry
             r = get_redis()
             r.setex(_blocklist_key(jti), ttl, "1")
@@ -213,4 +237,6 @@ def logout(request: Request):
             logger.error("Failed to blocklist token", error=str(e))
             # Don't fail the logout — client will clear its token anyway
     else:
-        logger.warning("Logout token missing jti/exp — cannot blocklist", payload=payload)
+        logger.warning(
+            "Logout token missing jti/exp — cannot blocklist", payload=payload
+        )

@@ -46,75 +46,92 @@ function setupNavAuth() {
   const style = document.createElement('style');
   style.id = 'nav-auth-styles';
   style.textContent = `
+  #nav-auth {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .nav-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    font-family: inherit;
+    font-size: .82rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all .2s ease;
+    line-height: 1.4;
+  }
+
+  /* ── Logged-in: logout button ── */
+  .nav-auth-logout {
+    background: rgba(255, 61, 77, .08);
+    color: #FF3D4D;
+    border: 1px solid rgba(255, 61, 77, .18);
+  }
+
+  .nav-auth-logout:hover {
+    background: rgba(255, 61, 77, .16);
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(255, 61, 77, .25);
+  }
+
+  /* ── Logged-out: login link ── */
+  .nav-auth-login {
+    background: rgba(255,255,255,.04);
+    color: rgba(255,255,255,.75);
+    border: 1px solid rgba(255,255,255,.08);
+  }
+
+  .nav-auth-login:hover {
+    background: rgba(13, 71, 255, .12);
+    border-color: rgba(13, 71, 255, .35);
+    color: #0D47FF;
+    box-shadow: 0 0 12px rgba(13, 71, 255, .20);
+  }
+
+  /* ── Logged-out: register link (World Cup accent) ── */
+  .nav-auth-register {
+    background: linear-gradient(
+      135deg,
+      #0D47FF 0%,
+      #7B2CFF 100%
+    );
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(13, 71, 255, .25);
+  }
+
+  .nav-auth-register:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 20px rgba(13, 71, 255, .35),
+      0 0 30px rgba(123, 44, 255, .20);
+    opacity: 1;
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 680px) {
     #nav-auth {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      gap: 4px;
+      margin-top: 4px;
     }
 
     .nav-auth-btn {
-      display: inline-flex;
-      align-items: center;
-      font-family: inherit;
-      font-size: .82rem;
-      font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 50px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      white-space: nowrap;
-      transition: background .15s, color .15s, opacity .15s;
-      line-height: 1.4;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: .85rem;
     }
-
-    /* ── Logged-in: logout button ── */
-    .nav-auth-logout {
-      background: transparent;
-      color: rgba(232,240,255,.45);
-    }
-    .nav-auth-logout:hover {
-      background: rgba(255, 77, 109, .1);
-      color: #ff4d6d;
-    }
-
-    /* ── Logged-out: login link ── */
-    .nav-auth-login {
-      background: transparent;
-      color: rgba(232,240,255,.55);
-    }
-    .nav-auth-login:hover {
-      background: rgba(255,255,255,.07);
-      color: #e8f0ff;
-    }
-
-    /* ── Logged-out: register link (accented) ── */
-    .nav-auth-register {
-      background: #00d4aa;
-      color: #080e1c;
-    }
-    .nav-auth-register:hover {
-      background: #00b894;
-      opacity: .92;
-    }
-
-    /* ── Mobile: stack vertically inside any open mobile menu ── */
-    @media (max-width: 680px) {
-      #nav-auth {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-        gap: 4px;
-        margin-top: 4px;
-      }
-      .nav-auth-btn {
-        justify-content: center;
-        padding: 10px 14px;
-        border-radius: 10px;
-        font-size: .85rem;
-      }
-    }
-  `;
+  }
+`;
   document.head.appendChild(style);
 }());

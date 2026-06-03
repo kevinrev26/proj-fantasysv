@@ -26,24 +26,44 @@ services:
     networks:
       - fantasy_net
 
-  fastapi:
-    build: ./backend
+  umami_db:
+    image: postgres:15
     env_file:
       - .env
-    volumes:
-      - ./backend:/app
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
-      SECRET_KEY: ${SECRET_KEY}
-    command: bash ./entrypoint.sh
+      POSTGRES_USER: ${UMAMI_USER}
+      POSTGRES_PASSWORD: ${UMAMI_PASSWORD}
+      POSTGRES_DB: ${UMAMI_DATABASE}
+    volumes:
+      - umami_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${UMAMI_USER} -d ${UMAMI_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fantasy_net
+
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    environment:
+      DATABASE_URL: ${UMAMI_DATABASE_URL}
+      APP_SECRET: ${UMAMI_APP_SECRET}
+      UMAMI_DEFAULT_EMAIL: ${UMAMI_DEFAULT_EMAIL}
+      UMAMI_DEFAULT_PASSWORD: ${UMAMI_DEFAULT_PASSWORD}
     ports:
-      - "8000:8000"
+      - "3000:3000"
     depends_on:
-      db:
+      umami_db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:3000/api/heartbeat || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     networks:
       - fantasy_net
 
@@ -67,17 +87,48 @@ services:
     networks:
       - fantasy_net
 
+  fastapi:
+    build: ./backend
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      SECRET_KEY: ${SECRET_KEY}
+    command: bash ./entrypoint.sh
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      umami:
+        condition: service_healthy
+    networks:
+      - fantasy_net
+
   frontend:
     build: ./frontend
+    environment:
+      UMAMI_SCRIPT_URL: ${UMAMI_SCRIPT_URL}
+      UMAMI_WEBSITE_ID: ${UMAMI_WEBSITE_ID}
+      NGINX_ENVSUBST_FILTER: "UMAMI_SCRIPT_URL UMAMI_WEBSITE_ID"
     ports:
       - "80:80"
     depends_on:
-      - fastapi
+      fastapi:
+        condition: service_started
+      umami:
+        condition: service_healthy
     networks:
       - fantasy_net
 
 volumes:
   postgres_data:
+  umami_postgres_data:
 
 networks:
   fantasy_net:
