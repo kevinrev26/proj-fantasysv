@@ -342,6 +342,13 @@ def update_player(player_id: int, payload: schemas.PlayerUpdate, db: Session = D
     if not player:
         raise HTTPException(status_code=404, detail="Player not found")
         
+    if payload.name is not None:
+        player.name = payload.name
+    if payload.position is not None:
+        try:
+            player.position = models.PlayerPosition(payload.position)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid position")
     if payload.is_active is not None:
         player.is_active = payload.is_active
     if payload.credit_value is not None:
@@ -972,4 +979,168 @@ def export_players(season_id: Optional[int] = None, db: Session = Depends(get_db
             for player, team in rows
         ]
     }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TournamentPhase CRUD endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/phases", response_model=List[schemas.TournamentPhaseResponse])
+def list_tournament_phases(season_id: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(models.TournamentPhase)
+    if season_id is not None:
+        query = query.filter(models.TournamentPhase.season_id == season_id)
+    return query.all()
+
+@router.get("/phases/{phase_id}", response_model=schemas.TournamentPhaseResponse)
+def get_tournament_phase(phase_id: int, db: Session = Depends(get_db)):
+    phase = db.query(models.TournamentPhase).filter(models.TournamentPhase.id == phase_id).first()
+    if not phase:
+        raise HTTPException(status_code=404, detail="Tournament phase not found")
+    return phase
+
+@router.patch("/phases/{phase_id}", response_model=schemas.TournamentPhaseResponse)
+def update_tournament_phase(
+    phase_id: int,
+    payload: schemas.TournamentPhaseUpdate,
+    db: Session = Depends(get_db)
+):
+    phase = db.query(models.TournamentPhase).filter(models.TournamentPhase.id == phase_id).first()
+    if not phase:
+        raise HTTPException(status_code=404, detail="Tournament phase not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if "name" in update_data:
+        try:
+            phase.name = models.PhaseName(update_data["name"])
+        except ValueError:
+            valid = [e.value for e in models.PhaseName]
+            raise HTTPException(status_code=400, detail=f"Invalid phase name. Valid values: {valid}")
+
+    if "season_id" in update_data:
+        # Verify season exists
+        season = db.query(models.Season).filter(models.Season.id == update_data["season_id"]).first()
+        if not season:
+            raise HTTPException(status_code=404, detail="Season not found")
+        phase.season_id = update_data["season_id"]
+
+    db.commit()
+    db.refresh(phase)
+    return phase
+
+@router.delete("/phases/{phase_id}", status_code=200)
+def delete_tournament_phase(phase_id: int, db: Session = Depends(get_db)):
+    phase = db.query(models.TournamentPhase).filter(models.TournamentPhase.id == phase_id).first()
+    if not phase:
+        raise HTTPException(status_code=404, detail="Tournament phase not found")
+    db.delete(phase)
+    db.commit()
+    return {"deleted": phase_id}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Team CRUD endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/teams", response_model=List[schemas.TeamResponseDetail])
+def list_teams(
+    league_id: Optional[int] = None,
+    season_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(models.Team)
+    if league_id is not None:
+        query = query.filter(models.Team.league_id == league_id)
+    if season_id is not None:
+        query = query.join(models.League).filter(models.League.season_id == season_id)
+    return query.all()
+
+@router.get("/teams/{team_id}", response_model=schemas.TeamResponseDetail)
+def get_team(team_id: int, db: Session = Depends(get_db)):
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    return team
+
+@router.patch("/teams/{team_id}", response_model=schemas.TeamResponseDetail)
+def update_team(
+    team_id: int,
+    payload: schemas.TeamUpdate,
+    db: Session = Depends(get_db)
+):
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+
+    if "name" in update_data:
+        team.name = update_data["name"]
+
+    if "league_id" in update_data:
+        league = db.query(models.League).filter(models.League.id == update_data["league_id"]).first()
+        if not league:
+            raise HTTPException(status_code=404, detail="League not found")
+        team.league_id = update_data["league_id"]
+
+    if "eliminated_in_phase_id" in update_data:
+        old_phase_id = team.eliminated_in_phase_id
+        new_phase_id = update_data["eliminated_in_phase_id"]
+
+        if new_phase_id is not None:
+            phase = db.query(models.TournamentPhase).filter(models.TournamentPhase.id == new_phase_id).first()
+            if not phase:
+                raise HTTPException(status_code=404, detail="Tournament phase not found")
+
+        team.eliminated_in_phase_id = new_phase_id
+
+        # Business logic for deactivating/reactivating players based on change
+        if old_phase_id is None and new_phase_id is not None:
+            # Team is eliminated -> deactivate its players
+            deactivate_players_for_teams_task.delay([team.id])
+        elif old_phase_id is not None and new_phase_id is None:
+            # Team is restored -> reactivate its players
+            reactivate_players_for_teams_task.delay([team.id])
+
+    db.commit()
+    db.refresh(team)
+    return team
+
+@router.delete("/teams/{team_id}", status_code=200)
+def delete_team(team_id: int, db: Session = Depends(get_db)):
+    team = db.query(models.Team).filter(models.Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    db.delete(team)
+    db.commit()
+    return {"deleted": team_id}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Player CRUD endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/players", response_model=List[schemas.PlayerResponseDetail])
+def list_players(team_id: Optional[int] = None, db: Session = Depends(get_db)):
+    query = db.query(models.Player)
+    if team_id is not None:
+        query = query.filter(models.Player.team_id == team_id)
+    return query.all()
+
+@router.get("/players/{player_id}", response_model=schemas.PlayerResponseDetail)
+def get_player(player_id: int, db: Session = Depends(get_db)):
+    player = db.query(models.Player).filter(models.Player.id == player_id).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    return player
+
+@router.delete("/players/{player_id}", status_code=200)
+def delete_player(player_id: int, db: Session = Depends(get_db)):
+    player = db.query(models.Player).filter(models.Player.id == player_id).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    db.delete(player)
+    db.commit()
+    return {"deleted": player_id}
+
 
