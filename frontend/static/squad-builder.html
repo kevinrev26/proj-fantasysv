@@ -155,7 +155,8 @@
             height: 72vw;
             min-height: 340px;
             max-height: 480px;
-            overflow: hidden;
+            overflow-x: hidden;      /* keeps horizontal clip for canvas */
+            overflow-y: visible;     /* lets GK star escape the bottom edge */
             background: linear-gradient(180deg, #1a4a2c 0%, #2c8c4a 100%);
             border-radius: 12px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -164,6 +165,7 @@
             .field-wrapper {
                 height: 54vw;
                 max-height: 560px;
+                padding-bottom: 24px
             }
         }
 
@@ -747,6 +749,33 @@
                 gap: 6px;
             }
         }
+
+        /* ── Formation view: taller field on mobile to fit GK star ── */
+        @media (max-width: 767px) {
+            .field-wrapper {
+                height: 92vw;
+                min-height: 420px;
+                max-height: 520px;
+                overflow-x: hidden;
+                overflow-y: visible;  /* lets GK star escape bottom edge */
+            }
+
+            /* Extra bottom breathing room so GK star isn't clipped */
+            .pitch-grid {
+                padding-bottom: 20px !important;
+            }
+
+            /* Move GK star above the jersey instead of below */
+            .zone-gk .wildcard-toggle-btn {
+                order: -1;
+                margin-bottom: 2px;
+                margin-top: 0;
+            }
+
+            .zone-gk .jersey-card {
+                flex-direction: column-reverse;
+            }
+        }
     </style>
 
     </head>
@@ -1121,7 +1150,7 @@
             <!-- 3-D pitch -->
             <div class="field-wrapper">
                 <canvas id="field-canvas"></canvas>
-                <div class="formation-overlay" style="pointer-events: none">
+                <div class="formation-overlay" style="pointer-events: none; height: 100%; position: absolute; inset: 0;">
                     <div
                         class="pitch-grid"
                         style="padding: 4px 8px 8px; pointer-events: all"
