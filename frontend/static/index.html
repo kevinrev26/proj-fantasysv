@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fantasy SV — Tu Liga de Fútbol Fantasy</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="/js/auth.js"></script>
+  <script src="/js/nav.js"></script>
   <style>
     :root {
       /* Color System */
@@ -19,6 +21,7 @@
       --text-muted: #A6B0C3;
       --shadow-glow: 0 0 20px rgba(13, 71, 255, 0.4);
       --shadow-glow-purple: 0 0 20px rgba(123, 44, 255, 0.4);
+      --danger-red: #FF3D4D;
       
       /* Typography */
       --font-primary: 'Inter', sans-serif;
@@ -94,80 +97,177 @@
       mask-image: radial-gradient(ellipse 80% 80% at 50% 40%, black 30%, transparent 100%);
     }
 
-    /* ── NAV ── */
-    .navbar {
+    /* Main Navigation */
+    .main-nav {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(15, 28, 50, 0.88);
-      backdrop-filter: blur(18px);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding: 0 1.5rem;
+      background: rgba(11, 16, 32, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
-    .nav-inner {
-      max-width: 1180px;
+    
+    .nav-container {
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 0 1.5rem;
-      height: var(--header-height);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      height: 64px;
     }
+    
     .nav-brand {
       display: flex;
       align-items: center;
       gap: 10px;
       text-decoration: none;
+      font-size: 1.4rem;
       font-weight: 800;
-      font-size: 1.3rem;
       color: var(--text-white);
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
+      transition: transform 0.2s;
+      position: relative;
     }
-    .nav-brand span { font-size: 1.5rem; }
-    .nav-brand em {
-      font-style: normal;
-      color: var(--gold);
+    
+    .nav-brand:hover {
+      transform: scale(1.02);
+      text-shadow: 0 0 10px rgba(13, 71, 255, 0.7);
     }
+    
+    .nav-logo-icon {
+      font-size: 1.6rem;
+      filter: drop-shadow(0 0 8px rgba(13, 71, 255, 0.7));
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: 24px;
     }
-    .nav-links a {
-      color: var(--text-muted);
+    
+    .nav-link {
       text-decoration: none;
+      color: var(--text-muted);
       font-weight: 600;
-      font-size: 0.88rem;
-      padding: 0.45rem 0.9rem;
-      border-radius: var(--radius-sm);
-      transition: color 0.2s, background 0.2s;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
       position: relative;
-      overflow: hidden;
+      padding: 6px 0;
+      letter-spacing: 0.02em;
     }
-    .nav-links a::before {
-      content: '';
+    
+    .nav-link:hover {
+      color: var(--primary-blue);
+    }
+    
+    .nav-link::after {
+      content: "";
       position: absolute;
       bottom: 0;
       left: 0;
-      width: 100%;
+      width: 0%;
       height: 2px;
       background: var(--primary-blue);
-      transform: scaleX(0);
-      transform-origin: right;
-      transition: transform 0.3s ease;
+      transition: width 0.3s ease;
+      border-radius: 2px;
+      box-shadow: 0 0 8px rgba(13, 71, 255, 0.5);
     }
-    .nav-links a:hover {
-      color: var(--text-white);
+    
+    .nav-link:hover::after {
+      width: 100%;
     }
-    .nav-links a:hover::before {
-      transform: scaleX(1);
-      transform-origin: left;
+    
+    .nav-link.active {
+      color: var(--primary-blue);
+      font-weight: 700;
     }
-    .nav-actions {
+    
+    .nav-link.active::after {
+      width: 100%;
+      background: var(--primary-blue);
+      box-shadow: 0 0 10px rgba(13, 71, 255, 0.7);
+    }
+    
+    .sign-out-btn {
+      background: rgba(255, 95, 109, 0.15);
+      color: var(--danger-red);
+      border: 1px solid rgba(255, 95, 109, 0.3);
+      padding: 8px 18px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 6px;
     }
+    
+    .sign-out-btn:hover {
+      background: var(--danger-red);
+      color: var(--text-white);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 95, 109, 0.3);
+      animation: pulse 1.5s infinite;
+    }
+    
+    .nav-mobile-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      padding: 5px;
+    }
+    
+    .nav-mobile-toggle span {
+      width: 24px;
+      height: 2px;
+      background: var(--text-white);
+      border-radius: 2px;
+      transition: 0.3s;
+    }
+    
+    @media (max-width: 768px) {
+      .nav-mobile-toggle {
+        display: flex;
+      }
+      
+      .nav-links {
+        position: absolute;
+        top: 64px;
+        left: 0;
+        right: 0;
+        background: rgba(15, 32, 64, 0.98);
+        backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: 20px;
+        gap: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      }
+      
+      .nav-links.active {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: all;
+      }
+    }
+
     .btn-ghost-sm {
       background: transparent;
       border: 1px solid rgba(255,255,255,0.18);
@@ -795,7 +895,6 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 680px) {
-      .nav-links { display: none; }
       .hero { padding: 3.5rem 1rem 3rem; }
       .stat-divider { display: none; }
       .cta-card { padding: 2.5rem 1.5rem; }
@@ -816,21 +915,18 @@
   </div>
   <div class="grid-overlay"></div>
 
-  <!-- NAV -->
-  <nav class="navbar">
-    <div class="nav-inner">
-      <a href="/" class="nav-brand">
-        <span>⚽</span> Fantasy<em>SV</em>
-      </a>
-      <div class="nav-links">
-        <a href="/leaderboard">Clasificación</a>
-        <a href="/schedule">Calendario</a>
-        <a href="/register">Cómo Jugar</a>
-        <a href="/points">Puntos</a>
-      </div>
-      <div class="nav-actions">
-        <a href="/login" class="btn-ghost-sm">Iniciar Sesión</a>
-        <a href="/register" class="btn-teal-sm">Registrarse</a>
+  <nav class="main-nav">
+    <div class="nav-container">
+      <a href="/" class="nav-brand"><span class="nav-logo-icon">⚽</span> Fantasy SV</a>
+      <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="nav-links">
+        <a href="/schedule" class="nav-link">Calendario</a>
+        <a href="/leaderboard" class="nav-link">Clasificación</a>
+        <a href="/register" class="nav-link">Cómo Jugar</a>
+        <a href="/points" class="nav-link">Puntos</a>
+        <span id="nav-auth"></span>
       </div>
     </div>
   </nav>
@@ -1026,6 +1122,8 @@
       <div class="footer-copy">© 2026 FantasySV. Todos los derechos reservados.</div>
     </div>
   </footer>
-
+<script>
+  setupNavAuth()
+</script>
 </body>
 </html>

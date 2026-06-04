@@ -38,6 +38,10 @@
       --radius-sm:   10px;
       --shadow-card: 0 8px 40px rgba(0,0,0,0.5);
       --shadow-glow: 0 0 20px rgba(13, 71, 255, 0.3);
+      --text-white: #FFFFFF;
+      --text-muted: #A6B0C3;
+      --primary-blue: #0D47FF;
+      --danger-red: #FF3D4D;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -63,66 +67,175 @@
       pointer-events: none;
     }
 
-    /* ── NAV ── */
-    .nav {
+    /* Main Navigation */
+    .main-nav {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(11, 16, 32, 0.92);
-      backdrop-filter: blur(18px);
-      border-bottom: 1px solid rgba(13, 71, 255, 0.12);
+      background: rgba(11, 16, 32, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       padding: 0 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
-    .nav-inner {
-      max-width: 1100px;
+    
+    .nav-container {
+      max-width: 1200px;
       margin: 0 auto;
       display: flex;
       align-items: center;
-      gap: 20px;
-      height: 56px;
+      justify-content: space-between;
+      height: 64px;
     }
+    
     .nav-brand {
-      font-family: var(--font-head);
-      font-size: 1.5rem;
-      letter-spacing: .06em;
-      color: var(--blue);
+      display: flex;
+      align-items: center;
+      gap: 10px;
       text-decoration: none;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-white);
+      letter-spacing: -0.02em;
+      transition: transform 0.2s;
+      position: relative;
     }
+    
+    .nav-brand:hover {
+      transform: scale(1.02);
+      text-shadow: 0 0 10px rgba(13, 71, 255, 0.7);
+    }
+    
+    .nav-logo-icon {
+      font-size: 1.6rem;
+      filter: drop-shadow(0 0 8px rgba(13, 71, 255, 0.7));
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
     .nav-links {
       display: flex;
-      gap: 4px;
-      margin-left: auto;
       align-items: center;
+      gap: 24px;
     }
+    
     .nav-link {
-      font-size: .82rem;
-      font-weight: 700;
-      color: var(--dim);
       text-decoration: none;
-      padding: 6px 14px;
-      border-radius: 50px;
-      transition: all .15s;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      position: relative;
+      padding: 6px 0;
+      letter-spacing: 0.02em;
     }
-    .nav-link:hover, .nav-link.active {
-      color: var(--text);
-      background: rgba(255,255,255,.06);
+    
+    .nav-link:hover {
+      color: var(--primary-blue);
     }
-    .nav-link.active { color: var(--blue); }
-    .nav-logout-btn {
-      font-size: .82rem;
+    
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0%;
+      height: 2px;
+      background: var(--primary-blue);
+      transition: width 0.3s ease;
+      border-radius: 2px;
+      box-shadow: 0 0 8px rgba(13, 71, 255, 0.5);
+    }
+    
+    .nav-link:hover::after {
+      width: 100%;
+    }
+    
+    .nav-link.active {
+      color: var(--primary-blue);
       font-weight: 700;
-      color: var(--dim);
-      background: none;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all .15s;
-      font-family: var(--font-body);
     }
-    .nav-logout-btn:hover {
-      color: var(--red);
-      background: rgba(255,77,109,.08);
+    
+    .nav-link.active::after {
+      width: 100%;
+      background: var(--primary-blue);
+      box-shadow: 0 0 10px rgba(13, 71, 255, 0.7);
+    }
+    
+    .sign-out-btn {
+      background: rgba(255, 95, 109, 0.15);
+      color: var(--danger-red);
+      border: 1px solid rgba(255, 95, 109, 0.3);
+      padding: 8px 18px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .sign-out-btn:hover {
+      background: var(--danger-red);
+      color: var(--text-white);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 95, 109, 0.3);
+      animation: pulse 1.5s infinite;
+    }
+    
+    .nav-mobile-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      padding: 5px;
+    }
+    
+    .nav-mobile-toggle span {
+      width: 24px;
+      height: 2px;
+      background: var(--text-white);
+      border-radius: 2px;
+      transition: 0.3s;
+    }
+    
+    @media (max-width: 768px) {
+      .nav-mobile-toggle {
+        display: flex;
+      }
+      
+      .nav-links {
+        position: absolute;
+        top: 64px;
+        left: 0;
+        right: 0;
+        background: rgba(15, 32, 64, 0.98);
+        backdrop-filter: blur(20px);
+        flex-direction: column;
+        padding: 20px;
+        gap: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      }
+      
+      .nav-links.active {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: all;
+      }
     }
 
     /* ── HERO ── */
@@ -1075,16 +1188,19 @@
       .tabs-nav { width: 100%; }
       .tab-btn { flex: 1; justify-content: center; }
     }
-  </style>
+</style>
 
 </head>
 <body>
 
 <!-- ── NAV ── -->
-<nav class="nav">
-  <div class="nav-inner">
-    <a href="/" class="nav-brand">⚽ Fantasy SV</a>
-    <div class="nav-links">
+<nav class="main-nav">
+  <div class="nav-container">
+    <a href="/" class="nav-brand"><span class="nav-logo-icon">⚽</span> Fantasy SV</a>
+    <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-links" id="nav-links">
       <a href="/squad-builder" class="nav-link">Mi Equipo</a>
       <a href="/schedule" class="nav-link">Calendario</a>
       <a href="/predictor" class="nav-link active">Predicciones</a>

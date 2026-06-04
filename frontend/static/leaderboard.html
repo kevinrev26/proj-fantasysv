@@ -682,6 +682,13 @@
       opacity: 0;
     }
 
+    .empty-state {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-weight: var(--font-weight-semibold);
+    }
+
     .leaderboard-table tr:nth-child(1) { animation-delay: 0.1s; }
     .leaderboard-table tr:nth-child(2) { animation-delay: 0.2s; }
     .leaderboard-table tr:nth-child(3) { animation-delay: 0.3s; }
@@ -782,14 +789,19 @@
 
       <!-- Legend -->
       <div class="points-legend">
-        <span style="color:var(--text-dim);font-weight:700;font-size:0.78rem;">Desglose:</span>
+        <span style="color:var(--text-muted);font-weight:700;font-size:0.78rem;">Desglose:</span>
         <div class="legend-item"><div class="legend-dot total"></div><span>Total</span></div>
         <div class="legend-item"><div class="legend-dot fantasy"></div><span>Fantasy</span></div>
         <div class="legend-item"><div class="legend-dot predictor"></div><span>Predictor</span></div>
       </div>
 
       <div class="table-wrapper">
-        <table class="leaderboard-table">
+        <template x-if="!loading && paginatedGlobal.length === 0">
+          <div class="empty-state">
+            🏟️ Sin datos disponibles todavía
+          </div>
+        </template>
+        <table x-show="loading || paginatedGlobal.length > 0" class="leaderboard-table">
           <thead>
             <tr>
               <th>Rango</th>
@@ -799,7 +811,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr x-show="loading" class="loading-row"><td colspan="4"><span class="spinner"></span> Cargando...</td></tr>
             <template x-if="!loading">
               <template x-for="team in paginatedGlobal" :key="team.id">
                 <tr :class="team.is_current_user ? 'current-user-row' : ''">
@@ -859,9 +870,6 @@
                 </tr>
               </template>
             </template>
-            <tr x-show="!loading && paginatedGlobal.length === 0" class="empty-row">
-              <td colspan="4">🏟️ Sin datos disponibles todavía</td>
-            </tr>
           </tbody>
         </table>
       </div>
