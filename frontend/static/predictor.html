@@ -1767,6 +1767,8 @@ function predictorApp() {
     async loadFixtures() {
       this.loading = true;
       this.error = null;
+      // Invalidate history cache so it re-fetches fresh data next visit
+      this._pastLoaded = false;
       try {
         const resp = await authFetch('/prediction/fixtures');
         if (!resp.ok) throw new Error(`Error ${resp.status}`);
@@ -1795,63 +1797,45 @@ function predictorApp() {
       this.pastLoading = true;
       this.pastError = null;
       try {
-        const resp = await authFetch('/prediction/');
+        // Re-use the fixtures endpoint — it returns all fixtures with
+        // existing_prediction (including fixture_result and score) embedded.
+        const resp = await authFetch('/prediction/fixtures');
         if (!resp.ok) throw new Error(`Error ${resp.status}`);
-        const predictions = await resp.json();
+        const allFixtures = await resp.json();
 
-        // Only show predictions that have already kicked off
         const now = new Date();
-        const past = predictions.filter(p => new Date(p.kickoff_utc) <= now);
 
-        // For each past prediction, try to fetch the fixture result
-        // We enrich in-place using the prediction data + optionally a result endpoint
-        // Since we don't have a dedicated "get result" endpoint per prediction,
-        // we'll try to GET the fixture result by fetching the fixture detail.
-        // The API response for predictions already includes fixture info, so we
-        // attempt to load results if they exist by fetching /prediction/?matchday_id
-        // and merging score data. The score is embedded via the PredictionScore model.
+        // Keep only fixtures that have already kicked off AND have a prediction
+        const past = allFixtures.filter(f =>
+          new Date(f.kickoff_utc) <= now && f.existing_prediction
+        );
 
-        // Attempt to load fixture results for each prediction
-        const enriched = await this._enrichPastPredictions(past);
-        this.pastPredictions = enriched;
+        // Flatten: merge fixture-level fields into the prediction object so
+        // the history template can access everything on a single `pred` object.
+        this.pastPredictions = past.map(f => {
+          const pred = f.existing_prediction;
+          return {
+            // prediction fields
+            ...pred,
+            // fixture context (some may already be on pred, but ensure they're set)
+            fixture_id:          f.fixture_id,
+            kickoff_utc:         f.kickoff_utc,
+            matchday_id:         f.matchday_id,
+            matchday_name:       f.matchday_name,
+            fixture_home_team:   f.home_team,
+            fixture_away_team:   f.away_team,
+            // normalise result field name: API uses fixture_result, template uses result
+            result: pred.fixture_result ?? null,
+            // score is already on pred if scoring worker has run
+            score: pred.score ?? null,
+          };
+        });
+
         this._pastLoaded = true;
       } catch (e) {
         this.pastError = 'No se pudo cargar el historial. ' + e.message;
       }
       this.pastLoading = false;
-    },
-
-    async _enrichPastPredictions(predictions) {
-      // Try to fetch fixture results from admin/fixture-result-like endpoints.
-      // Since there's no direct public "get fixture result" endpoint we know of,
-      // we attempt to load the schedule/fixtures page to get results, or fall back
-      // gracefully with null results (showing pending state).
-      // The score data (PredictionScore) comes from the scoring worker and is
-      // stored server-side. We'll try to fetch it via a batch approach.
-
-      // First, try fetching all fixtures with results (if endpoint exists)
-      let fixtureResults = {};
-      let predictionScores = {};
-
-      try {
-        // Try the matchday-summary endpoint to get scoring info
-        const summaryResp = await authFetch('/prediction/matchday-summary');
-        if (summaryResp.ok) {
-          // We have summary data, but not per-prediction scores yet
-          // We'll still use it for context
-        }
-      } catch (_) {}
-
-      // Try to get individual prediction scores if endpoint available
-      // For now, we'll return predictions with null results and scores
-      // since the PredictionResponse schema doesn't include score inline.
-      // The score would need a separate endpoint or schema extension.
-
-      return predictions.map(pred => ({
-        ...pred,
-        result: null,   // will be null unless we can fetch it
-        score: null,    // will be null unless score endpoint exists
-      }));
     },
 
     _enrich(raw) {
