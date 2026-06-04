@@ -1709,6 +1709,31 @@
                         ></button>
                     </template>
                 </div>
+                <!-- Sort by cost -->
+                <div style="display:flex; justify-content:flex-end; padding: 2px 2px 0;">
+                    <button
+                        @click="sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'"
+                        class="filt-pill"
+                        :class="{ active: true }"
+                        style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 5px;
+                            min-width: 110px;
+                            justify-content: center;
+                            font-size: 0.75rem;
+                            padding: 5px 12px;
+                            background: rgba(123,44,255,0.12);
+                            border-color: rgba(123,44,255,0.35);
+                            color: var(--secondary-purple);
+                            box-shadow: 0 0 8px rgba(123,44,255,0.2);
+                            transition: background 0.15s, box-shadow 0.15s;
+                        "
+                    >
+                        <span x-text="sortOrder === 'asc' ? '↑' : '↓'" style="font-size:0.9rem; line-height:1;"></span>
+                        <span>Costo <span x-text="sortOrder === 'asc' ? 'Menor' : 'Mayor'"></span></span>
+                    </button>
+                </div>
             </div>
 
             <div class="player-list">
@@ -2159,6 +2184,7 @@
                     filterTier: "ALL",
                     filterTeam: "ALL",
                     searchQuery: "",
+                    sortOrder: "desc",
 
                     // Squad state
                     // selectedPlayers[0..10] = starters, [11..14] = bench
@@ -2370,7 +2396,7 @@
 
                     get filteredPlayers() {
                         const q = this.searchQuery.toLowerCase();
-                        return this.activePlayers.filter((p) => {
+                        let players = this.activePlayers.filter((p) => {
                             if (
                                 this.filterPos !== "ALL" &&
                                 p.pos !== this.filterPos
@@ -2394,6 +2420,17 @@
                                 return false;
                             return true;
                         });
+
+                        // Add sorting based on cost
+                        players.sort((a, b) => {
+                            if (this.sortOrder === 'asc') {
+                                return a.cost - b.cost;
+                            } else {
+                                return b.cost - a.cost;
+                            }
+                        });
+
+                        return players;
                     },
 
                     get isLocked() {
