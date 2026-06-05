@@ -1,8 +1,8 @@
+from datetime import datetime, timezone
 from typing import List
 
 import sentry_sdk
 import structlog
-from datetime import datetime, timezone
 from celery import Celery
 from celery.signals import setup_logging as celery_setup_logging
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -13,16 +13,16 @@ from .logger import setup_logging
 from .models import (
     FantasyPlayer,
     FantasyTeam,
+    Fixture,
+    FixtureResult,
+    LeaderboardWeeklyEntry,
     Matchday,
     Player,
     PlayerScore,
-    TeamScore,
-    LeaderboardWeeklyEntry,
-    Fixture,
-    FixtureResult,
     Prediction,
-    PredictionScore,
     PredictionMatchdayStats,
+    PredictionScore,
+    TeamScore,
 )
 from .scoring import (
     apply_wildcard_multiplier,
@@ -31,6 +31,7 @@ from .scoring import (
 )
 
 logger = structlog.get_logger()
+
 
 @celery_setup_logging.connect
 def on_celery_setup_logging(**kwargs):
@@ -72,9 +73,11 @@ def add_numbers_task(a: int, b: int) -> int:
 
 
 def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_session):
-    logger.info("Starting matchday scoring for fantasy team", 
-                matchday_id=matchday_id, 
-                fantasy_team_id=fantasy_team_id)
+    logger.info(
+        "Starting matchday scoring for fantasy team",
+        matchday_id=matchday_id,
+        fantasy_team_id=fantasy_team_id,
+    )
     # 1. Fetch all FantasyPlayer records for this fantasy team and matchday
     fantasy_players = (
         db_session.query(FantasyPlayer)
@@ -110,7 +113,9 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
         )
 
         if not player_stats:
-            logger.warning("No player stats found", player_id=fp.player_id, matchday_id=matchday_id)
+            logger.warning(
+                "No player stats found", player_id=fp.player_id, matchday_id=matchday_id
+            )
             continue  # or default zeros
 
         # 4. Compute base + bonus using existing pure function
@@ -140,7 +145,9 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
 
         # For now, accumulate team total
         total_team_points += scored["final_points"]
-        logger.debug("Player scored", player_id=fp.player_id, final_points=scored["final_points"])
+        logger.debug(
+            "Player scored", player_id=fp.player_id, final_points=scored["final_points"]
+        )
 
     # 7. Update or create TeamScore for this matchday
     team_score = (
@@ -166,15 +173,19 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
     db_session.add(team_score)
     try:
         db_session.commit()
-        logger.info("Matchday scoring completed successfully", 
-                   matchday_id=matchday_id, 
-                   fantasy_team_id=fantasy_team_id,
-                   total_points=total_team_points)
+        logger.info(
+            "Matchday scoring completed successfully",
+            matchday_id=matchday_id,
+            fantasy_team_id=fantasy_team_id,
+            total_points=total_team_points,
+        )
     except Exception as e:
-        logger.error("Failed to commit team score", 
-                    matchday_id=matchday_id, 
-                    fantasy_team_id=fantasy_team_id, 
-                    error=str(e))
+        logger.error(
+            "Failed to commit team score",
+            matchday_id=matchday_id,
+            fantasy_team_id=fantasy_team_id,
+            error=str(e),
+        )
         db_session.rollback()
         raise
 
@@ -207,7 +218,10 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
         if not player_scores:
             matchday.task_status = "done"  # nothing to score
             db.commit()
-            logger.info("No player scores to process, marking matchday as done", matchday_id=matchday_id)
+            logger.info(
+                "No player scores to process, marking matchday as done",
+                matchday_id=matchday_id,
+            )
             return
 
         player_ids = [ps.player_id for ps in player_scores]
@@ -247,7 +261,9 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                     (p for p in player_scores if p.player_id == fp.player_id), None
                 )
                 if not ps:
-                    logger.debug("No player score found, skipping", player_id=fp.player_id)
+                    logger.debug(
+                        "No player score found, skipping", player_id=fp.player_id
+                    )
                     continue  # player didn't play, no points
 
                 # Get raw points from real player's stats
@@ -271,10 +287,12 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                 scored = apply_wildcard_multiplier(raw, fp.is_x2_joker)
 
                 total_points += scored["final_points"]
-                logger.debug("Player scored for team", 
-                            player_id=fp.player_id, 
-                            team_id=fantasy_team.id, 
-                            points=scored["final_points"])
+                logger.debug(
+                    "Player scored for team",
+                    player_id=fp.player_id,
+                    team_id=fantasy_team.id,
+                    points=scored["final_points"],
+                )
 
             # Update or create TeamScore
             team_score = (
@@ -309,22 +327,29 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                 team_score.cumulative_points = total_points
 
             leaderboard_entry = LeaderboardWeeklyEntry(
-                fantasy_team_id = fantasy_team.id,
-                total_points = total_points,
+                fantasy_team_id=fantasy_team.id,
+                total_points=total_points,
             )
             db.add(team_score)
             db.add(leaderboard_entry)
-            logger.debug("Team score updated", team_score_id=team_score.id, points=total_points)
+            logger.debug(
+                "Team score updated", team_score_id=team_score.id, points=total_points
+            )
 
         # Removing closing matchday state here, because we are keep updating the scores per fixtures.
         # So matchday is not closed until we manually close from admin dashboard UI.
 
         matchday.task_status = "done"
         db.commit()
-        logger.info("Matchday score recalculation completed successfully", matchday_id=matchday_id)
+        logger.info(
+            "Matchday score recalculation completed successfully",
+            matchday_id=matchday_id,
+        )
 
     except Exception as e:
-        logger.error("Matchday score recalculation failed", matchday_id=matchday_id, error=str(e))
+        logger.error(
+            "Matchday score recalculation failed", matchday_id=matchday_id, error=str(e)
+        )
         db.commit()
         # Retry the task
         raise self.retry(exc=e)
@@ -345,11 +370,17 @@ def deactivate_players_for_teams_task(self, team_ids: List[int]):
     db = SessionLocal()
     try:
         # Atomic bulk update
-        updated_count = db.query(Player).filter(Player.team_id.in_(team_ids)).update(
-            {Player.is_active: False}, synchronize_session=False
+        updated_count = (
+            db.query(Player)
+            .filter(Player.team_id.in_(team_ids))
+            .update({Player.is_active: False}, synchronize_session=False)
         )
         db.commit()
-        logger.info("Player deactivation completed", team_ids=team_ids, updated_count=updated_count)
+        logger.info(
+            "Player deactivation completed",
+            team_ids=team_ids,
+            updated_count=updated_count,
+        )
     except Exception as e:
         logger.error("Player deactivation failed", team_ids=team_ids, error=str(e))
         db.rollback()
@@ -419,18 +450,21 @@ def calculate_prediction_points_task(self, fixture_id: int):
         else:
             actual_outcome = "draw"
 
+        fixture = db.query(Fixture).filter(Fixture.id == fixture_id).first()
+        is_knockout = fixture.is_knockout if fixture else False
+
         # 2. Load all predictions for this fixture
         predictions = (
-            db.query(Prediction)
-            .filter(Prediction.fixture_id == fixture_id)
-            .all()
+            db.query(Prediction).filter(Prediction.fixture_id == fixture_id).all()
         )
 
         if not predictions:
             logger.info("No predictions found for fixture", fixture_id=fixture_id)
             return
 
-        logger.info("Scoring predictions", fixture_id=fixture_id, count=len(predictions))
+        logger.info(
+            "Scoring predictions", fixture_id=fixture_id, count=len(predictions)
+        )
 
         # Track which users need their matchday stats updated
         affected_users = set()
@@ -438,6 +472,7 @@ def calculate_prediction_points_task(self, fixture_id: int):
         for prediction in predictions:
             exact_score_points = 0
             correct_outcome_points = 0
+            correct_penalty_winner_points = 0
 
             pred_home = prediction.predicted_home_goals
             pred_away = prediction.predicted_away_goals
@@ -458,7 +493,31 @@ def calculate_prediction_points_task(self, fixture_id: int):
                 if pred_outcome == actual_outcome:
                     correct_outcome_points = 1
 
-            raw_points = exact_score_points + correct_outcome_points
+            if is_knockout and result.penalty_shootout:
+                # Predicted penalty winner
+                pred_pen_home = prediction.predicted_penalty_home_goals
+                pred_pen_away = prediction.predicted_penalty_away_goals
+                if pred_pen_home > pred_pen_away:
+                    pred_pen_winner = "home"
+                elif pred_pen_away > pred_pen_home:
+                    pred_pen_winner = "away"
+                else:
+                    pred_pen_winner = (
+                        None  # draw in penalties (should not happen in real matches)
+                    )
+
+                actual_pen_winner = (
+                    result.winner
+                )  # "home" or "away" (already computed from penalties)
+
+                if pred_pen_winner is not None and pred_pen_winner == actual_pen_winner:
+                    correct_penalty_winner_points = 2  # award 2 points
+
+            raw_points = (
+                exact_score_points
+                + correct_outcome_points
+                + correct_penalty_winner_points
+            )
 
             # Apply joker multiplier (x2) if this prediction has is_joker=True
             joker_applied = prediction.is_joker
@@ -474,8 +533,10 @@ def calculate_prediction_points_task(self, fixture_id: int):
                 score.points_earned = points_earned
                 score.exact_score_points = exact_score_points
                 score.correct_outcome_points = correct_outcome_points
+                score.correct_penalty_winner_points = correct_penalty_winner_points
                 score.joker_multiplier_applied = joker_applied
                 score.calculated_at = datetime.now(timezone.utc)
+
                 logger.debug(
                     "Updated existing prediction score",
                     prediction_id=prediction.id,
@@ -487,6 +548,7 @@ def calculate_prediction_points_task(self, fixture_id: int):
                     points_earned=points_earned,
                     exact_score_points=exact_score_points,
                     correct_outcome_points=correct_outcome_points,
+                    correct_penalty_winner_points=correct_penalty_winner_points,
                     joker_multiplier_applied=joker_applied,
                     calculated_at=datetime.now(timezone.utc),
                 )
@@ -534,14 +596,18 @@ def calculate_prediction_points_task(self, fixture_id: int):
             if stats:
                 stats.total_points = total_points
                 stats.joker_used = joker_pred is not None
-                stats.joker_applied_to_fixture_id = joker_pred.fixture_id if joker_pred else None
+                stats.joker_applied_to_fixture_id = (
+                    joker_pred.fixture_id if joker_pred else None
+                )
             else:
                 stats = PredictionMatchdayStats(
                     user_id=user_id,
                     matchday_id=matchday_id,
                     total_points=total_points,
                     joker_used=joker_pred is not None,
-                    joker_applied_to_fixture_id=joker_pred.fixture_id if joker_pred else None,
+                    joker_applied_to_fixture_id=joker_pred.fixture_id
+                    if joker_pred
+                    else None,
                 )
                 db.add(stats)
 

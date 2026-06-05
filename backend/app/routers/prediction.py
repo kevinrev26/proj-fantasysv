@@ -25,19 +25,32 @@ class PredictionCreate(BaseModel):
     fixture_id: int
     predicted_home_goals: int = Field(ge=0)
     predicted_away_goals: int = Field(ge=0)
+    predicted_extra_time_home_goals: int = Field(default=0, ge=0)
+    predicted_extra_time_away_goals: int = Field(default=0, ge=0)
+    predicted_penalty_home_goals: int = Field(default=0, ge=0)
+    predicted_penalty_away_goals: int = Field(default=0, ge=0)
     is_joker: bool = False
 
 
 class PredictionUpdate(BaseModel):
     predicted_home_goals: Optional[int] = Field(None, ge=0)
     predicted_away_goals: Optional[int] = Field(None, ge=0)
+    predicted_extra_time_home_goals: Optional[int] = Field(None, ge=0)
+    predicted_extra_time_away_goals: Optional[int] = Field(None, ge=0)
+    predicted_penalty_home_goals: Optional[int] = Field(None, ge=0)
+    predicted_penalty_away_goals: Optional[int] = Field(None, ge=0)
     is_joker: Optional[bool] = None
 
 
 class PredictionBatchItem(BaseModel):
+    # same fields as PredictionCreate but without fixture_id? Actually fixture_id is required
     fixture_id: int
     predicted_home_goals: int = Field(ge=0)
     predicted_away_goals: int = Field(ge=0)
+    predicted_extra_time_home_goals: int = Field(default=0, ge=0)
+    predicted_extra_time_away_goals: int = Field(default=0, ge=0)
+    predicted_penalty_home_goals: int = Field(default=0, ge=0)
+    predicted_penalty_away_goals: int = Field(default=0, ge=0)
     is_joker: bool = False
 
 
@@ -110,6 +123,10 @@ class PredictionResponse(BaseModel):
     fixture_result: Optional[FixtureResultResponse] = None
     # Populated once the scoring worker has run
     score: Optional[PredictionScoreInline] = None
+    predicted_extra_time_home_goals: int
+    predicted_extra_time_away_goals: int
+    predicted_penalty_home_goals: int
+    predicted_penalty_away_goals: int
 
     class Config:
         from_attributes = True
@@ -147,6 +164,10 @@ class PredictionDetailResponse(BaseModel):
     # Enriched data — null when not yet available
     result: Optional[FixtureResultResponse] = None
     score: Optional[PredictionScoreInline] = None
+    predicted_extra_time_home_goals: int
+    predicted_extra_time_away_goals: int
+    predicted_penalty_home_goals: int
+    predicted_penalty_away_goals: int
 
     class Config:
         from_attributes = True
@@ -194,6 +215,7 @@ class FixtureForPrediction(BaseModel):
     kickoff_utc: datetime
     matchday_id: int
     matchday_name: str
+    is_knockout: bool
     existing_prediction: Optional[PredictionResponse] = None
 
 
@@ -347,6 +369,10 @@ def create_prediction(
         fixture_id=prediction_in.fixture_id,
         predicted_home_goals=prediction_in.predicted_home_goals,
         predicted_away_goals=prediction_in.predicted_away_goals,
+        predicted_extra_time_home_goals=prediction_in.predicted_extra_time_home_goals,
+        predicted_extra_time_away_goals=prediction_in.predicted_extra_time_away_goals,
+        predicted_penalty_home_goals=prediction_in.predicted_penalty_home_goals,
+        predicted_penalty_away_goals=prediction_in.predicted_penalty_away_goals,
         is_joker=prediction_in.is_joker,
     )
     db.add(new_pred)
@@ -431,6 +457,14 @@ def upsert_predictions_batch(
                 joker_proposals[matchday_id] = item.fixture_id
             existing.predicted_home_goals = item.predicted_home_goals
             existing.predicted_away_goals = item.predicted_away_goals
+            existing.predicted_extra_time_home_goals = (
+                item.predicted_extra_time_home_goals
+            )
+            existing.predicted_extra_time_away_goals = (
+                item.predicted_extra_time_away_goals
+            )
+            existing.predicted_penalty_home_goals = item.predicted_penalty_home_goals
+            existing.predicted_penalty_away_goals = item.predicted_penalty_away_goals
             existing.is_joker = item.is_joker
             existing.updated_at = datetime.utcnow()
             responses.append(existing)
@@ -440,6 +474,10 @@ def upsert_predictions_batch(
                 fixture_id=item.fixture_id,
                 predicted_home_goals=item.predicted_home_goals,
                 predicted_away_goals=item.predicted_away_goals,
+                predicted_extra_time_home_goals=item.predicted_extra_time_home_goals,
+                predicted_extra_time_away_goals=item.predicted_extra_time_away_goals,
+                predicted_penalty_home_goals=item.predicted_penalty_home_goals,
+                predicted_penalty_away_goals=item.predicted_penalty_away_goals,
                 is_joker=item.is_joker,
             )
             db.add(new_pred)
@@ -662,6 +700,7 @@ def get_available_fixtures_for_prediction(
                 kickoff_utc=fixture.kickoff_utc,
                 matchday_id=fixture.matchday_id,
                 matchday_name=fixture.matchday.name,
+                is_knockout=fixture.is_knockout,
                 existing_prediction=(
                     _build_prediction_response(db, prediction) if prediction else None
                 ),
@@ -833,6 +872,10 @@ def _build_prediction_response(
         fixture_finished=fixture.finished,
         fixture_result=_build_fixture_result(fixture.result),
         score=_build_score_inline(score),
+        predicted_extra_time_home_goals=prediction.predicted_extra_time_home_goals,
+        predicted_extra_time_away_goals=prediction.predicted_extra_time_away_goals,
+        predicted_penalty_home_goals=prediction.predicted_penalty_home_goals,
+        predicted_penalty_away_goals=prediction.predicted_penalty_away_goals,
     )
 
 

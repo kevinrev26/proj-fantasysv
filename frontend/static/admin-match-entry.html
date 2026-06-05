@@ -1,847 +1,1840 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Fantasy SV – Admin Dashboard</title>
-    <link rel="stylesheet" href="/style.css">
-    <script src="/js/auth.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>
-      .admin-tabs { display:flex; gap:0; border-bottom:2px solid rgba(255,255,255,0.1); margin-bottom:20px; }
-      .admin-tab  { padding:10px 22px; cursor:pointer; font-weight:700; font-size:0.9rem; color:var(--text-dim);
-                    border-bottom:3px solid transparent; margin-bottom:-2px; transition:all .15s; }
-      .admin-tab.active { color:var(--teal); border-bottom-color:var(--teal); }
-      .admin-tab:hover  { color:var(--text-white); }
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <title>Fantasy SV – Admin Dashboard</title>
+        <link rel="stylesheet" href="/style.css" />
+        <script src="/js/auth.js"></script>
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+        ></script>
+        <style>
+            .admin-tabs {
+                display: flex;
+                gap: 0;
+                border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+                margin-bottom: 20px;
+            }
+            .admin-tab {
+                padding: 10px 22px;
+                cursor: pointer;
+                font-weight: 700;
+                font-size: 0.9rem;
+                color: var(--text-dim);
+                border-bottom: 3px solid transparent;
+                margin-bottom: -2px;
+                transition: all 0.15s;
+            }
+            .admin-tab.active {
+                color: var(--teal);
+                border-bottom-color: var(--teal);
+            }
+            .admin-tab:hover {
+                color: var(--text-white);
+            }
 
-      .section-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
-                      border-radius:10px; padding:18px; margin-bottom:16px; }
-      .section-card h3 { margin:0 0 14px; font-size:1rem; color:var(--teal); }
+            .section-card {
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                padding: 18px;
+                margin-bottom: 16px;
+            }
+            .section-card h3 {
+                margin: 0 0 14px;
+                font-size: 1rem;
+                color: var(--teal);
+            }
 
-      /* fixtures table */
-      .fix-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-      .fix-table th { text-align:left; padding:8px 10px; color:var(--text-dim);
-                      font-weight:700; border-bottom:1px solid rgba(255,255,255,0.1); }
-      .fix-table td { padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
-      .fix-table tr:hover td { background:rgba(255,255,255,0.03); }
-      .fix-table input[type=datetime-local],
-      .fix-table select { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15);
-                          color:var(--text-white); border-radius:5px; padding:4px 8px;
-                          font-size:0.82rem; width:100%; }
-      .fix-table input[type=datetime-local]:focus,
-      .fix-table select:focus { outline:none; border-color:var(--teal); }
-      .btn-add-row { margin-top:10px; background:rgba(0,212,170,0.12); color:var(--teal);
-                     border:1px solid var(--teal); border-radius:6px; padding:6px 14px;
-                     cursor:pointer; font-weight:700; font-size:0.82rem; }
-      .btn-add-row:hover { background:rgba(0,212,170,0.25); }
-      .btn-del-row { background:rgba(255,95,109,0.12); color:var(--red-accent);
-                     border:none; border-radius:50%; width:26px; height:26px;
-                     cursor:pointer; font-size:1rem; display:flex; align-items:center;
-                     justify-content:center; }
-      .btn-del-row:hover { background:rgba(255,95,109,0.35); }
-      .btn-edit-row { background:rgba(255,200,80,0.12); color:#ffc850;
-                      border:none; border-radius:50%; width:26px; height:26px;
-                      cursor:pointer; font-size:1rem; display:flex; align-items:center;
-                      justify-content:center; }
-      .btn-edit-row:hover { background:rgba(255,200,80,0.3); }
-      .editing-row td { background:rgba(0,212,170,0.05); }
-      .btn-primary { background:var(--teal); color:#0d1b2e; border:none; border-radius:7px;
-                     padding:9px 22px; font-weight:800; cursor:pointer; font-size:0.9rem; }
-      .btn-primary:hover { opacity:.88; }
-      .btn-primary:disabled { opacity:.45; cursor:not-allowed; }
+            /* fixtures table */
+            .fix-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.85rem;
+            }
+            .fix-table th {
+                text-align: left;
+                padding: 8px 10px;
+                color: var(--text-dim);
+                font-weight: 700;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .fix-table td {
+                padding: 7px 10px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                vertical-align: middle;
+            }
+            .fix-table tr:hover td {
+                background: rgba(255, 255, 255, 0.03);
+            }
+            .fix-table input[type="datetime-local"],
+            .fix-table select {
+                background: rgba(255, 255, 255, 0.07);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                color: var(--text-white);
+                border-radius: 5px;
+                padding: 4px 8px;
+                font-size: 0.82rem;
+                width: 100%;
+            }
+            .fix-table input[type="datetime-local"]:focus,
+            .fix-table select:focus {
+                outline: none;
+                border-color: var(--teal);
+            }
+            .btn-add-row {
+                margin-top: 10px;
+                background: rgba(0, 212, 170, 0.12);
+                color: var(--teal);
+                border: 1px solid var(--teal);
+                border-radius: 6px;
+                padding: 6px 14px;
+                cursor: pointer;
+                font-weight: 700;
+                font-size: 0.82rem;
+            }
+            .btn-add-row:hover {
+                background: rgba(0, 212, 170, 0.25);
+            }
+            .btn-del-row {
+                background: rgba(255, 95, 109, 0.12);
+                color: var(--red-accent);
+                border: none;
+                border-radius: 50%;
+                width: 26px;
+                height: 26px;
+                cursor: pointer;
+                font-size: 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .btn-del-row:hover {
+                background: rgba(255, 95, 109, 0.35);
+            }
+            .btn-edit-row {
+                background: rgba(255, 200, 80, 0.12);
+                color: #ffc850;
+                border: none;
+                border-radius: 50%;
+                width: 26px;
+                height: 26px;
+                cursor: pointer;
+                font-size: 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .btn-edit-row:hover {
+                background: rgba(255, 200, 80, 0.3);
+            }
+            .editing-row td {
+                background: rgba(0, 212, 170, 0.05);
+            }
+            .btn-primary {
+                background: var(--teal);
+                color: #0d1b2e;
+                border: none;
+                border-radius: 7px;
+                padding: 9px 22px;
+                font-weight: 800;
+                cursor: pointer;
+                font-size: 0.9rem;
+            }
+            .btn-primary:hover {
+                opacity: 0.88;
+            }
+            .btn-primary:disabled {
+                opacity: 0.45;
+                cursor: not-allowed;
+            }
 
-      textarea.csv-input { width:100%; font-family:monospace; font-size:0.8rem; padding:10px;
-                           border-radius:6px; background:var(--navy); color:var(--text-white);
-                           border:1px solid var(--teal); resize:vertical; }
+            textarea.csv-input {
+                width: 100%;
+                font-family: monospace;
+                font-size: 0.8rem;
+                padding: 10px;
+                border-radius: 6px;
+                background: var(--navy);
+                color: var(--text-white);
+                border: 1px solid var(--teal);
+                resize: vertical;
+            }
 
-      .lock-info { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-      .lock-badge-on  { background:rgba(255,95,109,0.2); border:1px solid var(--red-accent);
-                        color:#ff9aa4; padding:4px 12px; border-radius:50px; font-weight:700; font-size:0.8rem; }
-      .lock-badge-off { background:rgba(0,212,170,0.12); border:1px solid var(--teal);
-                        color:var(--teal); padding:4px 12px; border-radius:50px; font-weight:700; font-size:0.8rem; }
-    </style>
-</head>
-<body>
-<nav class="main-nav">
-  <div class="nav-container">
-    <a href="/" class="nav-brand"><span class="nav-logo-icon">⚽</span> Fantasy SV</a>
-    <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="nav-links" id="nav-links">
-      <a href="/leaderboard" class="nav-link">Leaderboard</a>
-      <button class="sign-out-btn" onclick="logout()">Sign Out</button>
-    </div>
-  </div>
-</nav>
+            .lock-info {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            .lock-badge-on {
+                background: rgba(255, 95, 109, 0.2);
+                border: 1px solid var(--red-accent);
+                color: #ff9aa4;
+                padding: 4px 12px;
+                border-radius: 50px;
+                font-weight: 700;
+                font-size: 0.8rem;
+            }
+            .lock-badge-off {
+                background: rgba(0, 212, 170, 0.12);
+                border: 1px solid var(--teal);
+                color: var(--teal);
+                padding: 4px 12px;
+                border-radius: 50px;
+                font-weight: 700;
+                font-size: 0.8rem;
+            }
+        </style>
+    </head>
+    <body>
+        <nav class="main-nav">
+            <div class="nav-container">
+                <a href="/" class="nav-brand"
+                    ><span class="nav-logo-icon">⚽</span> Fantasy SV</a
+                >
+                <button
+                    class="nav-mobile-toggle"
+                    onclick="
+                        document
+                            .getElementById('nav-links')
+                            .classList.toggle('active')
+                    "
+                >
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="nav-links" id="nav-links">
+                    <a href="/leaderboard" class="nav-link">Leaderboard</a>
+                    <button class="sign-out-btn" onclick="logout()">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </nav>
 
-<div class="container" x-data="adminApp()" x-init="init()">
-  <header>
-    <h1>⚙️ Admin Dashboard</h1>
-    <!-- Season / League / Matchday selectors -->
-    <div class="filters-row" style="display:flex;gap:15px;margin-top:15px;flex-wrap:wrap;">
-      <label>Season:
-        <select x-model="selectedSeasonId" @change="loadLeaguesAndMatchdays()" style="padding:5px;border-radius:4px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);">
-          <option value="">-- Select Season --</option>
-          <template x-for="s in seasons" :key="s.id">
-            <option :value="s.id" x-text="s.name"></option>
-          </template>
-        </select>
-      </label>
-      <label>League:
-        <select x-model="selectedLeagueId" @change="loadPlayers()" style="padding:5px;border-radius:4px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);">
-          <option value="">-- All Leagues --</option>
-          <template x-for="l in leagues" :key="l.id">
-            <option :value="l.id" x-text="l.name"></option>
-          </template>
-        </select>
-      </label>
-      <label>Matchday:
-        <select x-model="matchdayId" @change="onMatchdayChange()" style="padding:5px;border-radius:4px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);">
-          <option value="">-- Select Matchday --</option>
-          <template x-for="m in matchdays" :key="m.id">
-            <option :value="m.id" x-text="m.name"></option>
-          </template>
-        </select>
-      </label>
-    </div>
-    <!-- Lock status -->
-    <div x-show="matchdayId" style="margin-top:12px;" class="lock-info">
-      <span x-show="matchdayLocked" class="lock-badge-on">🔒 LOCKED</span>
-      <span x-show="!matchdayLocked" class="lock-badge-off">🔓 Open</span>
-      <span x-show="matchdayDeadline" style="font-size:0.85rem;color:var(--text-dim);">
-        Lock at: <strong x-text="matchdayDeadline ? new Date(matchdayDeadline).toLocaleString() : '—'"></strong>
-      </span>
-    </div>
-  </header>
+        <div class="container" x-data="adminApp()" x-init="init()">
+            <header>
+                <h1>⚙️ Admin Dashboard</h1>
+                <!-- Season / League / Matchday selectors -->
+                <div
+                    class="filters-row"
+                    style="
+                        display: flex;
+                        gap: 15px;
+                        margin-top: 15px;
+                        flex-wrap: wrap;
+                    "
+                >
+                    <label
+                        >Season:
+                        <select
+                            x-model="selectedSeasonId"
+                            @change="loadLeaguesAndMatchdays()"
+                            style="
+                                padding: 5px;
+                                border-radius: 4px;
+                                background: rgba(255, 255, 255, 0.1);
+                                color: white;
+                                border: 1px solid rgba(255, 255, 255, 0.2);
+                            "
+                        >
+                            <option value="">-- Select Season --</option>
+                            <template x-for="s in seasons" :key="s.id">
+                                <option :value="s.id" x-text="s.name"></option>
+                            </template>
+                        </select>
+                    </label>
+                    <label
+                        >League:
+                        <select
+                            x-model="selectedLeagueId"
+                            @change="loadPlayers()"
+                            style="
+                                padding: 5px;
+                                border-radius: 4px;
+                                background: rgba(255, 255, 255, 0.1);
+                                color: white;
+                                border: 1px solid rgba(255, 255, 255, 0.2);
+                            "
+                        >
+                            <option value="">-- All Leagues --</option>
+                            <template x-for="l in leagues" :key="l.id">
+                                <option :value="l.id" x-text="l.name"></option>
+                            </template>
+                        </select>
+                    </label>
+                    <label
+                        >Matchday:
+                        <select
+                            x-model="matchdayId"
+                            @change="onMatchdayChange()"
+                            style="
+                                padding: 5px;
+                                border-radius: 4px;
+                                background: rgba(255, 255, 255, 0.1);
+                                color: white;
+                                border: 1px solid rgba(255, 255, 255, 0.2);
+                            "
+                        >
+                            <option value="">-- Select Matchday --</option>
+                            <template x-for="m in matchdays" :key="m.id">
+                                <option :value="m.id" x-text="m.name"></option>
+                            </template>
+                        </select>
+                    </label>
+                </div>
+                <!-- Lock status -->
+                <div
+                    x-show="matchdayId"
+                    style="margin-top: 12px"
+                    class="lock-info"
+                >
+                    <span x-show="matchdayLocked" class="lock-badge-on"
+                        >🔒 LOCKED</span
+                    >
+                    <span x-show="!matchdayLocked" class="lock-badge-off"
+                        >🔓 Open</span
+                    >
+                    <span
+                        x-show="matchdayDeadline"
+                        style="font-size: 0.85rem; color: var(--text-dim)"
+                    >
+                        Lock at:
+                        <strong
+                            x-text="matchdayDeadline ? new Date(matchdayDeadline).toLocaleString() : '—'"
+                        ></strong>
+                    </span>
+                </div>
+            </header>
 
-  <!-- ── ADMIN TABS ── -->
-  <div class="admin-tabs" style="margin-top:20px;">
-    <div class="admin-tab" :class="tab==='results'?'active':''" @click="tab='results'">📤 Match Results</div>
-    <div class="admin-tab" :class="tab==='fixtures'?'active':''" @click="tab='fixtures'">📅 Fixtures</div>
-  </div>
+            <!-- ── ADMIN TABS ── -->
+            <div class="admin-tabs" style="margin-top: 20px">
+                <div
+                    class="admin-tab"
+                    :class="tab==='results'?'active':''"
+                    @click="tab='results'"
+                >
+                    📤 Match Results
+                </div>
+                <div
+                    class="admin-tab"
+                    :class="tab==='fixtures'?'active':''"
+                    @click="tab='fixtures'"
+                >
+                    📅 Fixtures
+                </div>
+            </div>
 
-  <!-- ══════════════════════════════════════════════════════
+            <!-- ══════════════════════════════════════════════════════
        TAB 1 — MATCH RESULTS
   ═══════════════════════════════════════════════════════ -->
-  <div x-show="tab==='results'">
-    <template x-if="!matchdayId">
-      <p style="color:var(--text-dim);padding:20px 0;">Select a matchday to enter results.</p>
-    </template>
+            <div x-show="tab==='results'">
+                <template x-if="!matchdayId">
+                    <p style="color: var(--text-dim); padding: 20px 0">
+                        Select a matchday to enter results.
+                    </p>
+                </template>
 
-    <template x-if="matchdayId">
-      <div>
-        <!-- CSV Bulk Import -->
-        <div class="section-card">
-          <h3>📋 Bulk Import Results (CSV)</h3>
-          <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:10px;">
-            Headers: <code>player_id, minutes_played, goals, assists, goals_conceded, yellow_card, red_card, own_goal, penalty_missed, penalty_saved</code>
-          </p>
-          <textarea class="csv-input" x-model="csvData" rows="5"
-            placeholder="player_id,minutes_played,goals,assists,goals_conceded,yellow_card,red_card,own_goal,penalty_missed,penalty_saved&#10;1,90,1,0,0,0,0,0,0,0&#10;2,45,0,1,1,1,0,0,0,0"></textarea>
-          <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
-            <button type="button" class="btn-primary" @click="parseCSV()">📥 Load CSV</button>
-            <button type="button" class="btn-add-row" @click="downloadCSVTemplate()">⬇️ Download Template</button>
-          </div>
-        </div>
+                <template x-if="matchdayId">
+                    <div>
+                        <!-- CSV Bulk Import -->
+                        <div class="section-card">
+                            <h3>📋 Bulk Import Results (CSV)</h3>
+                            <p
+                                style="
+                                    font-size: 0.82rem;
+                                    color: var(--text-dim);
+                                    margin-bottom: 10px;
+                                "
+                            >
+                                Headers:
+                                <code
+                                    >player_id, minutes_played, goals, assists,
+                                    goals_conceded, yellow_card, red_card,
+                                    own_goal, penalty_missed,
+                                    penalty_saved</code
+                                >
+                            </p>
+                            <textarea
+                                class="csv-input"
+                                x-model="csvData"
+                                rows="5"
+                                placeholder="player_id,minutes_played,goals,assists,goals_conceded,yellow_card,red_card,own_goal,penalty_missed,penalty_saved&#10;1,90,1,0,0,0,0,0,0,0&#10;2,45,0,1,1,1,0,0,0,0"
+                            ></textarea>
+                            <div
+                                style="
+                                    margin-top: 10px;
+                                    display: flex;
+                                    gap: 10px;
+                                    align-items: center;
+                                "
+                            >
+                                <button
+                                    type="button"
+                                    class="btn-primary"
+                                    @click="parseCSV()"
+                                >
+                                    📥 Load CSV
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn-add-row"
+                                    @click="downloadCSVTemplate()"
+                                >
+                                    ⬇️ Download Template
+                                </button>
+                            </div>
+                        </div>
 
-        <!-- Stats Table -->
+                        <!-- Stats Table -->
 
-        <!-- Read-only Fixtures Summary -->
-        <div class="section-card" x-show="savedFixtures.length > 0">
-          <h3>📅 Fixtures <span style="font-size:0.75rem;color:var(--text-dim);font-weight:500;">(read-only — edit in Fixtures tab)</span></h3>
-          <table class="fix-table">
-            <thead><tr><th>#</th><th>Home</th><th>Away</th><th>Kickoff (local)</th><th>Status</th></tr></thead>
-            <tbody>
-              <template x-for="(f, i) in savedFixtures" :key="f.id">
-                <tr>
-                  <td x-text="i+1" style="color:var(--text-dim);font-size:0.78rem;"></td>
-                  <td x-text="teamName(f.home_team_id)" style="font-weight:700;"></td>
-                  <td x-text="teamName(f.away_team_id)" style="font-weight:700;"></td>
-                  <td x-text="new Date(f.kickoff_utc).toLocaleString()" style="color:var(--text-dim);font-size:0.82rem;"></td>
-                  <td><span x-show="f.finished" style="color:var(--teal);font-weight:700;font-size:0.8rem;">✅ Done</span><span x-show="!f.finished" style="color:var(--gold);font-weight:700;font-size:0.8rem;">⏳ Upcoming</span></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
+                        <!-- Read-only Fixtures Summary -->
+                        <div
+                            class="section-card"
+                            x-show="savedFixtures.length > 0"
+                        >
+                            <h3>
+                                📅 Fixtures
+                                <span
+                                    style="
+                                        font-size: 0.75rem;
+                                        color: var(--text-dim);
+                                        font-weight: 500;
+                                    "
+                                    >(read-only — edit in Fixtures tab)</span
+                                >
+                            </h3>
+                            <table class="fix-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Home</th>
+                                        <th>Away</th>
+                                        <th>Kickoff (local)</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template
+                                        x-for="(f, i) in savedFixtures"
+                                        :key="f.id"
+                                    >
+                                        <tr>
+                                            <td
+                                                x-text="i+1"
+                                                style="
+                                                    color: var(--text-dim);
+                                                    font-size: 0.78rem;
+                                                "
+                                            ></td>
+                                            <td
+                                                x-text="teamName(f.home_team_id)"
+                                                style="font-weight: 700"
+                                            ></td>
+                                            <td
+                                                x-text="teamName(f.away_team_id)"
+                                                style="font-weight: 700"
+                                            ></td>
+                                            <td
+                                                x-text="new Date(f.kickoff_utc).toLocaleString()"
+                                                style="
+                                                    color: var(--text-dim);
+                                                    font-size: 0.82rem;
+                                                "
+                                            ></td>
+                                            <td>
+                                                <span
+                                                    x-show="f.finished"
+                                                    style="
+                                                        color: var(--teal);
+                                                        font-weight: 700;
+                                                        font-size: 0.8rem;
+                                                    "
+                                                    >✅ Done</span
+                                                ><span
+                                                    x-show="!f.finished"
+                                                    style="
+                                                        color: var(--gold);
+                                                        font-weight: 700;
+                                                        font-size: 0.8rem;
+                                                    "
+                                                    >⏳ Upcoming</span
+                                                >
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
 
-        <div x-show="loading" class="loading">Loading players…</div>
-        <template x-if="!loading && teams.length">
-          <div class="section-card">
-            <h3>🏟️ Player Stats</h3>
-            <div class="table-responsive">
-              <table class="stats-table">
-                <thead>
-                  <tr>
-                    <th>Player</th>
-                    <th>Min</th><th>G</th><th>A</th><th>GC</th>
-                    <th>YC</th><th>RC</th><th>OG</th><th>PM</th><th>PS</th>
-                  </tr>
-                  <tr class="legend">
-                    <td colspan="10"><small>Min=Minutes · G=Goals · A=Assists · GC=Goals Conceded · YC=Yellow · RC=Red · OG=Own Goal · PM=Pen Missed · PS=Pen Saved</small></td>
-                  </tr>
-                </thead>
-                  <template x-for="team in teams" :key="team.team_id">
-                    <tbody>
-                      <tr class="team-separator">
-                        <td colspan="10" x-text="team.team_name"></td>
-                      </tr>
-                      <template x-for="player in team.players" :key="player.player_id">
-                        <tr>
-                          <td class="player-name" x-text="player.name"></td>
-                          <td><input type="number" x-model.number="player.stats.minutes_played" min="0" step="1" required></td>
-                          <td><input type="number" x-model.number="player.stats.goals"          min="0" step="1"></td>
-                          <td><input type="number" x-model.number="player.stats.assists"        min="0" step="1"></td>
-                          <td><input type="number" x-model.number="player.stats.goals_conceded" min="0" step="1"></td>
-                          <td><input type="number" x-model.number="player.stats.yellow_card"    min="0" step="1"></td>
-                          <td><input type="number" x-model.number="player.stats.red_card"       min="0" step="1"></td>
-                          <td><input type="number" x-model.number="player.stats.own_goal"       min="0" step="1"></td>
-                          <td><input type="number" x-model.number="player.stats.penalty_missed" min="0" step="1"></td>
-                          <td><input type="number" x-model.number="player.stats.penalty_saved"  min="0" step="1"></td>
-                        </tr>
-                      </template>
-                    </tbody>
-                  </template>
-              </table>
+                        <div x-show="loading" class="loading">
+                            Loading players…
+                        </div>
+                        <template x-if="!loading && teams.length">
+                            <div class="section-card">
+                                <h3>🏟️ Player Stats</h3>
+                                <div class="table-responsive">
+                                    <table class="stats-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Player</th>
+                                                <th>Min</th>
+                                                <th>G</th>
+                                                <th>A</th>
+                                                <th>GC</th>
+                                                <th>YC</th>
+                                                <th>RC</th>
+                                                <th>OG</th>
+                                                <th>PM</th>
+                                                <th>PS</th>
+                                            </tr>
+                                            <tr class="legend">
+                                                <td colspan="10">
+                                                    <small
+                                                        >Min=Minutes · G=Goals ·
+                                                        A=Assists · GC=Goals
+                                                        Conceded · YC=Yellow ·
+                                                        RC=Red · OG=Own Goal ·
+                                                        PM=Pen Missed · PS=Pen
+                                                        Saved</small
+                                                    >
+                                                </td>
+                                            </tr>
+                                        </thead>
+                                        <template
+                                            x-for="team in teams"
+                                            :key="team.team_id"
+                                        >
+                                            <tbody>
+                                                <tr class="team-separator">
+                                                    <td
+                                                        colspan="10"
+                                                        x-text="team.team_name"
+                                                    ></td>
+                                                </tr>
+                                                <template
+                                                    x-for="player in team.players"
+                                                    :key="player.player_id"
+                                                >
+                                                    <tr>
+                                                        <td
+                                                            class="player-name"
+                                                            x-text="player.name"
+                                                        ></td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                x-model.number="player.stats.minutes_played"
+                                                                min="0"
+                                                                step="1"
+                                                                required
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                x-model.number="player.stats.goals"
+                                                                min="0"
+                                                                step="1"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                x-model.number="player.stats.assists"
+                                                                min="0"
+                                                                step="1"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                x-model.number="player.stats.goals_conceded"
+                                                                min="0"
+                                                                step="1"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                x-model.number="player.stats.yellow_card"
+                                                                min="0"
+                                                                step="1"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                x-model.number="player.stats.red_card"
+                                                                min="0"
+                                                                step="1"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                x-model.number="player.stats.own_goal"
+                                                                min="0"
+                                                                step="1"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                x-model.number="player.stats.penalty_missed"
+                                                                min="0"
+                                                                step="1"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <input
+                                                                type="number"
+                                                                x-model.number="player.stats.penalty_saved"
+                                                                min="0"
+                                                                step="1"
+                                                            />
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </template>
+                                    </table>
+                                </div>
+                                <div class="actions" style="margin-top: 16px">
+                                    <button
+                                        type="button"
+                                        class="btn-primary"
+                                        :disabled="submitting"
+                                        @click="submitStats()"
+                                    >
+                                        <span x-show="!submitting"
+                                            >📤 Submit Match Results</span
+                                        >
+                                        <span x-show="submitting"
+                                            >⏳ Submitting…</span
+                                        >
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Task status -->
+                        <div
+                            x-show="taskStatus"
+                            class="task-status"
+                            style="margin-top: 12px"
+                        >
+                            <strong>Task:</strong>
+                            <span x-text="taskStatus"></span>
+                            <progress
+                                x-show="taskStatus==='processing'"
+                                class="progress"
+                            ></progress>
+                        </div>
+                    </div>
+                </template>
             </div>
-            <div class="actions" style="margin-top:16px;">
-              <button type="button" class="btn-primary" :disabled="submitting" @click="submitStats()">
-                <span x-show="!submitting">📤 Submit Match Results</span>
-                <span x-show="submitting">⏳ Submitting…</span>
-              </button>
-            </div>
-          </div>
-        </template>
 
-        <!-- Task status -->
-        <div x-show="taskStatus" class="task-status" style="margin-top:12px;">
-          <strong>Task:</strong> <span x-text="taskStatus"></span>
-          <progress x-show="taskStatus==='processing'" class="progress"></progress>
-        </div>
-      </div>
-    </template>
-  </div>
-
-  <!-- ══════════════════════════════════════════════════════
+            <!-- ══════════════════════════════════════════════════════
        TAB 2 — FIXTURES
   ═══════════════════════════════════════════════════════ -->
-  <div x-show="tab==='fixtures'">
-    <template x-if="!matchdayId">
-      <p style="color:var(--text-dim);padding:20px 0;">Select a matchday to manage its fixtures.</p>
-    </template>
-
-    <template x-if="matchdayId">
-      <div>
-
-        <!-- CSV bulk import for fixtures -->
-        <div class="section-card">
-          <h3>📋 Bulk Import Fixtures (CSV)</h3>
-          <p style="font-size:0.82rem;color:var(--text-dim);margin-bottom:10px;">
-            Headers: <code>home_team_id, away_team_id, kickoff_utc</code> &nbsp;·&nbsp;
-            kickoff format: <code>2025-06-01T14:00</code>
-          </p>
-          <textarea class="csv-input" x-model="fixtureCsvData" rows="5"
-            placeholder="home_team_id,away_team_id,kickoff_utc&#10;1,2,2025-06-01T14:00&#10;3,4,2025-06-01T17:00"></textarea>
-          <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
-            <button type="button" class="btn-primary" @click="parseFixtureCsv()">📥 Load CSV</button>
-            <button type="button" class="btn-add-row" @click="downloadFixtureTemplate()">⬇️ Template</button>
-          </div>
-        </div>
-
-        <!-- Fixture rows editor -->
-        <div class="section-card">
-          <h3>📅 Fixture List</h3>
-          <div x-show="fixtureRows.length === 0" style="color:var(--text-dim);font-size:0.88rem;margin-bottom:12px;">
-            No fixtures yet. Add rows below or import via CSV.
-          </div>
-          <div class="table-responsive">
-            <table class="fix-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Home Team</th>
-                  <th>Away Team</th>
-                  <th>Kickoff (UTC)</th>
-                  <th>Finished</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <template x-for="(row, idx) in fixtureRows" :key="row._key">
-                  <tr>
-                    <td style="color:var(--text-dim);font-size:0.78rem;" x-text="idx+1"></td>
-                    <td>
-                      <select x-model.number="row.home_team_id">
-                        <option value="">— Home —</option>
-                        <template x-for="t in allTeams" :key="t.id">
-                          <option :value="t.id" x-text="t.name" :selected="row.home_team_id === t.id"></option>
-                        </template>
-                      </select>
-                    </td>
-                    <td>
-                      <select x-model.number="row.away_team_id">
-                        <option value="">— Away —</option>
-                        <template x-for="t in allTeams" :key="t.id">
-                          <option :value="t.id" x-text="t.name" :selected="row.away_team_id === t.id"></option>
-                        </template>
-                      </select>
-                    </td>
-                    <td>
-                      <input type="datetime-local" x-model="row.kickoff_utc">
-                    </td>
-                    <td style="text-align:center;">
-                      <input type="checkbox" x-model="row.finished">
-                    </td>
-                    <td>
-                      <button class="btn-del-row" @click="removeFixtureRow(idx)" title="Remove">✕</button>
-                    </td>
-                  </tr>
+            <div x-show="tab==='fixtures'">
+                <template x-if="!matchdayId">
+                    <p style="color: var(--text-dim); padding: 20px 0">
+                        Select a matchday to manage its fixtures.
+                    </p>
                 </template>
-              </tbody>
-            </table>
-          </div>
 
-          <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-            <button class="btn-add-row" @click="addFixtureRow()">+ Add Fixture</button>
-            <button class="btn-primary" :disabled="savingFixtures || fixtureRows.length===0" @click="saveFixtures()">
-              <span x-show="!savingFixtures">💾 Save All Fixtures</span>
-              <span x-show="savingFixtures">⏳ Saving…</span>
-            </button>
-            <button class="btn-add-row" style="margin-left:auto;" @click="initLock()"
-                    x-show="fixtureRows.length > 0" title="Recalculate lock time from earliest kickoff">
-              🔒 Recalculate Lock
-            </button>
-            <button class="btn-add-row" style="margin-left:auto;" @click="resetLockToEarliest()"
-                    x-show="fixtureRows.length > 0" title="Reset lock to earliest fixture of closest matchday">
-              🔄 Reset to Earliest Fixture
-            </button>
-          </div>
-        </div>
+                <template x-if="matchdayId">
+                    <div>
+                        <!-- CSV bulk import for fixtures -->
+                        <div class="section-card">
+                            <h3>📋 Bulk Import Fixtures (CSV)</h3>
+                            <p
+                                style="
+                                    font-size: 0.82rem;
+                                    color: var(--text-dim);
+                                    margin-bottom: 10px;
+                                "
+                            >
+                                Headers:
+                                <code
+                                    >home_team_id, away_team_id,
+                                    kickoff_utc</code
+                                >
+                                &nbsp;·&nbsp; kickoff format:
+                                <code>2025-06-01T14:00</code>
+                            </p>
+                            <textarea
+                                class="csv-input"
+                                x-model="fixtureCsvData"
+                                rows="5"
+                                placeholder="home_team_id,away_team_id,kickoff_utc&#10;1,2,2025-06-01T14:00&#10;3,4,2025-06-01T17:00"
+                            ></textarea>
+                            <div
+                                style="
+                                    margin-top: 10px;
+                                    display: flex;
+                                    gap: 10px;
+                                    align-items: center;
+                                "
+                            >
+                                <button
+                                    type="button"
+                                    class="btn-primary"
+                                    @click="parseFixtureCsv()"
+                                >
+                                    📥 Load CSV
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn-add-row"
+                                    @click="downloadFixtureTemplate()"
+                                >
+                                    ⬇️ Template
+                                </button>
+                            </div>
+                        </div>
 
-        <!-- Saved fixtures — inline-editable CRUD table -->
-        <div class="section-card" x-show="savedFixtures.length > 0">
-          <h3>✅ Saved Fixtures <span style="font-size:0.75rem;color:var(--text-dim);font-weight:500;">— click a row to edit</span></h3>
-          <div class="table-responsive">
-            <table class="fix-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Home</th>
-                  <th>Away</th>
-                  <th>Kickoff (UTC)</th>
-                  <th style="text-align:center;">Done</th>
-                  <th style="text-align:center;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <template x-for="(f, i) in savedFixtures" :key="f.id">
-                  <tr :class="editingFixtureId === f.id ? 'editing-row' : ''">
+                        <!-- Fixture rows editor -->
+                        <div class="section-card">
+                            <h3>📅 Fixture List</h3>
+                            <div
+                                x-show="fixtureRows.length === 0"
+                                style="
+                                    color: var(--text-dim);
+                                    font-size: 0.88rem;
+                                    margin-bottom: 12px;
+                                "
+                            >
+                                No fixtures yet. Add rows below or import via
+                                CSV.
+                            </div>
+                            <div class="table-responsive">
+                                <table class="fix-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Home Team</th>
+                                            <th>Away Team</th>
+                                            <th>Kickoff (UTC)</th>
+                                            <th>Finished</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template
+                                            x-for="(row, idx) in fixtureRows"
+                                            :key="row._key"
+                                        >
+                                            <tr>
+                                                <td
+                                                    style="
+                                                        color: var(--text-dim);
+                                                        font-size: 0.78rem;
+                                                    "
+                                                    x-text="idx+1"
+                                                ></td>
+                                                <td>
+                                                    <select
+                                                        x-model.number="row.home_team_id"
+                                                    >
+                                                        <option value="">
+                                                            — Home —
+                                                        </option>
+                                                        <template
+                                                            x-for="t in allTeams"
+                                                            :key="t.id"
+                                                        >
+                                                            <option
+                                                                :value="t.id"
+                                                                x-text="t.name"
+                                                                :selected="row.home_team_id === t.id"
+                                                            ></option>
+                                                        </template>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <select
+                                                        x-model.number="row.away_team_id"
+                                                    >
+                                                        <option value="">
+                                                            — Away —
+                                                        </option>
+                                                        <template
+                                                            x-for="t in allTeams"
+                                                            :key="t.id"
+                                                        >
+                                                            <option
+                                                                :value="t.id"
+                                                                x-text="t.name"
+                                                                :selected="row.away_team_id === t.id"
+                                                            ></option>
+                                                        </template>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="datetime-local"
+                                                        x-model="row.kickoff_utc"
+                                                    />
+                                                </td>
+                                                <td style="text-align: center">
+                                                    <input
+                                                        type="checkbox"
+                                                        x-model="row.finished"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        class="btn-del-row"
+                                                        @click="removeFixtureRow(idx)"
+                                                        title="Remove"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    <!-- VIEW mode -->
-                    <template x-if="editingFixtureId !== f.id">
-                      <td style="color:var(--text-dim);font-size:0.78rem;" x-text="i+1"></td>
-                    </template>
-                    <template x-if="editingFixtureId !== f.id">
-                      <td x-text="teamName(f.home_team_id)" style="font-weight:700;"></td>
-                    </template>
-                    <template x-if="editingFixtureId !== f.id">
-                      <td x-text="teamName(f.away_team_id)" style="font-weight:700;"></td>
-                    </template>
-                    <template x-if="editingFixtureId !== f.id">
-                      <td x-text="new Date(f.kickoff_utc).toLocaleString()" style="color:var(--text-dim);font-size:0.82rem;"></td>
-                    </template>
-                    <template x-if="editingFixtureId !== f.id">
-                      <td style="text-align:center;" x-text="f.finished ? '✅' : '⏳'"></td>
-                    </template>
-                    <template x-if="editingFixtureId !== f.id">
-                      <td style="text-align:center;display:flex;gap:6px;justify-content:center;">
-                        <button class="btn-edit-row" @click="startEditFixture(f)" title="Edit">✏️</button>
-                        <button class="btn-del-row" @click="deleteFixture(f.id)" title="Delete">✕</button>
-                      </td>
-                    </template>
+                            <div
+                                style="
+                                    margin-top: 12px;
+                                    display: flex;
+                                    gap: 10px;
+                                    flex-wrap: wrap;
+                                    align-items: center;
+                                "
+                            >
+                                <button
+                                    class="btn-add-row"
+                                    @click="addFixtureRow()"
+                                >
+                                    + Add Fixture
+                                </button>
+                                <button
+                                    class="btn-primary"
+                                    :disabled="savingFixtures || fixtureRows.length===0"
+                                    @click="saveFixtures()"
+                                >
+                                    <span x-show="!savingFixtures"
+                                        >💾 Save All Fixtures</span
+                                    >
+                                    <span x-show="savingFixtures"
+                                        >⏳ Saving…</span
+                                    >
+                                </button>
+                                <button
+                                    class="btn-add-row"
+                                    style="margin-left: auto"
+                                    @click="initLock()"
+                                    x-show="fixtureRows.length > 0"
+                                    title="Recalculate lock time from earliest kickoff"
+                                >
+                                    🔒 Recalculate Lock
+                                </button>
+                                <button
+                                    class="btn-add-row"
+                                    style="margin-left: auto"
+                                    @click="resetLockToEarliest()"
+                                    x-show="fixtureRows.length > 0"
+                                    title="Reset lock to earliest fixture of closest matchday"
+                                >
+                                    🔄 Reset to Earliest Fixture
+                                </button>
+                            </div>
+                        </div>
 
-                    <!-- EDIT mode -->
-                    <template x-if="editingFixtureId === f.id">
-                      <td style="color:var(--teal);font-size:0.78rem;font-weight:700;" x-text="i+1"></td>
-                    </template>
-                    <template x-if="editingFixtureId === f.id">
-                      <td>
-                        <select x-model.number="editFixtureDraft.home_team_id">
-                          <option value="">— Home —</option>
-                          <template x-for="t in allTeams" :key="t.id">
-                            <option :value="t.id" x-text="t.name"></option>
-                          </template>
-                        </select>
-                      </td>
-                    </template>
-                    <template x-if="editingFixtureId === f.id">
-                      <td>
-                        <select x-model.number="editFixtureDraft.away_team_id">
-                          <option value="">— Away —</option>
-                          <template x-for="t in allTeams" :key="t.id">
-                            <option :value="t.id" x-text="t.name"></option>
-                          </template>
-                        </select>
-                      </td>
-                    </template>
-                    <template x-if="editingFixtureId === f.id">
-                      <td><input type="datetime-local" x-model="editFixtureDraft.kickoff_utc"></td>
-                    </template>
-                    <template x-if="editingFixtureId === f.id">
-                      <td style="text-align:center;"><input type="checkbox" x-model="editFixtureDraft.finished"></td>
-                    </template>
-                    <template x-if="editingFixtureId === f.id">
-                      <td style="text-align:center;display:flex;gap:6px;justify-content:center;">
-                        <button class="btn-primary" style="padding:4px 12px;font-size:0.8rem;"
-                                :disabled="savingFixtureEdit"
-                                @click="saveFixtureEdit(f.id)">
-                          <span x-show="!savingFixtureEdit">💾</span>
-                          <span x-show="savingFixtureEdit">⏳</span>
-                        </button>
-                        <button class="btn-add-row" style="padding:4px 10px;font-size:0.8rem;"
-                                @click="cancelEditFixture()">✕</button>
-                      </td>
-                    </template>
+                        <!-- Saved fixtures — inline-editable CRUD table -->
+                        <div
+                            class="section-card"
+                            x-show="savedFixtures.length > 0"
+                        >
+                            <h3>
+                                ✅ Saved Fixtures
+                                <span
+                                    style="
+                                        font-size: 0.75rem;
+                                        color: var(--text-dim);
+                                        font-weight: 500;
+                                    "
+                                    >— click a row to edit</span
+                                >
+                            </h3>
+                            <div class="table-responsive">
+                                <table class="fix-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Home</th>
+                                            <th>Away</th>
+                                            <th>Kickoff (UTC)</th>
+                                            <th>Knockout</th>
+                                            <th style="text-align: center">
+                                                Done
+                                            </th>
+                                            <th style="text-align: center">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template
+                                            x-for="(f, i) in savedFixtures"
+                                            :key="f.id"
+                                        >
+                                            <tr
+                                                :class="editingFixtureId === f.id ? 'editing-row' : ''"
+                                            >
+                                                <!-- VIEW mode -->
+                                                <template
+                                                    x-if="editingFixtureId !== f.id"
+                                                >
+                                                    <td
+                                                        style="
+                                                            color: var(
+                                                                --text-dim
+                                                            );
+                                                            font-size: 0.78rem;
+                                                        "
+                                                        x-text="i+1"
+                                                    ></td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId !== f.id"
+                                                >
+                                                    <td
+                                                        x-text="teamName(f.home_team_id)"
+                                                        style="font-weight: 700"
+                                                    ></td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId !== f.id"
+                                                >
+                                                    <td
+                                                        x-text="teamName(f.away_team_id)"
+                                                        style="font-weight: 700"
+                                                    ></td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId !== f.id"
+                                                >
+                                                    <td
+                                                        x-text="new Date(f.kickoff_utc).toLocaleString()"
+                                                        style="
+                                                            color: var(
+                                                                --text-dim
+                                                            );
+                                                            font-size: 0.82rem;
+                                                        "
+                                                    ></td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId !== f.id"
+                                                >
+                                                    <td
+                                                        style="
+                                                            text-align: center;
+                                                        "
+                                                    >
+                                                        <span
+                                                            x-text="f.is_knockout ? '🏆' : '⚽'"
+                                                            :title="f.is_knockout ? 'Knockout' : 'Group Stage'"
+                                                        ></span>
+                                                    </td>
+                                                </template>
 
-                  </tr>
+                                                <template
+                                                    x-if="editingFixtureId !== f.id"
+                                                >
+                                                    <td
+                                                        style="
+                                                            text-align: center;
+                                                        "
+                                                        x-text="f.finished ? '✅' : '⏳'"
+                                                    ></td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId !== f.id"
+                                                >
+                                                    <td
+                                                        style="
+                                                            text-align: center;
+                                                            display: flex;
+                                                            gap: 6px;
+                                                            justify-content: center;
+                                                        "
+                                                    >
+                                                        <button
+                                                            class="btn-edit-row"
+                                                            @click="startEditFixture(f)"
+                                                            title="Edit"
+                                                        >
+                                                            ✏️
+                                                        </button>
+                                                        <button
+                                                            class="btn-del-row"
+                                                            @click="deleteFixture(f.id)"
+                                                            title="Delete"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </td>
+                                                </template>
+
+                                                <!-- EDIT mode -->
+                                                <template
+                                                    x-if="editingFixtureId === f.id"
+                                                >
+                                                    <td
+                                                        style="
+                                                            color: var(--teal);
+                                                            font-size: 0.78rem;
+                                                            font-weight: 700;
+                                                        "
+                                                        x-text="i+1"
+                                                    ></td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId === f.id"
+                                                >
+                                                    <td>
+                                                        <select
+                                                            x-model.number="editFixtureDraft.home_team_id"
+                                                        >
+                                                            <option value="">
+                                                                — Home —
+                                                            </option>
+                                                            <template
+                                                                x-for="t in allTeams"
+                                                                :key="t.id"
+                                                            >
+                                                                <option
+                                                                    :value="t.id"
+                                                                    x-text="t.name"
+                                                                ></option>
+                                                            </template>
+                                                        </select>
+                                                    </td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId === f.id"
+                                                >
+                                                    <td>
+                                                        <select
+                                                            x-model.number="editFixtureDraft.away_team_id"
+                                                        >
+                                                            <option value="">
+                                                                — Away —
+                                                            </option>
+                                                            <template
+                                                                x-for="t in allTeams"
+                                                                :key="t.id"
+                                                            >
+                                                                <option
+                                                                    :value="t.id"
+                                                                    x-text="t.name"
+                                                                ></option>
+                                                            </template>
+                                                        </select>
+                                                    </td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId === f.id"
+                                                >
+                                                    <td>
+                                                        <input
+                                                            type="datetime-local"
+                                                            x-model="editFixtureDraft.kickoff_utc"
+                                                        />
+                                                    </td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId === f.id"
+                                                >
+                                                    <td
+                                                        style="
+                                                            text-align: center;
+                                                        "
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            x-model="editFixtureDraft.is_knockout"
+                                                        />
+                                                    </td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId === f.id"
+                                                >
+                                                    <td
+                                                        style="
+                                                            text-align: center;
+                                                        "
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            x-model="editFixtureDraft.finished"
+                                                        />
+                                                    </td>
+                                                </template>
+                                                <template
+                                                    x-if="editingFixtureId === f.id"
+                                                >
+                                                    <td
+                                                        style="
+                                                            text-align: center;
+                                                            display: flex;
+                                                            gap: 6px;
+                                                            justify-content: center;
+                                                        "
+                                                    >
+                                                        <button
+                                                            class="btn-primary"
+                                                            style="
+                                                                padding: 4px
+                                                                    12px;
+                                                                font-size: 0.8rem;
+                                                            "
+                                                            :disabled="savingFixtureEdit"
+                                                            @click="saveFixtureEdit(f.id)"
+                                                        >
+                                                            <span
+                                                                x-show="!savingFixtureEdit"
+                                                                >💾</span
+                                                            >
+                                                            <span
+                                                                x-show="savingFixtureEdit"
+                                                                >⏳</span
+                                                            >
+                                                        </button>
+                                                        <button
+                                                            class="btn-add-row"
+                                                            style="
+                                                                padding: 4px
+                                                                    10px;
+                                                                font-size: 0.8rem;
+                                                            "
+                                                            @click="cancelEditFixture()"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </td>
+                                                </template>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </template>
-              </tbody>
-            </table>
-          </div>
+            </div>
+
+            <!-- Global message toast -->
+            <div
+                x-show="message"
+                class="message"
+                :class="messageType"
+                x-text="message"
+                style="
+                    position: fixed;
+                    bottom: 24px;
+                    right: 24px;
+                    z-index: 999;
+                    max-width: 360px;
+                "
+            ></div>
         </div>
 
-      </div>
-    </template>
-  </div>
+        <script>
+            requireRole("admin");
 
-  <!-- Global message toast -->
-  <div x-show="message" class="message" :class="messageType" x-text="message"
-       style="position:fixed;bottom:24px;right:24px;z-index:999;max-width:360px;"></div>
-</div>
+            function adminApp() {
+                return {
+                    // ── state ───────────────────────────────────────────
+                    tab: "results",
+                    seasons: [],
+                    leagues: [],
+                    matchdays: [],
+                    selectedSeasonId: "",
+                    selectedLeagueId: "",
+                    matchdayId: "",
+                    matchdayDeadline: "",
+                    matchdayLocked: false,
 
-<script>
-  requireRole('admin')
+                    // results tab
+                    csvData: "",
+                    teams: [],
+                    loading: false,
+                    submitting: false,
+                    taskId: null,
+                    taskStatus: null,
+                    pollInterval: null,
 
-function adminApp() {
-  return {
-    // ── state ───────────────────────────────────────────
-    tab: 'results',
-    seasons: [], leagues: [], matchdays: [],
-    selectedSeasonId: '', selectedLeagueId: '', matchdayId: '',
-    matchdayDeadline: '', matchdayLocked: false,
+                    // fixtures tab
+                    fixtureCsvData: "",
+                    fixtureRows: [], // rows being edited
+                    savedFixtures: [], // rows fetched from API
+                    allTeams: [],
+                    savingFixtures: false,
+                    _rowKey: 0,
 
-    // results tab
-    csvData: '', teams: [], loading: false,
-    submitting: false, taskId: null, taskStatus: null, pollInterval: null,
+                    // inline edit state for saved fixtures
+                    editingFixtureId: null,
+                    editFixtureDraft: {},
+                    savingFixtureEdit: false,
 
-    // fixtures tab
-    fixtureCsvData: '',
-    fixtureRows: [],      // rows being edited
-    savedFixtures: [],    // rows fetched from API
-    allTeams: [],
-    savingFixtures: false,
-    _rowKey: 0,
+                    message: "",
+                    messageType: "",
 
-    // inline edit state for saved fixtures
-    editingFixtureId: null,
-    editFixtureDraft: {},
-    savingFixtureEdit: false,
+                    // ── init ────────────────────────────────────────────
+                    async init() {
+                        try {
+                            const res = await authFetch("/seasons", {
+                                method: "GET",
+                            });
+                            if (res.ok) {
+                                const d = await res.json();
+                                this.seasons = d.seasons;
+                            }
+                        } catch {
+                            this.showMessage("Failed to load seasons", "error");
+                        }
+                    },
 
-    message: '', messageType: '',
+                    // ── season / matchday selectors ──────────────────────
+                    async loadLeaguesAndMatchdays() {
+                        this.leagues = [];
+                        this.matchdays = [];
+                        this.selectedLeagueId = "";
+                        this.matchdayId = "";
+                        this.matchdayDeadline = "";
+                        this.matchdayLocked = false;
+                        this.teams = [];
+                        this.savedFixtures = [];
+                        this.fixtureRows = [];
+                        if (!this.selectedSeasonId) return;
+                        try {
+                            const [resL, resM] = await Promise.all([
+                                authFetch(
+                                    `/seasons/${this.selectedSeasonId}/leagues`,
+                                    { method: "GET" },
+                                ),
+                                authFetch(
+                                    `/seasons/${this.selectedSeasonId}/matchdays`,
+                                    { method: "GET" },
+                                ),
+                            ]);
+                            if (resL.ok) {
+                                const d = await resL.json();
+                                this.leagues = d.leagues;
+                            }
+                            if (resM.ok) {
+                                const d = await resM.json();
+                                this.matchdays = d.matchdays;
+                            }
+                        } catch {
+                            this.showMessage(
+                                "Failed to load leagues/matchdays",
+                                "error",
+                            );
+                        }
+                    },
 
-    // ── init ────────────────────────────────────────────
-    async init() {
-      try {
-        const res = await authFetch('/seasons', { method: 'GET' });
-        if (res.ok) { const d = await res.json(); this.seasons = d.seasons; }
-      } catch { this.showMessage('Failed to load seasons', 'error'); }
-    },
+                    async onMatchdayChange() {
+                        const md = this.matchdays.find(
+                            (m) => m.id === parseInt(this.matchdayId),
+                        );
+                        this.matchdayDeadline =
+                            md?.lock_at_utc ?? md?.deadline_utc ?? "";
+                        this.matchdayLocked = md?.is_locked ?? false;
+                        this.savedFixtures = [];
+                        this.fixtureRows = [];
+                        await Promise.all([
+                            this.loadPlayers(),
+                            this.loadTeams(),
+                            this.loadFixtures(),
+                        ]);
+                    },
 
+                    // ── teams (for fixture dropdowns) ────────────────────
+                    async loadTeams() {
+                        if (!this.selectedSeasonId) return;
+                        try {
+                            const res = await authFetch(
+                                `/seasons/${this.selectedSeasonId}/teams`,
+                                { method: "GET" },
+                            );
+                            if (res.ok) {
+                                const d = await res.json();
+                                this.allTeams = d.teams ?? d;
+                            }
+                        } catch {
+                            /* non-critical */
+                        }
+                    },
 
-    // ── season / matchday selectors ──────────────────────
-    async loadLeaguesAndMatchdays() {
-      this.leagues = []; this.matchdays = [];
-      this.selectedLeagueId = ''; this.matchdayId = '';
-      this.matchdayDeadline = ''; this.matchdayLocked = false;
-      this.teams = []; this.savedFixtures = []; this.fixtureRows = [];
-      if (!this.selectedSeasonId) return;
-      try {
-        const [resL, resM] = await Promise.all([
-          authFetch(`/seasons/${this.selectedSeasonId}/leagues`,  { method: 'GET' }),
-          authFetch(`/seasons/${this.selectedSeasonId}/matchdays`, { method: 'GET'  }),
-        ]);
-        if (resL.ok) { const d = await resL.json(); this.leagues = d.leagues; }
-        if (resM.ok) { const d = await resM.json(); this.matchdays = d.matchdays; }
-      } catch { this.showMessage('Failed to load leagues/matchdays', 'error'); }
-    },
+                    teamName(id) {
+                        return (
+                            this.allTeams.find((t) => t.id === id)?.name ??
+                            `Team ${id}`
+                        );
+                    },
 
-    async onMatchdayChange() {
-      const md = this.matchdays.find(m => m.id === parseInt(this.matchdayId));
-      this.matchdayDeadline = md?.lock_at_utc ?? md?.deadline_utc ?? '';
-      this.matchdayLocked   = md?.is_locked ?? false;
-      this.savedFixtures = [];
-      this.fixtureRows   = [];
-      await Promise.all([ this.loadPlayers(), this.loadTeams(), this.loadFixtures() ]);
-    },
+                    // ── FIXTURES TAB ─────────────────────────────────────
+                    async loadFixtures() {
+                        if (!this.matchdayId) return;
+                        try {
+                            const res = await authFetch(
+                                `/matchday/${this.matchdayId}/fixtures`,
+                                { method: "GET" },
+                            );
+                            if (res.ok) {
+                                const d = await res.json();
+                                this.savedFixtures = d.fixtures ?? [];
+                            }
+                        } catch {
+                            /* endpoint may not exist yet */
+                        }
+                    },
 
-    // ── teams (for fixture dropdowns) ────────────────────
-    async loadTeams() {
-      if (!this.selectedSeasonId) return;
-      try {
-        const res = await authFetch(
-          `/seasons/${this.selectedSeasonId}/teams`,
-          { method: 'GET' }
-        );
-        if (res.ok) { const d = await res.json(); this.allTeams = d.teams ?? d; }
-      } catch { /* non-critical */ }
-    },
+                    addFixtureRow() {
+                        this.fixtureRows.push({
+                            _key: this._rowKey++,
+                            home_team_id: "",
+                            away_team_id: "",
+                            kickoff_utc: "",
+                            is_knockout: false,
+                            finished: false,
+                        });
+                    },
 
-    teamName(id) {
-      return this.allTeams.find(t => t.id === id)?.name ?? `Team ${id}`;
-    },
+                    removeFixtureRow(idx) {
+                        this.fixtureRows.splice(idx, 1);
+                    },
 
-    // ── FIXTURES TAB ─────────────────────────────────────
-    async loadFixtures() {
-      if (!this.matchdayId) return;
-      try {
-        const res = await authFetch(`/matchday/${this.matchdayId}/fixtures`,
-                                { method: 'GET' });
-        if (res.ok) { const d = await res.json(); this.savedFixtures = d.fixtures ?? []; }
-      } catch { /* endpoint may not exist yet */ }
-    },
+                    parseFixtureCsv() {
+                        const lines = this.fixtureCsvData
+                            .trim()
+                            .split("\n")
+                            .filter((l) => l.trim());
+                        if (lines.length < 2) {
+                            this.showMessage(
+                                "CSV needs a header row + data rows",
+                                "error",
+                            );
+                            return;
+                        }
+                        const headers = lines[0]
+                            .split(",")
+                            .map((h) => h.trim());
+                        const rows = [];
+                        for (let i = 1; i < lines.length; i++) {
+                            const vals = lines[i]
+                                .split(",")
+                                .map((v) => v.trim());
+                            const row = {};
+                            headers.forEach(
+                                (h, idx) => (row[h] = vals[idx] ?? ""),
+                            );
+                            // Parse team IDs as integers — must match the numeric ids from allTeams
+                            const homeId = parseInt(row.home_team_id);
+                            const awayId = parseInt(row.away_team_id);
+                            // datetime-local input expects "YYYY-MM-DDTHH:MM" — strip seconds/tz if present
+                            const kickoff = (row.kickoff_utc ?? "")
+                                .replace(/Z$/, "")
+                                .replace(/:\d{2}(\.\d+)?$/, "")
+                                .slice(0, 16);
+                            const isKnockout =
+                                row.is_knockout === "1" ||
+                                row.is_knockout === "true";
+                            rows.push({
+                                _key: this._rowKey++,
+                                home_team_id: isNaN(homeId) ? "" : homeId,
+                                away_team_id: isNaN(awayId) ? "" : awayId,
+                                kickoff_utc: kickoff,
+                                finished: false,
+                                is_knockout: isKnockout,
+                            });
+                        }
+                        this.fixtureRows = rows;
+                        this.showMessage(
+                            `${rows.length} fixture(s) loaded from CSV`,
+                            "success",
+                        );
+                    },
 
-    addFixtureRow() {
-      this.fixtureRows.push({
-        _key: this._rowKey++,
-        home_team_id: '', away_team_id: '',
-        kickoff_utc: '', finished: false,
-      });
-    },
+                    downloadFixtureTemplate() {
+                        const csv =
+                            "home_team_id,away_team_id,kickoff_utc,is_knockout\n1,2,2025-06-01T14:00,0\n3,4,2025-06-01T17:00,1\n";
+                        const blob = new Blob([csv], { type: "text/csv" });
+                        const a = document.createElement("a");
+                        a.href = URL.createObjectURL(blob);
+                        a.download = "fixtures_template.csv";
+                        a.click();
+                    },
 
-    removeFixtureRow(idx) { this.fixtureRows.splice(idx, 1); },
+                    async saveFixtures() {
+                        // Validate
+                        for (const r of this.fixtureRows) {
+                            if (
+                                !r.home_team_id ||
+                                !r.away_team_id ||
+                                !r.kickoff_utc
+                            ) {
+                                this.showMessage(
+                                    "All fixture rows must have Home, Away, and Kickoff filled in",
+                                    "error",
+                                );
+                                return;
+                            }
+                            if (r.home_team_id === r.away_team_id) {
+                                this.showMessage(
+                                    "Home and Away teams cannot be the same",
+                                    "error",
+                                );
+                                return;
+                            }
+                        }
+                        this.savingFixtures = true;
+                        try {
+                            const payload = {
+                                fixtures: this.fixtureRows.map((r) => ({
+                                    home_team_id: r.home_team_id,
+                                    away_team_id: r.away_team_id,
+                                    // Ensure UTC suffix
+                                    kickoff_utc: r.kickoff_utc.includes("Z")
+                                        ? r.kickoff_utc
+                                        : r.kickoff_utc + ":00Z",
+                                    finished: r.finished,
+                                    is_knockout: r.is_knockout,
+                                })),
+                            };
+                            const res = await authFetch(
+                                `/admin/matchday/${this.matchdayId}/fixtures`,
+                                {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify(payload),
+                                },
+                            );
+                            if (!res.ok) {
+                                const err = await res.json();
+                                throw new Error(err.detail || "Save failed");
+                            }
+                            const d = await res.json();
+                            this.showMessage(
+                                `${d.created ?? this.fixtureRows.length} fixture(s) saved. Lock recalculated.`,
+                                "success",
+                            );
+                            this.fixtureRows = [];
+                            await this.loadFixtures();
+                            // Refresh lock time shown in header
+                            const md = this.matchdays.find(
+                                (m) => m.id === parseInt(this.matchdayId),
+                            );
+                            if (d.lock_at_utc) {
+                                this.matchdayDeadline = d.lock_at_utc;
+                            }
+                        } catch (e) {
+                            this.showMessage(e.message, "error");
+                        } finally {
+                            this.savingFixtures = false;
+                        }
+                    },
 
-    parseFixtureCsv() {
-      const lines = this.fixtureCsvData.trim().split('\n').filter(l => l.trim());
-      if (lines.length < 2) { this.showMessage('CSV needs a header row + data rows', 'error'); return; }
-      const headers = lines[0].split(',').map(h => h.trim());
-      const rows = [];
-      for (let i = 1; i < lines.length; i++) {
-        const vals = lines[i].split(',').map(v => v.trim());
-        const row = {};
-        headers.forEach((h, idx) => row[h] = vals[idx] ?? '');
-        // Parse team IDs as integers — must match the numeric ids from allTeams
-        const homeId = parseInt(row.home_team_id);
-        const awayId = parseInt(row.away_team_id);
-        // datetime-local input expects "YYYY-MM-DDTHH:MM" — strip seconds/tz if present
-        const kickoff = (row.kickoff_utc ?? '').replace(/Z$/, '').replace(/:\d{2}(\.\d+)?$/, '').slice(0, 16);
-        rows.push({
-          _key: this._rowKey++,
-          home_team_id: isNaN(homeId) ? '' : homeId,
-          away_team_id: isNaN(awayId) ? '' : awayId,
-          kickoff_utc: kickoff,
-          finished: false,
-        });
-      }
-      this.fixtureRows = rows;
-      this.showMessage(`${rows.length} fixture(s) loaded from CSV`, 'success');
-    },
+                    async initLock() {
+                        try {
+                            const res = await authFetch(
+                                `/admin/matchday/${this.matchdayId}/init-lock`,
+                                {
+                                    method: "POST",
+                                },
+                            );
+                            if (!res.ok) throw new Error("Lock init failed");
+                            const d = await res.json();
+                            this.matchdayDeadline = d.lock_at_utc;
+                            this.showMessage(
+                                `Lock set to ${new Date(d.lock_at_utc).toLocaleString()}`,
+                                "success",
+                            );
+                        } catch (e) {
+                            this.showMessage(e.message, "error");
+                        }
+                    },
 
-    downloadFixtureTemplate() {
-      const csv = 'home_team_id,away_team_id,kickoff_utc\n1,2,2025-06-01T14:00\n3,4,2025-06-01T17:00\n';
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'fixtures_template.csv';
-      a.click();
-    },
+                    async resetLockToEarliest() {
+                        if (!this.matchdayId) {
+                            this.showMessage(
+                                "Please select a matchday first",
+                                "error",
+                            );
+                            return;
+                        }
+                        try {
+                            const res = await authFetch(
+                                `/admin/matchday/${this.matchdayId}/reset-lock`,
+                                {
+                                    method: "POST",
+                                },
+                            );
+                            if (!res.ok) throw new Error("Reset failed");
+                            const d = await res.json();
+                            this.matchdayDeadline = d.lock_at_utc;
+                            this.showMessage(
+                                `Lock reset to earliest fixture: ${new Date(d.lock_at_utc).toLocaleString()}`,
+                                "success",
+                            );
+                        } catch (e) {
+                            this.showMessage(e.message, "error");
+                        }
+                    },
 
-    async saveFixtures() {
-      // Validate
-      for (const r of this.fixtureRows) {
-        if (!r.home_team_id || !r.away_team_id || !r.kickoff_utc) {
-          this.showMessage('All fixture rows must have Home, Away, and Kickoff filled in', 'error');
-          return;
-        }
-        if (r.home_team_id === r.away_team_id) {
-          this.showMessage('Home and Away teams cannot be the same', 'error');
-          return;
-        }
-      }
-      this.savingFixtures = true;
-      try {
-        const payload = {
-          fixtures: this.fixtureRows.map(r => ({
-            home_team_id: r.home_team_id,
-            away_team_id: r.away_team_id,
-            // Ensure UTC suffix
-            kickoff_utc: r.kickoff_utc.includes('Z') ? r.kickoff_utc : r.kickoff_utc + ':00Z',
-            finished: r.finished,
-          }))
-        };
-        const res = await authFetch(
-          `/admin/matchday/${this.matchdayId}/fixtures`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          }
-        );
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Save failed');
-        }
-        const d = await res.json();
-        this.showMessage(`${d.created ?? this.fixtureRows.length} fixture(s) saved. Lock recalculated.`, 'success');
-        this.fixtureRows = [];
-        await this.loadFixtures();
-        // Refresh lock time shown in header
-        const md = this.matchdays.find(m => m.id === parseInt(this.matchdayId));
-        if (d.lock_at_utc) { this.matchdayDeadline = d.lock_at_utc; }
-      } catch (e) {
-        this.showMessage(e.message, 'error');
-      } finally {
-        this.savingFixtures = false;
-      }
-    },
+                    // ── RESULTS TAB ──────────────────────────────────────
+                    async loadPlayers() {
+                        if (!this.matchdayId) {
+                            this.teams = [];
+                            return;
+                        }
+                        this.loading = true;
+                        this.message = "";
+                        try {
+                            let url = `/admin/matchday/${this.matchdayId}/players`;
+                            if (this.selectedLeagueId)
+                                url += `?league_id=${this.selectedLeagueId}`;
+                            const res = await authFetch(url, { method: "GET" });
+                            if (!res.ok)
+                                throw new Error("Failed to load players");
+                            const data = await res.json();
+                            this.teams = data.teams.map((team) => ({
+                                ...team,
+                                players: team.players.map((p) => ({
+                                    ...p,
+                                    stats: {
+                                        minutes_played: 0,
+                                        goals: 0,
+                                        assists: 0,
+                                        goals_conceded: 0,
+                                        yellow_card: 0,
+                                        red_card: 0,
+                                        own_goal: 0,
+                                        penalty_missed: 0,
+                                        penalty_saved: 0,
+                                    },
+                                })),
+                            }));
+                        } catch (err) {
+                            this.showMessage(err.message, "error");
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
 
-    async initLock() {
-      try {
-        const res = await authFetch(`/admin/matchday/${this.matchdayId}/init-lock`, {
-          method: 'POST'
-        });
-        if (!res.ok) throw new Error('Lock init failed');
-        const d = await res.json();
-        this.matchdayDeadline = d.lock_at_utc;
-        this.showMessage(`Lock set to ${new Date(d.lock_at_utc).toLocaleString()}`, 'success');
-      } catch (e) { this.showMessage(e.message, 'error'); }
-    },
+                    parseCSV() {
+                        if (!this.csvData) return;
+                        const lines = this.csvData
+                            .split("\n")
+                            .filter((l) => l.trim());
+                        if (lines.length < 2) {
+                            this.showMessage(
+                                "CSV needs header + data rows",
+                                "error",
+                            );
+                            return;
+                        }
+                        const headers = lines[0]
+                            .split(",")
+                            .map((h) => h.trim());
+                        const parsed = {};
+                        for (let i = 1; i < lines.length; i++) {
+                            const vals = lines[i]
+                                .split(",")
+                                .map((v) => v.trim());
+                            const row = {};
+                            headers.forEach((h, idx) => {
+                                row[h] = parseInt(vals[idx]) || 0;
+                            });
+                            if (row.player_id) parsed[row.player_id] = row;
+                        }
+                        let matched = 0;
+                        for (const team of this.teams) {
+                            for (const p of team.players) {
+                                if (parsed[p.player_id]) {
+                                    const d = parsed[p.player_id];
+                                    Object.assign(p.stats, {
+                                        minutes_played: d.minutes_played || 0,
+                                        goals: d.goals || 0,
+                                        assists: d.assists || 0,
+                                        goals_conceded: d.goals_conceded || 0,
+                                        yellow_card: d.yellow_card || 0,
+                                        red_card: d.red_card || 0,
+                                        own_goal: d.own_goal || 0,
+                                        penalty_missed: d.penalty_missed || 0,
+                                        penalty_saved: d.penalty_saved || 0,
+                                    });
+                                    matched++;
+                                }
+                            }
+                        }
+                        this.showMessage(
+                            `CSV loaded — ${matched} player(s) matched`,
+                            matched ? "success" : "error",
+                        );
+                    },
 
-    async resetLockToEarliest() {
-      if (!this.matchdayId) {
-        this.showMessage('Please select a matchday first', 'error');
-        return;
-      }
-      try {
-        const res = await authFetch(`/admin/matchday/${this.matchdayId}/reset-lock`, {
-          method: 'POST',
-        });
-        if (!res.ok) throw new Error('Reset failed');
-        const d = await res.json();
-        this.matchdayDeadline = d.lock_at_utc;
-        this.showMessage(`Lock reset to earliest fixture: ${new Date(d.lock_at_utc).toLocaleString()}`, 'success');
-      } catch (e) { 
-        this.showMessage(e.message, 'error'); 
-      }
-    },
+                    downloadCSVTemplate() {
+                        const headers =
+                            "player_id,minutes_played,goals,assists,goals_conceded,yellow_card,red_card,own_goal,penalty_missed,penalty_saved\n";
+                        const rows = this.teams
+                            .flatMap((t) =>
+                                t.players.map(
+                                    (p) => `${p.player_id},0,0,0,0,0,0,0,0,0`,
+                                ),
+                            )
+                            .join("\n");
+                        const blob = new Blob([headers + rows], {
+                            type: "text/csv",
+                        });
+                        const a = document.createElement("a");
+                        a.href = URL.createObjectURL(blob);
+                        a.download = `matchday_${this.matchdayId}_results_template.csv`;
+                        a.click();
+                    },
 
-    // ── RESULTS TAB ──────────────────────────────────────
-    async loadPlayers() {
-      if (!this.matchdayId) { this.teams = []; return; }
-      this.loading = true; this.message = '';
-      try {
-        let url = `/admin/matchday/${this.matchdayId}/players`;
-        if (this.selectedLeagueId) url += `?league_id=${this.selectedLeagueId}`;
-        const res = await authFetch(url, { method: 'GET' });
-        if (!res.ok) throw new Error('Failed to load players');
-        const data = await res.json();
-        this.teams = data.teams.map(team => ({
-          ...team,
-          players: team.players.map(p => ({
-            ...p,
-            stats: {
-              minutes_played: 0, goals: 0, assists: 0,
-              goals_conceded: 0, yellow_card: 0, red_card: 0,
-              own_goal: 0, penalty_missed: 0, penalty_saved: 0,
+                    validateStats() {
+                        for (const team of this.teams) {
+                            for (const p of team.players) {
+                                const fields = [
+                                    "minutes_played",
+                                    "goals",
+                                    "assists",
+                                    "goals_conceded",
+                                    "yellow_card",
+                                    "red_card",
+                                    "own_goal",
+                                    "penalty_missed",
+                                    "penalty_saved",
+                                ];
+                                for (const f of fields) {
+                                    const v = parseInt(p.stats[f]);
+                                    if (isNaN(v) || v < 0) {
+                                        this.showMessage(
+                                            `${f} for ${p.name} must be ≥ 0`,
+                                            "error",
+                                        );
+                                        return false;
+                                    }
+                                    p.stats[f] = v;
+                                }
+                            }
+                        }
+                        return true;
+                    },
+
+                    async submitStats() {
+                        if (!this.validateStats()) return;
+                        this.submitting = true;
+                        this.message = "";
+                        this.taskStatus = null;
+                        const stats = this.teams.flatMap((team) =>
+                            team.players.map((p) => ({
+                                player_id: p.player_id,
+                                ...p.stats,
+                            })),
+                        );
+                        try {
+                            const res = await authFetch(
+                                `/admin/matchday/${this.matchdayId}/results`,
+                                {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ stats }),
+                                },
+                            );
+                            if (!res.ok) {
+                                const e = await res.json();
+                                throw new Error(
+                                    e.detail || "Submission failed",
+                                );
+                            }
+                            const d = await res.json();
+                            this.taskId = d.task_id;
+                            this.showMessage(
+                                `Task queued (${this.taskId}). Processing…`,
+                                "success",
+                            );
+                            this.startPolling();
+                        } catch (err) {
+                            this.showMessage(err.message, "error");
+                        } finally {
+                            this.submitting = false;
+                        }
+                    },
+
+                    startPolling() {
+                        if (this.pollInterval) clearInterval(this.pollInterval);
+                        this.pollInterval = setInterval(async () => {
+                            if (!this.taskId) return;
+                            try {
+                                const res = await authFetch(
+                                    `/admin/matchday/${this.matchdayId}/task-status`,
+                                    { method: "GET" },
+                                );
+                                if (!res.ok) return;
+                                const d = await res.json();
+                                this.taskStatus = d.status;
+                                if (
+                                    d.status === "done" ||
+                                    d.status === "failed"
+                                ) {
+                                    clearInterval(this.pollInterval);
+                                    this.pollInterval = null;
+                                    this.showMessage(
+                                        d.status === "done"
+                                            ? "✅ Calculation complete!"
+                                            : "❌ Task failed. Check logs.",
+                                        d.status === "done"
+                                            ? "success"
+                                            : "error",
+                                    );
+                                }
+                            } catch {
+                                /* ignore */
+                            }
+                        }, 2000);
+                    },
+
+                    // ── SAVED FIXTURES — inline CRUD ─────────────────────
+                    startEditFixture(f) {
+                        this.editingFixtureId = f.id;
+                        // Convert ISO kickoff to datetime-local format (strip seconds+tz)
+                        const local = f.kickoff_utc
+                            .replace(/Z$/, "")
+                            .replace(/:\d{2}(\.\d+)?$/, "")
+                            .slice(0, 16);
+                        this.editFixtureDraft = {
+                            home_team_id: f.home_team_id,
+                            away_team_id: f.away_team_id,
+                            kickoff_utc: local,
+                            finished: f.finished,
+                            is_knockout: f.is_knockout,
+                        };
+                    },
+
+                    cancelEditFixture() {
+                        this.editingFixtureId = null;
+                        this.editFixtureDraft = {};
+                    },
+
+                    async saveFixtureEdit(fixtureId) {
+                        const d = this.editFixtureDraft;
+                        if (
+                            !d.home_team_id ||
+                            !d.away_team_id ||
+                            !d.kickoff_utc
+                        ) {
+                            this.showMessage(
+                                "Home team, away team and kickoff are required",
+                                "error",
+                            );
+                            return;
+                        }
+                        if (d.home_team_id === d.away_team_id) {
+                            this.showMessage(
+                                "Home and Away teams cannot be the same",
+                                "error",
+                            );
+                            return;
+                        }
+                        this.savingFixtureEdit = true;
+                        try {
+                            const res = await authFetch(
+                                `/admin/fixtures/${fixtureId}`,
+                                {
+                                    method: "PATCH",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        home_team_id: d.home_team_id,
+                                        away_team_id: d.away_team_id,
+                                        kickoff_utc: d.kickoff_utc.includes("Z")
+                                            ? d.kickoff_utc
+                                            : d.kickoff_utc + ":00Z",
+                                        finished: d.finished,
+                                        is_knockout: d.is_knockout,
+                                    }),
+                                },
+                            );
+                            if (!res.ok) {
+                                const err = await res.json();
+                                throw new Error(err.detail || "Update failed");
+                            }
+                            const updated = await res.json();
+                            // Patch the local savedFixtures entry
+                            const idx = this.savedFixtures.findIndex(
+                                (f) => f.id === fixtureId,
+                            );
+                            if (idx !== -1) this.savedFixtures[idx] = updated;
+                            if (updated.lock_at_utc)
+                                this.matchdayDeadline = updated.lock_at_utc;
+                            this.cancelEditFixture();
+                            this.showMessage("Fixture updated ✓", "success");
+                        } catch (e) {
+                            this.showMessage(e.message, "error");
+                        } finally {
+                            this.savingFixtureEdit = false;
+                        }
+                    },
+
+                    async deleteFixture(fixtureId) {
+                        if (!confirm("Delete this fixture?")) return;
+                        try {
+                            const res = await authFetch(
+                                `/admin/fixtures/${fixtureId}`,
+                                {
+                                    method: "DELETE",
+                                },
+                            );
+                            if (!res.ok) {
+                                const err = await res.json();
+                                throw new Error(err.detail || "Delete failed");
+                            }
+                            const d = await res.json();
+                            this.savedFixtures = this.savedFixtures.filter(
+                                (f) => f.id !== fixtureId,
+                            );
+                            if (d.lock_at_utc)
+                                this.matchdayDeadline = d.lock_at_utc;
+                            else if (!this.savedFixtures.length)
+                                this.matchdayDeadline = "";
+                            this.showMessage("Fixture deleted ✓", "success");
+                        } catch (e) {
+                            this.showMessage(e.message, "error");
+                        }
+                    },
+
+                    showMessage(msg, type) {
+                        this.message = msg;
+                        this.messageType = type;
+                        setTimeout(() => {
+                            if (this.message === msg) this.message = "";
+                        }, 5000);
+                    },
+                };
             }
-          }))
-        }));
-      } catch (err) {
-        this.showMessage(err.message, 'error');
-      } finally { this.loading = false; }
-    },
-
-    parseCSV() {
-      if (!this.csvData) return;
-      const lines = this.csvData.split('\n').filter(l => l.trim());
-      if (lines.length < 2) { this.showMessage('CSV needs header + data rows', 'error'); return; }
-      const headers = lines[0].split(',').map(h => h.trim());
-      const parsed = {};
-      for (let i = 1; i < lines.length; i++) {
-        const vals = lines[i].split(',').map(v => v.trim());
-        const row = {};
-        headers.forEach((h, idx) => { row[h] = parseInt(vals[idx]) || 0; });
-        if (row.player_id) parsed[row.player_id] = row;
-      }
-      let matched = 0;
-      for (const team of this.teams) {
-        for (const p of team.players) {
-          if (parsed[p.player_id]) {
-            const d = parsed[p.player_id];
-            Object.assign(p.stats, {
-              minutes_played: d.minutes_played || 0,
-              goals: d.goals || 0, assists: d.assists || 0,
-              goals_conceded: d.goals_conceded || 0,
-              yellow_card: d.yellow_card || 0, red_card: d.red_card || 0,
-              own_goal: d.own_goal || 0, penalty_missed: d.penalty_missed || 0,
-              penalty_saved: d.penalty_saved || 0,
-            });
-            matched++;
-          }
-        }
-      }
-      this.showMessage(`CSV loaded — ${matched} player(s) matched`, matched ? 'success' : 'error');
-    },
-
-    downloadCSVTemplate() {
-      const headers = 'player_id,minutes_played,goals,assists,goals_conceded,yellow_card,red_card,own_goal,penalty_missed,penalty_saved\n';
-      const rows = this.teams.flatMap(t => t.players.map(p => `${p.player_id},0,0,0,0,0,0,0,0,0`)).join('\n');
-      const blob = new Blob([headers + rows], { type: 'text/csv' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = `matchday_${this.matchdayId}_results_template.csv`; a.click();
-    },
-
-    validateStats() {
-      for (const team of this.teams) {
-        for (const p of team.players) {
-          const fields = ['minutes_played','goals','assists','goals_conceded',
-                          'yellow_card','red_card','own_goal','penalty_missed','penalty_saved'];
-          for (const f of fields) {
-            const v = parseInt(p.stats[f]);
-            if (isNaN(v) || v < 0) {
-              this.showMessage(`${f} for ${p.name} must be ≥ 0`, 'error'); return false;
-            }
-            p.stats[f] = v;
-          }
-        }
-      }
-      return true;
-    },
-
-    async submitStats() {
-      if (!this.validateStats()) return;
-      this.submitting = true; this.message = ''; this.taskStatus = null;
-      const stats = this.teams.flatMap(team =>
-        team.players.map(p => ({ player_id: p.player_id, ...p.stats }))
-      );
-      try {
-        const res = await authFetch(`/admin/matchday/${this.matchdayId}/results`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stats }),
-        });
-        if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Submission failed'); }
-        const d = await res.json();
-        this.taskId = d.task_id;
-        this.showMessage(`Task queued (${this.taskId}). Processing…`, 'success');
-        this.startPolling();
-      } catch (err) {
-        this.showMessage(err.message, 'error');
-      } finally { this.submitting = false; }
-    },
-
-    startPolling() {
-      if (this.pollInterval) clearInterval(this.pollInterval);
-      this.pollInterval = setInterval(async () => {
-        if (!this.taskId) return;
-        try {
-          const res = await authFetch(`/admin/matchday/${this.matchdayId}/task-status`,
-                                  { method: 'GET' });
-          if (!res.ok) return;
-          const d = await res.json();
-          this.taskStatus = d.status;
-          if (d.status === 'done' || d.status === 'failed') {
-            clearInterval(this.pollInterval); this.pollInterval = null;
-            this.showMessage(d.status === 'done' ? '✅ Calculation complete!' : '❌ Task failed. Check logs.', d.status === 'done' ? 'success' : 'error');
-          }
-        } catch { /* ignore */ }
-      }, 2000);
-    },
-
-    // ── SAVED FIXTURES — inline CRUD ─────────────────────
-    startEditFixture(f) {
-      this.editingFixtureId = f.id;
-      // Convert ISO kickoff to datetime-local format (strip seconds+tz)
-      const local = f.kickoff_utc.replace(/Z$/, '').replace(/:\d{2}(\.\d+)?$/, '').slice(0, 16);
-      this.editFixtureDraft = {
-        home_team_id: f.home_team_id,
-        away_team_id: f.away_team_id,
-        kickoff_utc: local,
-        finished: f.finished,
-      };
-    },
-
-    cancelEditFixture() {
-      this.editingFixtureId = null;
-      this.editFixtureDraft = {};
-    },
-
-    async saveFixtureEdit(fixtureId) {
-      const d = this.editFixtureDraft;
-      if (!d.home_team_id || !d.away_team_id || !d.kickoff_utc) {
-        this.showMessage('Home team, away team and kickoff are required', 'error');
-        return;
-      }
-      if (d.home_team_id === d.away_team_id) {
-        this.showMessage('Home and Away teams cannot be the same', 'error');
-        return;
-      }
-      this.savingFixtureEdit = true;
-      try {
-        const res = await authFetch(`/admin/fixtures/${fixtureId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            home_team_id: d.home_team_id,
-            away_team_id: d.away_team_id,
-            kickoff_utc: d.kickoff_utc.includes('Z') ? d.kickoff_utc : d.kickoff_utc + ':00Z',
-            finished: d.finished,
-          }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Update failed');
-        }
-        const updated = await res.json();
-        // Patch the local savedFixtures entry
-        const idx = this.savedFixtures.findIndex(f => f.id === fixtureId);
-        if (idx !== -1) this.savedFixtures[idx] = updated;
-        if (updated.lock_at_utc) this.matchdayDeadline = updated.lock_at_utc;
-        this.cancelEditFixture();
-        this.showMessage('Fixture updated ✓', 'success');
-      } catch (e) {
-        this.showMessage(e.message, 'error');
-      } finally {
-        this.savingFixtureEdit = false;
-      }
-    },
-
-    async deleteFixture(fixtureId) {
-      if (!confirm('Delete this fixture?')) return;
-      try {
-        const res = await authFetch(`/admin/fixtures/${fixtureId}`, {
-          method: 'DELETE',
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Delete failed');
-        }
-        const d = await res.json();
-        this.savedFixtures = this.savedFixtures.filter(f => f.id !== fixtureId);
-        if (d.lock_at_utc) this.matchdayDeadline = d.lock_at_utc;
-        else if (!this.savedFixtures.length) this.matchdayDeadline = '';
-        this.showMessage('Fixture deleted ✓', 'success');
-      } catch (e) {
-        this.showMessage(e.message, 'error');
-      }
-    },
-
-    showMessage(msg, type) {
-      this.message = msg; this.messageType = type;
-      setTimeout(() => { if (this.message === msg) this.message = ''; }, 5000);
-    },
-  };
-}
-</script>
-</body>
+        </script>
+    </body>
 </html>
