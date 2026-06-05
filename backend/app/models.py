@@ -614,3 +614,21 @@ class PredictionMatchdayStats(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "matchday_id", name="uq_user_matchday_stats"),
     )
+
+
+class PlayerPoints(Base):
+    """For storing how many points the FantasyPlayer has scored during a matchday."""
+
+    __tablename__ = "player_points"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fantasy_player_id = Column(Integer, ForeignKey("fantasy_player.id"), nullable=False)
+    matchday_id = Column(Integer, ForeignKey("matchday.id"), nullable=False)
+    points = Column(Integer, nullable=False)
+
+    # Relationships
+    fantasy_player = relationship("FantasyPlayer", back_populates="player_points")
+    matchday = relationship("Matchday", back_populates="player_points")
+
+    # Ensure unique combination of fantasy_player_id and matchday_id
+    __table_args__ = (UniqueConstraint("fantasy_player_id", "matchday_id"),)

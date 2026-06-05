@@ -1023,3 +1023,112 @@ def get_weekly_leaderboard(
         entry["rank"] = idx + 1
 
     return {"leaderboard": leaderboard}
+
+
+# ---------------------------------------------------------------------------
+# NEW ENDPOINTS FOR PLAYER POINTS
+# ---------------------------------------------------------------------------
+
+
+@router.get("/points/{matchday_id}")
+def get_player_points_for_matchday(
+    matchday_id: int,
+    request: Request,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Return fantasy points for the current user's squad for a specific matchday.
+    """
+    user_id = current_user.id
+    season = _active_season(db)
+    team = _fantasy_team(db, user_id, season.id)
+
+    if not team:
+        return {"players": []}
+
+    # Get all player points for this matchday and team
+    player_points = (
+        db.query(models.PlayerPoints)
+        .join(models.FantasyPlayer, models.PlayerPoints.fantasy_player_id == models.FantasyPlayer.id)
+        .filter(
+            models.PlayerPoints.matchday_id == matchday_id,
+            models.FantasyPlayer.fantasy_team_id == team.id
+        )
+        .all()
+    )
+
+    # Build response with player details
+    result = []
+    for pp in player_points:
+        fp = pp.fantasy_player
+        p = fp.player
+        result.append({
+            "player_id": p.id,
+            "name": p.name,
+            "pos": p.position.value,
+            "club": p.team.name if p.team else "",
+            "slot": fp.slot.value,
+            "is_x2_joker": fp.is_x2_joker,
+            "points": pp.points,
+        })
+
+    return {"players": result}
+
+
+@router.get("/points/all")
+def get_player_points_all_matchdays(
+    request: Request,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Return points for the current user's squad across all matchdays.
+    """
+    user_id = current_user.id
+    season = _active_season(db)
+    team = _fantasy_team(db, user_id, season.id)
+
+    if not team:
+        return {"matchdays": []}
+
+    # Get all matchdays with player points for this team
+    matchday_points = (
+        db.query(models.Matchday, models.PlayerPoints, models.FantasyPlayer)
+        .join(models.PlayerPoints, models.PlayerPoints.matchday_id == models.Matchday.id)
+        .join(models.FantasyPlayer, models.PlayerPoints.fantasy_player_id == models.FantasyPlayer.id)
+        .filter(models.FantasyPlayer.fantasy_team_id == team.id)
+        .order_by(models.Matchday.id.asc())
+        .all()
+    )
+
+    # Group by matchday
+    result = []
+    matchday_map = {}
+    
+    for matchday, player_point, fantasy_player in matchday_points:
+        if matchday.id not in matchday_map:
+            matchday_map[matchday.id] = {
+                "matchday": {
+                    "id": matchday.id,
+                    "name": matchday.name,
+                    "status": matchday.status.value,
+                },
+                "players": []
+            }
+        
+        p = fantasy_player.player
+        matchday_map[matchday.id]["players"].append({
+            "player_id": p.id,
+            "name": p.name,
+            "pos": p.position.value,
+            "club": p.team.name if p.team else "",
+            "slot": fantasy_player.slot.value,
+            "is_x2_joker": fantasy_player.is_x2_joker,
+            "points": player_point.points,
+        })
+
+    # Convert to list
+    result = list(matchday_map.values())
+    
+    return {"matchdays": result}

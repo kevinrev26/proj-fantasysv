@@ -18,6 +18,7 @@ from .models import (
     LeaderboardWeeklyEntry,
     Matchday,
     Player,
+    PlayerPoints,
     PlayerScore,
     Prediction,
     PredictionMatchdayStats,
@@ -135,21 +136,21 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
         # 5. Apply wildcard multiplier
         scored = apply_wildcard_multiplier(raw, fp.is_x2_joker)
 
-        # 6. Store in PlayerScore? Actually PlayerScore is for real player stats.
-        #    For fantasy team scoring, we store in TeamScore.
-        #    But we need to store the wildcard‑affected final_points somewhere.
-        #    The spec says "Result is stored as final_points in PlayerScore" – that seems incorrect
-        #    because PlayerScore belongs to the real player, not the fantasy team.
-        #    I think the intention is to store in TeamScore (or a separate FantasyPlayerScore table).
-        #    Let's assume we have a FantasyPlayerScore table that records per‑matchday points for each fantasy player.
+        # 6. Store fantasy player points for matchday
+        player_points = PlayerPoints(
+            fantasy_player_id=fp.id,
+            matchday_id=matchday_id,
+            points=scored["final_points"]
+        )
+        db_session.add(player_points)
 
-        # For now, accumulate team total
+        # 7. Accumulate team total
         total_team_points += scored["final_points"]
         logger.debug(
             "Player scored", player_id=fp.player_id, final_points=scored["final_points"]
         )
 
-    # 7. Update or create TeamScore for this matchday
+    # 8. Update or create TeamScore for this matchday
     team_score = (
         db_session.query(TeamScore)
         .filter(

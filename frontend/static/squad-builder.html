@@ -726,6 +726,55 @@
             box-shadow: 0 0 10px rgba(255, 200, 0, 0.2);
         }
 
+        /* Points table styles */
+        .points-table-wrapper {
+            padding: 8px 12px;
+        }
+        .points-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .points-table th {
+            text-align: left;
+            padding: 12px 8px;
+            background: rgba(255,255,255,0.05);
+            font-weight: 700;
+            color: var(--muted-text);
+        }
+        .points-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .points-player {
+            font-weight: 600;
+        }
+        .points-pos {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+        .points-club {
+            font-size: 0.75rem;
+            color: var(--muted-text);
+        }
+        .points-value {
+            font-weight: 800;
+            font-size: 1rem;
+            color: var(--success-green);
+        }
+        .points-double {
+            color: var(--gold);
+            text-shadow: 0 0 4px rgba(248,198,58,0.5);
+        }
+        .star-icon {
+            margin-left: 5px;
+            font-size: 0.85rem;
+        }
+        .points-x2 {
+            font-size: 0.7rem;
+        }
+
         @media (max-width: 768px) {
 
             .pitch3d-field {
@@ -884,6 +933,13 @@
                 @click="activeTab='squad'"
             >
                 <span class="tab-icon">📋</span> Equipo
+            </button>
+            <button
+                class="tab-btn"
+                :class="activeTab==='points' && 'active'"
+                @click="activeTab='points'"
+            >
+                <span class="tab-icon">📊</span> Puntos
             </button>
         </div>
 
@@ -1933,6 +1989,74 @@
         </div>
 
         <!-- ══════════ POINTS TAB ══════════ -->
+        <!-- ══════════ POINTS TAB ══════════ -->
+        <div class="tab-content" x-show="activeTab==='points'">
+            <div class="pool-header">
+                <h2 class="pool-title">Puntos por Jornada</h2>
+                <p class="pool-sub" x-show="!pointsLoading && pointsMatchdays.length === 0">
+                    Aún no hay puntos registrados para tu equipo.
+                </p>
+            </div>
+
+            <!-- Matchday selector -->
+            <div class="filter-section" x-show="pointsMatchdays.length > 0">
+                <div class="filter-scroll" style="justify-content: center;">
+                    <template x-for="md in pointsMatchdays" :key="md.matchday.id">
+                        <button
+                            class="filt-pill"
+                            :class="selectedMatchdayId === md.matchday.id && 'active'"
+                            @click="selectedMatchdayId = md.matchday.id"
+                            x-text="md.matchday.name"
+                        ></button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Points table for selected matchday -->
+            <div x-show="selectedMatchday && selectedMatchday.players.length > 0" class="points-table-wrapper">
+                <div class="comp-card" style="margin-top: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 class="comp-card-title" x-text="selectedMatchday.matchday.name"></h3>
+                        <div class="stat-pill stat-pill--green">
+                            🏆 Total: <strong x-text="selectedMatchdayTotalPoints"></strong> pts
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="points-table">
+                            <thead>
+                                <tr><th>Jugador</th><th>Pos</th><th>Equipo</th><th>Puntos</th><th>×2</th></tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="p in selectedMatchday.players" :key="p.player_id">
+                                    <tr>
+                                        <td class="points-player" x-text="p.name"></td>
+                                        <td class="points-pos" x-text="p.pos"></td>
+                                        <td class="points-club" x-text="p.club"></td>
+                                        <td class="points-value" :class="p.is_x2_joker ? 'points-double' : ''">
+                                            <span x-text="p.points.toFixed(1)"></span>
+                                            <span x-show="p.is_x2_joker" class="star-icon">★</span>
+                                        </td>
+                                        <td class="points-x2">
+                                            <span x-show="p.is_x2_joker" style="color: gold;">★ capi</span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading / error -->
+            <div x-show="pointsLoading" class="empty-pool">
+                <span style="font-size: 2rem">⏳</span>
+                <p>Cargando puntos...</p>
+            </div>
+            <div x-show="pointsError" class="empty-pool">
+                <span style="font-size: 2rem">⚠️</span>
+                <p x-text="pointsError"></p>
+            </div>
+        </div>
 
         <!-- Modals & Toast -->
         <div
@@ -2179,6 +2303,12 @@
                     selectedMdId: null,
                     showSuccess: false,
 
+                    // Points tab
+                    pointsMatchdays: [],
+                    selectedMatchdayId: null,
+                    pointsLoading: false,
+                    pointsError: null,
+
                     // Filters
                     filterPos: "ALL",
                     filterTier: "ALL",
@@ -2353,7 +2483,7 @@
                         } catch (e) {
                             console.warn("Squad API failed");
                         }
-
+                        this.loadPoints();
                         this.$nextTick(() => initField());
                     },
 
@@ -3090,43 +3220,37 @@
                         return this.TEAM_MAP[teamName]?.color || "#FFFFFF";
                     },
 
-                    // ── POINTS TAB ────────────────────────────────────────────────────────────
-                    // get selectedMd() {
-                    //     if (!this.selectedMdId) return null;
-                    //     return (
-                    //         this.allMatchdays.find(
-                    //             (m) => m.matchday.id === this.selectedMdId,
-                    //         ) || null
-                    //     );
-                    // },
-                    // async loadPoints() {
-                    //     if (this.pointsLoading) return;
-                    //     this.pointsLoading = true;
-                    //     try {
-                    //         const r = await authFetch(
-                    //             "/squad/points/all-matchdays",
-                    //         );
-                    //         if (!r.ok) throw new Error("Failed to load points");
-                    //         const d = await r.json();
-                    //         this.allMatchdays = d.matchdays || [];
-                    //         // Auto-select the most recent matchday
-                    //         if (
-                    //             this.allMatchdays.length &&
-                    //             !this.selectedMdId
-                    //         ) {
-                    //             this.selectedMdId =
-                    //                 this.allMatchdays[
-                    //                     this.allMatchdays.length - 1
-                    //                 ].matchday.id;
-                    //         }
-                    //     } catch (e) {
-                    //         this.toast(
-                    //             "No se pudo cargar los puntos: " + e.message,
-                    //         );
-                    //     } finally {
-                    //         this.pointsLoading = false;
-                    //     }
-                    // },
+                    // ── POINTS TAB ─────────────────────────────────────────────────
+                    async loadPoints() {
+                        this.pointsLoading = true;
+                        this.pointsError = null;
+                        try {
+                            const resp = await authFetch("/squad/points/all");
+                            if (!resp.ok) throw new Error("Error al cargar puntos");
+                            const data = await resp.json();
+                            this.pointsMatchdays = data.matchdays || [];
+                            if (this.pointsMatchdays.length > 0 && !this.selectedMatchdayId) {
+                                // Auto-select the most recent matchday (last in array)
+                                this.selectedMatchdayId = this.pointsMatchdays[this.pointsMatchdays.length - 1].matchday.id;
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            this.pointsError = err.message || "No se pudieron cargar los puntos";
+                        } finally {
+                            this.pointsLoading = false;
+                        }
+                    },
+
+                    get selectedMatchday() {
+                        if (!this.selectedMatchdayId) return null;
+                        return this.pointsMatchdays.find(md => md.matchday.id === this.selectedMatchdayId) || null;
+                    },
+
+                    get selectedMatchdayTotalPoints() {
+                        const md = this.selectedMatchday;
+                        if (!md) return 0;
+                        return md.players.reduce((sum, p) => sum + (p.points || 0), 0).toFixed(1);
+                    },
                 };
             }
         </script>
