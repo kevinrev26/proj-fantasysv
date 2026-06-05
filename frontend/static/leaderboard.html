@@ -1,1223 +1,1738 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Clasificación — Fantasy SV</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="/js/auth.js"></script>
-  <script src="/js/nav.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <style>
-    /* ========== GLOBAL & VARIABLES ========== */
-    :root {
-      /* Color System */
-      --primary-blue: #0D47FF;
-      --secondary-purple: #7B2CFF;
-      --success-green: #00D26A;
-      --danger-red: #FF3D4D;
-      --gold: #F8C63A;
-      --background: #0B1020;
-      --surface: #151C32;
-      --text-white: #FFFFFF;
-      --text-muted: #A6B0C3;
-      
-      /* Typography */
-      --font-primary: 'Inter', 'Rajdhani', 'Archivo', 'Oswald', sans-serif;
-      --font-size-h1: 2.5rem;
-      --font-size-h2: 1.8rem;
-      --font-size-h3: 1.4rem;
-      --font-size-base: 1rem;
-      --font-size-sm: 0.875rem;
-      --font-size-xs: 0.75rem;
-      --font-weight-light: 300;
-      --font-weight-normal: 400;
-      --font-weight-medium: 500;
-      --font-weight-semibold: 600;
-      --font-weight-bold: 700;
-      --font-weight-black: 900;
-
-      /* Spacing */
-      --spacing-xs: 0.5rem;
-      --spacing-sm: 1rem;
-      --spacing-md: 1.5rem;
-      --spacing-lg: 2rem;
-      --spacing-xl: 3rem;
-      
-      /* Border Radius */
-      --radius-xs: 4px;
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 20px;
-      --radius-xl: 24px;
-      
-      /* Shadows */
-      --shadow-card: 0 8px 32px rgba(13, 71, 255, 0.3);
-      --shadow-glow: 0 0 15px rgba(13, 71, 255, 0.5);
-      --shadow-glow-purple: 0 0 15px rgba(123, 44, 255, 0.5);
-      
-      /* Transitions */
-      --transition-fast: 0.2s ease;
-      --transition-normal: 0.3s ease;
-      --transition-slow: 0.5s ease;
-    }
-
-    * { 
-      margin: 0; 
-      padding: 0; 
-      box-sizing: border-box; 
-    }
-
-    body {
-      font-family: var(--font-primary);
-      background: var(--background);
-      color: var(--text-white);
-      min-height: 100vh;
-      overflow-x: hidden;
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(13, 71, 255, 0.1) 0%, transparent 20%),
-        radial-gradient(circle at 90% 80%, rgba(123, 44, 255, 0.1) 0%, transparent 20%);
-    }
-
-    /* main container */
-    .leaderboard-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 1.5rem 1rem 3rem;
-    }
-
-    .leaderboard-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .leaderboard-title h1 {
-      font-size: var(--font-size-h1);
-      font-weight: var(--font-weight-black);
-      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      text-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
-    }
-
-    .leaderboard-title p {
-      color: var(--text-muted);
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-sm);
-      margin-top: 4px;
-    }
-
-    .refresh-info {
-      background: rgba(13, 71, 255, 0.15);
-      border-radius: 40px;
-      padding: 6px 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-semibold);
-      color: var(--primary-blue);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      box-shadow: var(--shadow-glow);
-    }
-
-    .refresh-info span:first-child { 
-      font-size: 1.2rem; 
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.6; }
-      50% { opacity: 1; }
-      100% { opacity: 0.6; }
-    }
-
-    /* ── TABS ── */
-    .tabs-wrapper { 
-      margin-bottom: 1.5rem; 
-      position: relative;
-    }
-
-    .tabs-nav {
-      display: flex;
-      gap: 4px;
-      background: rgba(21, 28, 50, 0.7);
-      border-radius: var(--radius-md);
-      padding: 4px;
-      width: fit-content;
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      backdrop-filter: blur(10px);
-      box-shadow: var(--shadow-glow);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .tabs-nav::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
-      opacity: 0.1;
-      z-index: 0;
-    }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-family: var(--font-primary);
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-sm);
-      padding: 9px 18px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      white-space: nowrap;
-      position: relative;
-      z-index: 1;
-    }
-
-    .tab-btn.active { 
-      background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
-      color: var(--text-white);
-      box-shadow: var(--shadow-glow);
-      text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-    }
-
-    .tab-btn:hover:not(.active) { 
-      background: rgba(255,255,255,0.07); 
-      color: var(--text-white); 
-      box-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
-    }
-
-    /* ── TAB-SPECIFIC CONTROLS ── */
-    .tab-controls {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 1.25rem;
-    }
-
-    .control-label {
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .select-control {
-      background: rgba(21, 28, 50, 0.7);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      border-radius: var(--radius-sm);
-      color: var(--text-white);
-      font-family: var(--font-primary);
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-sm);
-      padding: 8px 12px;
-      cursor: pointer;
-      outline: none;
-      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
-    }
-
-    .select-control:focus { 
-      border-color: var(--primary-blue); 
-      box-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
-    }
-
-    .date-input {
-      background: rgba(21, 28, 50, 0.7);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      border-radius: var(--radius-sm);
-      color: var(--text-white);
-      font-family: var(--font-primary);
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-sm);
-      padding: 8px 12px;
-      outline: none;
-      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
-      color-scheme: dark;
-    }
-
-    .date-input:focus { 
-      border-color: var(--primary-blue); 
-      box-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
-    }
-
-    .apply-btn {
-      background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
-      color: var(--text-white);
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: var(--font-primary);
-      font-weight: var(--font-weight-black);
-      font-size: var(--font-size-sm);
-      padding: 9px 18px;
-      cursor: pointer;
-      transition: all var(--transition-fast), transform var(--transition-fast);
-      box-shadow: var(--shadow-glow);
-      text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-    }
-
-    .apply-btn:hover { 
-      background: linear-gradient(90deg, var(--secondary-purple), var(--primary-blue));
-      transform: translateY(-2px);
-      box-shadow: 0 0 20px rgba(13, 71, 255, 0.5);
-    }
-
-    /* TABLE WRAPPER */
-    .table-wrapper {
-      background: rgba(21, 28, 50, 0.7);
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      overflow-x: auto;
-      box-shadow: var(--shadow-card);
-      backdrop-filter: blur(12px);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .table-wrapper::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      pointer-events: none;
-      box-shadow: inset 0 0 20px rgba(13, 71, 255, 0.1);
-    }
-
-    .leaderboard-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-      min-width: 620px;
-    }
-
-    .leaderboard-table th {
-      text-align: left;
-      padding: 1rem 1rem;
-      background: rgba(13, 71, 255, 0.1);
-      color: var(--text-muted);
-      font-weight: var(--font-weight-bold);
-      font-size: var(--font-size-xs);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid rgba(13, 71, 255, 0.3);
-      position: relative;
-      z-index: 2;
-    }
-
-    .leaderboard-table td {
-      padding: 0.9rem 1rem;
-      border-bottom: 1px solid rgba(13, 71, 255, 0.15);
-      font-weight: var(--font-weight-semibold);
-      transition: all var(--transition-fast);
-      position: relative;
-      z-index: 1;
-    }
-
-    .leaderboard-table tr:hover td { 
-      background: rgba(13, 71, 255, 0.15);
-      box-shadow: inset 0 0 10px rgba(13, 71, 255, 0.1);
-    }
-
-    /* rank */
-    .rank-cell { 
-      font-weight: var(--font-weight-black); 
-      color: var(--gold); 
-      width: 70px; 
-      position: relative;
-      z-index: 2;
-    }
-
-    .rank-1 { 
-      color: var(--gold); 
-      font-size: 1.2em; 
-      text-shadow: 0 0 10px rgba(248, 198, 58, 0.5);
-      position: relative;
-      z-index: 2;
-    }
-
-    .rank-2 { 
-      color: #C0C0C0; 
-      position: relative;
-      z-index: 2;
-    }
-
-    .rank-3 { 
-      color: #CD7F32; 
-      position: relative;
-      z-index: 2;
-    }
-
-    /* delta cell */
-    .delta-cell { 
-      width: 70px; 
-      font-weight: var(--font-weight-black); 
-      text-align: center; 
-      position: relative;
-      z-index: 2;
-    }
-
-    .delta-up   { 
-      color: var(--success-green); 
-      text-shadow: 0 0 5px rgba(0, 210, 106, 0.3);
-    }
-
-    .delta-down { 
-      color: var(--danger-red); 
-      text-shadow: 0 0 5px rgba(255, 61, 77, 0.3);
-    }
-
-    .delta-equal{ 
-      color: var(--text-muted); 
-    }
-
-    .team-name {
-      font-weight: var(--font-weight-black);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .team-badge {
-      width: 24px; 
-      height: 24px;
-      background: rgba(13, 71, 255, 0.2);
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.7rem;
-      flex-shrink: 0;
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
-    }
-
-    .username-sub { 
-      font-size: var(--font-size-xs); 
-      color: var(--text-muted); 
-      font-weight: var(--font-weight-semibold); 
-    }
-
-    /* ── POINTS BREAKDOWN ── */
-    .points-cell {
-      min-width: 180px;
-    }
-
-    .points-total {
-      font-weight: var(--font-weight-black);
-      color: var(--success-green);
-      font-size: 1rem;
-      text-shadow: 0 0 5px rgba(0, 210, 106, 0.3);
-    }
-
-    .points-breakdown {
-      display: flex;
-      gap: 10px;
-      margin-top: 4px;
-      flex-wrap: wrap;
-    }
-
-    .pts-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-semibold);
-      padding: 2px 8px;
-      border-radius: 50px;
-      transition: all var(--transition-fast);
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-    }
-
-    .pts-tag.fantasy {
-      background: rgba(13, 71, 255, 0.15);
-      color: var(--primary-blue);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-    }
-
-    .pts-tag.predictor {
-      background: rgba(123, 44, 255, 0.15);
-      color: var(--secondary-purple);
-      border: 1px solid rgba(123, 44, 255, 0.3);
-    }
-
-    .pts-tag .tag-icon { 
-      font-size: 0.8em; 
-      opacity: 0.8;
-    }
-
-    /* highlighted row (current user) */
-    .current-user-row td {
-      background: linear-gradient(90deg, rgba(13, 71, 255, 0.15), rgba(123, 44, 255, 0.1));
-      border-bottom: 1px solid rgba(13, 71, 255, 0.3);
-    }
-
-    .current-user-row td:first-child {
-      border-left: 4px solid var(--primary-blue);
-    }
-
-    .user-badge {
-      background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
-      color: var(--text-white);
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-black);
-      padding: 2px 8px;
-      border-radius: 50px;
-      margin-left: 8px;
-      flex-shrink: 0;
-      box-shadow: 0 0 5px rgba(13, 71, 255, 0.3);
-      text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
-    }
-
-    /* pagination */
-    .pagination {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin-top: 2rem;
-    }
-
-    .page-btn {
-      background: rgba(21, 28, 50, 0.7);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      padding: 8px 14px;
-      border-radius: 50px;
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-muted);
-      transition: all var(--transition-fast);
-      cursor: pointer;
-      font-family: var(--font-primary);
-      box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
-      backdrop-filter: blur(10px);
-    }
-
-    .page-btn.active { 
-      background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
-      color: var(--text-white);
-      border-color: transparent;
-      box-shadow: var(--shadow-glow);
-      text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-    }
-
-    .page-btn:hover:not(.disabled) { 
-      background: rgba(13, 71, 255, 0.2); 
-      color: var(--primary-blue); 
-      transform: translateY(-1px);
-      box-shadow: 0 0 15px rgba(13, 71, 255, 0.4);
-    }
-
-    .page-btn.disabled { 
-      opacity: 0.4; 
-      cursor: not-allowed; 
-      pointer-events: none;
-    }
-
-    .page-indicator {
-      color: var(--text-muted);
-      font-weight: var(--font-weight-semibold);
-      background: rgba(21, 28, 50, 0.7);
-      padding: 6px 14px;
-      border-radius: 50px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
-    }
-
-    /* empty / loading */
-    .empty-row td { 
-      text-align: center; 
-      padding: 3rem; 
-      color: var(--text-muted); 
-      font-weight: var(--font-weight-semibold); 
-    }
-
-    .loading-row td { 
-      text-align: center; 
-      padding: 3rem; 
-      color: var(--primary-blue); 
-      font-weight: var(--font-weight-semibold); 
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 18px; 
-      height: 18px;
-      border: 2px solid rgba(13, 71, 255, 0.3);
-      border-top-color: var(--primary-blue);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      vertical-align: middle;
-      margin-right: 8px;
-      box-shadow: 0 0 5px rgba(13, 71, 255, 0.3);
-    }
-
-    @keyframes spin { 
-      to { transform: rotate(360deg); } 
-    }
-
-    /* matchday pills */
-    .matchday-pills { 
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 6px; 
-      margin-bottom: 1.25rem; 
-    }
-
-    .md-pill {
-      background: rgba(21, 28, 50, 0.7);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      border-radius: 50px;
-      padding: 6px 14px;
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      font-family: var(--font-primary);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
-    }
-
-    .md-pill.active { 
-      background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
-      color: var(--text-white);
-      border-color: transparent;
-      box-shadow: var(--shadow-glow);
-      text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-    }
-
-    .md-pill:hover:not(.active) { 
-      background: rgba(13, 71, 255, 0.2); 
-      color: var(--primary-blue); 
-      box-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
-    }
-
-    .md-pill.no-data { 
-      opacity: 0.4; 
-      cursor: not-allowed; 
-      pointer-events: none;
-    }
-
-    /* legend */
-    .points-legend {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-      font-size: var(--font-size-xs);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-muted);
-      align-items: center;
-    }
-
-    .legend-item { 
-      display: flex; 
-      align-items: center; 
-      gap: 6px; 
-    }
-
-    .legend-dot {
-      width: 10px; 
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-    }
-
-    .legend-dot.fantasy  { 
-      background: var(--primary-blue);
-      box-shadow: 0 0 5px rgba(13, 71, 255, 0.5);
-    }
-
-    .legend-dot.predictor{ 
-      background: var(--secondary-purple);
-      box-shadow: 0 0 5px rgba(123, 44, 255, 0.5);
-    }
-
-    .legend-dot.total    { 
-      background: var(--success-green);
-      box-shadow: 0 0 5px rgba(0, 210, 106, 0.5);
-    }
-
-    .footer-note {
-      text-align: center;
-      margin-top: 2rem;
-      font-size: var(--font-size-xs);
-      color: var(--text-muted);
-      opacity: 0.7;
-    }
-
-    /* Animations */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .leaderboard-table tr {
-      animation: fadeIn 0.5s ease-out forwards;
-      opacity: 0;
-    }
-
-    .empty-state {
-      padding: 3rem 1rem;
-      text-align: center;
-      color: var(--text-muted);
-      font-weight: var(--font-weight-semibold);
-    }
-
-    .leaderboard-table tr:nth-child(1) { animation-delay: 0.1s; }
-    .leaderboard-table tr:nth-child(2) { animation-delay: 0.2s; }
-    .leaderboard-table tr:nth-child(3) { animation-delay: 0.3s; }
-    .leaderboard-table tr:nth-child(4) { animation-delay: 0.4s; }
-    .leaderboard-table tr:nth-child(5) { animation-delay: 0.5s; }
-    .leaderboard-table tr:nth-child(6) { animation-delay: 0.6s; }
-    .leaderboard-table tr:nth-child(7) { animation-delay: 0.7s; }
-    .leaderboard-table tr:nth-child(8) { animation-delay: 0.8s; }
-    .leaderboard-table tr:nth-child(9) { animation-delay: 0.9s; }
-    .leaderboard-table tr:nth-child(10) { animation-delay: 1s; }
-
-    /* Responsive */
-    @media (max-width: 680px) {
-      .leaderboard-table th, .leaderboard-table td { 
-        padding: 0.7rem 0.8rem; 
-        font-size: var(--font-size-xs); 
-      }
-      
-      .rank-cell { width: 55px; }
-      .delta-cell { width: 55px; }
-      .user-badge { font-size: var(--font-size-xs); margin-left: 4px; }
-      .leaderboard-header { flex-direction: column; align-items: flex-start; }
-      .tabs-nav { width: 100%; }
-      .tab-btn { flex: 1; text-align: center; padding: 9px 10px; }
-      .points-breakdown { gap: 6px; }
-      .pts-tag { font-size: var(--font-size-xs); padding: 2px 6px; }
-      
-      .leaderboard-title h1 {
-        font-size: 1.8rem;
-      }
-      
-      .refresh-info {
-        padding: 4px 12px;
-        font-size: var(--font-size-xs);
-      }
-      
-      .tabs-wrapper {
-        margin-bottom: 1rem;
-      }
-      
-      .tab-controls {
-        margin-bottom: 1rem;
-      }
-    }
-  </style>
-</head>
-<body>
-
-<!-- ── MAIN NAVIGATION ── -->
-<nav class="main-nav">
-  <div class="nav-container">
-    <a href="/" class="nav-brand">
-      <span class="nav-logo-icon">⚽</span>
-      Fantasy SV
-    </a>
-    <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="nav-links" id="nav-links">
-      <a href="/squad-builder" class="nav-link">Mi Equipo</a>
-      <a href="/schedule" class="nav-link">Calendario</a>
-      <a href="/predictor" class="nav-link">Predicciones</a>
-      <a href="/leaderboard" class="nav-link active">Clasificación</a>
-      <a href="/profile" class="nav-link">Perfil</a>
-      <a href="/leagues" class="nav-link">Ligas Privadas</a>
-      <span id="nav-auth"></span>
-    </div>
-  </div>
-</nav>
-
-<main x-data="leaderboardApp()" x-init="init()">
-  <div class="leaderboard-container">
-
-    <!-- Header -->
-    <div class="leaderboard-header">
-      <div class="leaderboard-title">
-        <h1>🏆 Clasificación</h1>
-        <p x-text="headerSubtitle"></p>
-      </div>
-      <div class="refresh-info">
-        <span>🔄</span>
-        <span>Actualizado: <span x-text="lastUpdatedText"></span></span>
-        <button @click="refreshData()" style="background:none;border:none;color:inherit;cursor:pointer;font-weight:bold;">⟳</button>
-      </div>
-    </div>
-
-    <!-- Tab Navigation -->
-    <div class="tabs-wrapper">
-      <div class="tabs-nav">
-        <button class="tab-btn" :class="{ active: activeTab === 'global' }" @click="switchTab('global')">🌍 Global</button>
-        <button class="tab-btn" :class="{ active: activeTab === 'matchday' }" @click="switchTab('matchday')">📅 Por Jornada</button>
-        <button class="tab-btn" :class="{ active: activeTab === 'dates' }" @click="switchTab('dates')">📆 Por Fechas</button>
-      </div>
-    </div>
-
-    <!-- ── TAB: GLOBAL ── -->
-    <div x-show="activeTab === 'global'" x-transition>
-
-      <!-- Legend -->
-      <div class="points-legend">
-        <span style="color:var(--text-muted);font-weight:700;font-size:0.78rem;">Desglose:</span>
-        <div class="legend-item"><div class="legend-dot total"></div><span>Total</span></div>
-        <div class="legend-item"><div class="legend-dot fantasy"></div><span>Fantasy</span></div>
-        <div class="legend-item"><div class="legend-dot predictor"></div><span>Predictor</span></div>
-      </div>
-
-      <div class="table-wrapper">
-        <template x-if="!loading && paginatedGlobal.length === 0">
-          <div class="empty-state">
-            🏟️ Sin datos disponibles todavía
-          </div>
-        </template>
-        <table x-show="loading || paginatedGlobal.length > 0" class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>Rango</th>
-              <th>Equipo / Usuario</th>
-              <th>Δ</th>
-              <th>Puntos</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-if="!loading">
-              <template x-for="team in paginatedGlobal" :key="team.id">
-                <tr :class="team.is_current_user ? 'current-user-row' : ''">
-
-                  <!-- Rank -->
-                  <td class="rank-cell">
-                    <span :class="'rank-' + team.rank" x-text="team.rank"></span>
-                  </td>
-
-                  <!-- Team / User -->
-                  <td class="team-name">
-                    <span class="team-badge">⚡</span>
-                    <div>
-                      <div style="display:flex;align-items:center;gap:6px;">
-                        <span x-text="team.name"></span>
-                        <span x-show="team.is_current_user" class="user-badge">Tú</span>
-                      </div>
-                      <div class="username-sub" x-text="'@' + team.user_username"></div>
-                    </div>
-                  </td>
-
-                  <!-- Delta -->
-                  <td class="delta-cell">
-                    <template x-if="team.previous_rank !== null && team.previous_rank !== undefined">
-                      <div>
-                        <template x-if="team.previous_rank > team.rank">
-                          <span class="delta-up">▲ <span x-text="team.previous_rank - team.rank"></span></span>
-                        </template>
-                        <template x-if="team.previous_rank < team.rank">
-                          <span class="delta-down">▼ <span x-text="team.rank - team.previous_rank"></span></span>
-                        </template>
-                        <template x-if="team.previous_rank === team.rank">
-                          <span class="delta-equal">=</span>
-                        </template>
-                      </div>
-                    </template>
-                    <template x-if="team.previous_rank === null || team.previous_rank === undefined">
-                      <span class="delta-equal">–</span>
-                    </template>
-                  </td>
-
-                  <!-- Points breakdown -->
-                  <td class="points-cell">
-                    <div class="points-total" x-text="team.total_points + ' pts'"></div>
-                    <div class="points-breakdown">
-                      <span class="pts-tag fantasy">
-                        <span class="tag-icon">⚽</span>
-                        <span x-text="team.fantasy_points"></span>
-                      </span>
-                      <span class="pts-tag predictor">
-                        <span class="tag-icon">🎯</span>
-                        <span x-text="team.predictor_points"></span>
-                      </span>
-                    </div>
-                  </td>
-
-                </tr>
-              </template>
-            </template>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination Global -->
-      <div class="pagination" x-show="totalPagesGlobal > 1">
-        <button class="page-btn" :class="{ disabled: currentPageGlobal === 1 }" @click="prevPageGlobal()" :disabled="currentPageGlobal === 1">← Anterior</button>
-        <template x-for="page in visiblePagesGlobal" :key="page">
-          <button class="page-btn" :class="{ active: currentPageGlobal === page }" @click="goToPageGlobal(page)" x-text="page"></button>
-        </template>
-        <button class="page-btn" :class="{ disabled: currentPageGlobal === totalPagesGlobal }" @click="nextPageGlobal()" :disabled="currentPageGlobal === totalPagesGlobal">Siguiente →</button>
-        <span class="page-indicator" x-text="`Página ${currentPageGlobal} de ${totalPagesGlobal}`"></span>
-      </div>
-    </div>
-
-    <!-- ── TAB: MATCHDAY ── -->
-    <div x-show="activeTab === 'matchday'" x-transition>
-      <div x-show="matchdays.length > 0" class="matchday-pills">
-        <template x-for="md in matchdays" :key="md.id">
-          <button
-            class="md-pill"
-            :class="{ active: selectedMatchdayId === md.id, 'no-data': !matchdayLeaderboard[md.id] || matchdayLeaderboard[md.id].length === 0 }"
-            @click="selectMatchday(md.id)"
-            x-text="md.name"
-          ></button>
-        </template>
-      </div>
-      <div x-show="matchdays.length === 0 && !loading" style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">
-        Cargando jornadas...
-      </div>
-
-      <div class="table-wrapper">
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>Rango</th>
-              <th>Equipo / Usuario</th>
-              <th>Pts Jornada</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr x-show="loading" class="loading-row"><td colspan="3"><span class="spinner"></span> Cargando...</td></tr>
-            <template x-if="!loading">
-              <template x-for="team in paginatedMatchday" :key="team.id">
-                <tr :class="team.is_current_user ? 'current-user-row' : ''">
-                  <td class="rank-cell"><span :class="'rank-' + team.rank" x-text="team.rank"></span></td>
-                  <td class="team-name">
-                    <span class="team-badge">⚡</span>
-                    <div>
-                      <div style="display:flex;align-items:center;gap:6px;">
-                        <span x-text="team.name"></span>
-                        <span x-show="team.is_current_user" class="user-badge">Tú</span>
-                      </div>
-                      <div class="username-sub" x-text="'@' + team.user_username"></div>
-                    </div>
-                  </td>
-                  <td class="points-val" x-text="team.total_points + ' pts'"></td>
-                </tr>
-              </template>
-            </template>
-            <tr x-show="!loading && paginatedMatchday.length === 0" class="empty-row">
-              <td colspan="3">
-                <span x-show="selectedMatchdayId === null">Selecciona una jornada arriba</span>
-                <span x-show="selectedMatchdayId !== null">Sin resultados para esta jornada todavía</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination Matchday -->
-      <div class="pagination" x-show="totalPagesMatchday > 1">
-        <button class="page-btn" :class="{ disabled: currentPageMatchday === 1 }" @click="prevPageMatchday()" :disabled="currentPageMatchday === 1">← Anterior</button>
-        <template x-for="page in visiblePagesMatchday" :key="page">
-          <button class="page-btn" :class="{ active: currentPageMatchday === page }" @click="goToPageMatchday(page)" x-text="page"></button>
-        </template>
-        <button class="page-btn" :class="{ disabled: currentPageMatchday === totalPagesMatchday }" @click="nextPageMatchday()" :disabled="currentPageMatchday === totalPagesMatchday">Siguiente →</button>
-        <span class="page-indicator" x-text="`Página ${currentPageMatchday} de ${totalPagesMatchday}`"></span>
-      </div>
-    </div>
-
-    <!-- ── TAB: DATE RANGE ── -->
-    <div x-show="activeTab === 'dates'" x-transition>
-      <div class="tab-controls">
-        <span class="control-label">Desde</span>
-        <input type="date" class="date-input" x-model="dateFrom" />
-        <span class="control-label">Hasta</span>
-        <input type="date" class="date-input" x-model="dateTo" />
-        <button class="apply-btn" @click="loadDatesLeaderboard()">Buscar</button>
-      </div>
-
-      <div class="table-wrapper">
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>Rango</th>
-              <th>Equipo / Usuario</th>
-              <th>Puntos (Período)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr x-show="loadingDates" class="loading-row"><td colspan="3"><span class="spinner"></span> Cargando...</td></tr>
-            <template x-if="!loadingDates">
-              <template x-for="team in paginatedDates" :key="team.id">
-                <tr :class="team.is_current_user ? 'current-user-row' : ''">
-                  <td class="rank-cell"><span :class="'rank-' + team.rank" x-text="team.rank"></span></td>
-                  <td class="team-name">
-                    <span class="team-badge">⚡</span>
-                    <div>
-                      <div style="display:flex;align-items:center;gap:6px;">
-                        <span x-text="team.name"></span>
-                        <span x-show="team.is_current_user" class="user-badge">Tú</span>
-                      </div>
-                      <div class="username-sub" x-text="'@' + team.user_username"></div>
-                    </div>
-                  </td>
-                  <td class="points-val" x-text="team.total_points + ' pts'"></td>
-                </tr>
-              </template>
-            </template>
-            <tr x-show="!loadingDates && datesSearched && paginatedDates.length === 0" class="empty-row">
-              <td colspan="3">📭 Sin resultados para ese rango de fechas</td>
-            </tr>
-            <tr x-show="!loadingDates && !datesSearched" class="empty-row">
-              <td colspan="3">📅 Selecciona un rango de fechas y presiona Buscar</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination Dates -->
-      <div class="pagination" x-show="totalPagesDates > 1">
-        <button class="page-btn" :class="{ disabled: currentPageDates === 1 }" @click="prevPageDates()" :disabled="currentPageDates === 1">← Anterior</button>
-        <template x-for="page in visiblePagesDates" :key="page">
-          <button class="page-btn" :class="{ active: currentPageDates === page }" @click="goToPageDates(page)" x-text="page"></button>
-        </template>
-        <button class="page-btn" :class="{ disabled: currentPageDates === totalPagesDates }" @click="nextPageDates()" :disabled="currentPageDates === totalPagesDates">Siguiente →</button>
-        <span class="page-indicator" x-text="`Página ${currentPageDates} de ${totalPagesDates}`"></span>
-      </div>
-    </div>
-
-    <div class="footer-note">
-      * Los puntos se actualizan automáticamente tras cada cálculo de jornada. Fila resaltada = tu equipo. El ranking global suma puntos de Fantasy y Predictor.
-    </div>
-  </div>
-</main>
-
-<script>
-  function leaderboardApp() {
-    return {
-      // ── STATE ──
-      activeTab: 'global',
-      loading: false,
-      loadingDates: false,
-
-      // Global
-      globalLeaderboard: [],
-      currentPageGlobal: 1,
-
-      // Matchday
-      matchdays: [],
-      matchdayLeaderboard: {},
-      selectedMatchdayId: null,
-      currentPageMatchday: 1,
-
-      // Dates
-      datesLeaderboard: [],
-      dateFrom: '',
-      dateTo: '',
-      datesSearched: false,
-      currentPageDates: 1,
-
-      // Shared
-      itemsPerPage: 10,
-      lastUpdated: new Date(),
-      lastUpdatedText: '',
-
-      // ── INIT ──
-      async init() {
-        await requireRole('user');
-        setupNavAuth();
-        this.updateTimestamp();
-        await this.loadGlobal();
-        await this.loadMatchdayData();
-        const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() + 1).padStart(2, '0');
-        this.dateFrom = `${y}-${m}-01`;
-        this.dateTo = today.toISOString().slice(0, 10);
-      },
-
-      get headerSubtitle() {
-        if (this.activeTab === 'global') return 'Temporada 2026 · Fantasy + Predictor';
-        if (this.activeTab === 'matchday') {
-          const md = this.matchdays.find(m => m.id === this.selectedMatchdayId);
-          return md ? `Jornada: ${md.name}` : 'Selecciona una jornada';
-        }
-        if (this.activeTab === 'dates') {
-          return this.datesSearched ? `Período: ${this.dateFrom} → ${this.dateTo}` : 'Clasificación por rango de fechas';
-        }
-        return '';
-      },
-
-      switchTab(tab) { this.activeTab = tab; },
-
-      async refreshData() {
-        if (this.activeTab === 'global') await this.loadGlobal();
-        else if (this.activeTab === 'matchday') await this.loadMatchdayData();
-        else if (this.activeTab === 'dates' && this.datesSearched) await this.loadDatesLeaderboard();
-        this.lastUpdated = new Date();
-        this.updateTimestamp();
-      },
-
-      // ── GLOBAL ──
-      async loadGlobal() {
-        this.loading = true;
-        this.globalLeaderboard = [];
-        this.currentPageGlobal = 1;
-        try {
-          const resp = await authFetch('/squad/global_leaderboard');
-          if (resp.ok) {
-            const data = await resp.json();
-            // Ensure fantasy_points / predictor_points default to 0 if absent
-            this.globalLeaderboard = (data.leaderboard || []).map(e => ({
-              ...e,
-              fantasy_points:   e.fantasy_points   ?? 0,
-              predictor_points: e.predictor_points ?? 0,
-            }));
-          }
-        } catch (e) {
-          console.warn('Error loading global leaderboard', e);
-        }
-        this.loading = false;
-      },
-
-      get paginatedGlobal() {
-        const s = (this.currentPageGlobal - 1) * this.itemsPerPage;
-        return this.globalLeaderboard.slice(s, s + this.itemsPerPage);
-      },
-      get totalPagesGlobal() { return Math.ceil(this.globalLeaderboard.length / this.itemsPerPage); },
-      get visiblePagesGlobal() { return this._visiblePages(this.currentPageGlobal, this.totalPagesGlobal); },
-      goToPageGlobal(p) { if (p >= 1 && p <= this.totalPagesGlobal) this.currentPageGlobal = p; },
-      prevPageGlobal() { this.goToPageGlobal(this.currentPageGlobal - 1); },
-      nextPageGlobal() { this.goToPageGlobal(this.currentPageGlobal + 1); },
-
-      // ── MATCHDAY ──
-      async loadMatchdayData() {
-        this.loading = true;
-        try {
-          const seasonsResp = await fetch('/seasons');
-          if (!seasonsResp.ok) throw new Error('seasons failed');
-          const seasonsData = await seasonsResp.json();
-          const seasons = seasonsData.seasons || [];
-          const activeSeason = seasons.find(s => s.status === 'active') || seasons[seasons.length - 1];
-          if (!activeSeason) { this.loading = false; return; }
-
-          const mdsResp = await fetch(`/seasons/${activeSeason.id}/matchdays`);
-          if (!mdsResp.ok) throw new Error('matchdays failed');
-          const mdsData = await mdsResp.json();
-          this.matchdays = mdsData.matchdays || [];
-
-          const lbResp = await authFetch('/squad/matchday_leaderboard');
-          if (lbResp.ok) {
-            const lbData = await lbResp.json();
-            const raw = lbData.leaderboard || {};
-            this.matchdayLeaderboard = {};
-            for (const [k, v] of Object.entries(raw)) {
-              this.matchdayLeaderboard[parseInt(k)] = v;
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <title>Clasificación — Fantasy SV</title>
+        <link rel="stylesheet" href="style.css" />
+        <script src="/js/auth.js"></script>
+        <script src="/js/nav.js"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap"
+            rel="stylesheet"
+        />
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+        ></script>
+        <style>
+            /* ========== GLOBAL & VARIABLES ========== */
+            :root {
+                /* Color System */
+                --primary-blue: #0d47ff;
+                --secondary-purple: #7b2cff;
+                --success-green: #00d26a;
+                --danger-red: #ff3d4d;
+                --gold: #f8c63a;
+                --background: #0b1020;
+                --surface: #151c32;
+                --text-white: #ffffff;
+                --text-muted: #a6b0c3;
+
+                /* Typography */
+                --font-primary:
+                    "Inter", "Rajdhani", "Archivo", "Oswald", sans-serif;
+                --font-size-h1: 2.5rem;
+                --font-size-h2: 1.8rem;
+                --font-size-h3: 1.4rem;
+                --font-size-base: 1rem;
+                --font-size-sm: 0.875rem;
+                --font-size-xs: 0.75rem;
+                --font-weight-light: 300;
+                --font-weight-normal: 400;
+                --font-weight-medium: 500;
+                --font-weight-semibold: 600;
+                --font-weight-bold: 700;
+                --font-weight-black: 900;
+
+                /* Spacing */
+                --spacing-xs: 0.5rem;
+                --spacing-sm: 1rem;
+                --spacing-md: 1.5rem;
+                --spacing-lg: 2rem;
+                --spacing-xl: 3rem;
+
+                /* Border Radius */
+                --radius-xs: 4px;
+                --radius-sm: 8px;
+                --radius-md: 12px;
+                --radius-lg: 20px;
+                --radius-xl: 24px;
+
+                /* Shadows */
+                --shadow-card: 0 8px 32px rgba(13, 71, 255, 0.3);
+                --shadow-glow: 0 0 15px rgba(13, 71, 255, 0.5);
+                --shadow-glow-purple: 0 0 15px rgba(123, 44, 255, 0.5);
+
+                /* Transitions */
+                --transition-fast: 0.2s ease;
+                --transition-normal: 0.3s ease;
+                --transition-slow: 0.5s ease;
             }
-          }
 
-          const withData = this.matchdays.filter(md => {
-            const d = this.matchdayLeaderboard[md.id];
-            return d && d.length > 0;
-          });
-          if (withData.length > 0) {
-            this.selectedMatchdayId = withData[withData.length - 1].id;
-          } else if (this.matchdays.length > 0) {
-            this.selectedMatchdayId = this.matchdays[0].id;
-          }
-        } catch (e) {
-          console.warn('Error loading matchday data', e);
-        }
-        this.loading = false;
-      },
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-      selectMatchday(id) { this.selectedMatchdayId = id; this.currentPageMatchday = 1; },
+            body {
+                font-family: var(--font-primary);
+                background: var(--background);
+                color: var(--text-white);
+                min-height: 100vh;
+                overflow-x: hidden;
+                background-image:
+                    radial-gradient(
+                        circle at 10% 20%,
+                        rgba(13, 71, 255, 0.1) 0%,
+                        transparent 20%
+                    ),
+                    radial-gradient(
+                        circle at 90% 80%,
+                        rgba(123, 44, 255, 0.1) 0%,
+                        transparent 20%
+                    );
+            }
 
-      get currentMatchdayTeams() {
-        if (this.selectedMatchdayId === null) return [];
-        return this.matchdayLeaderboard[this.selectedMatchdayId] || [];
-      },
-      get paginatedMatchday() {
-        const s = (this.currentPageMatchday - 1) * this.itemsPerPage;
-        return this.currentMatchdayTeams.slice(s, s + this.itemsPerPage);
-      },
-      get totalPagesMatchday() { return Math.ceil(this.currentMatchdayTeams.length / this.itemsPerPage); },
-      get visiblePagesMatchday() { return this._visiblePages(this.currentPageMatchday, this.totalPagesMatchday); },
-      goToPageMatchday(p) { if (p >= 1 && p <= this.totalPagesMatchday) this.currentPageMatchday = p; },
-      prevPageMatchday() { this.goToPageMatchday(this.currentPageMatchday - 1); },
-      nextPageMatchday() { this.goToPageMatchday(this.currentPageMatchday + 1); },
+            /* main container */
+            .leaderboard-container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 1.5rem 1rem 3rem;
+            }
 
-      // ── DATES ──
-      async loadDatesLeaderboard() {
-        if (!this.dateFrom || !this.dateTo) return;
-        this.loadingDates = true;
-        this.datesLeaderboard = [];
-        this.currentPageDates = 1;
-        this.datesSearched = false;
-        try {
-          const url = `/squad/weekly_leaderboard?start_date=${this.dateFrom}&end_date=${this.dateTo}`;
-          const resp = await authFetch(url);
-          if (resp.ok) {
-            const data = await resp.json();
-            this.datesLeaderboard = data.leaderboard || [];
-          }
-        } catch (e) {
-          console.warn('Error loading dates leaderboard', e);
-        }
-        this.datesSearched = true;
-        this.loadingDates = false;
-      },
+            .leaderboard-header {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
 
-      get paginatedDates() {
-        const s = (this.currentPageDates - 1) * this.itemsPerPage;
-        return this.datesLeaderboard.slice(s, s + this.itemsPerPage);
-      },
-      get totalPagesDates() { return Math.ceil(this.datesLeaderboard.length / this.itemsPerPage); },
-      get visiblePagesDates() { return this._visiblePages(this.currentPageDates, this.totalPagesDates); },
-      goToPageDates(p) { if (p >= 1 && p <= this.totalPagesDates) this.currentPageDates = p; },
-      prevPageDates() { this.goToPageDates(this.currentPageDates - 1); },
-      nextPageDates() { this.goToPageDates(this.currentPageDates + 1); },
+            .leaderboard-title h1 {
+                font-size: var(--font-size-h1);
+                font-weight: var(--font-weight-black);
+                background: linear-gradient(
+                    135deg,
+                    var(--primary-blue),
+                    var(--secondary-purple)
+                );
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+                text-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
+            }
 
-      // ── HELPERS ──
-      _visiblePages(current, total) {
-        let start = Math.max(1, current - 2);
-        let end = Math.min(total, start + 4);
-        if (end - start < 4) start = Math.max(1, end - 4);
-        const pages = [];
-        for (let i = start; i <= end; i++) pages.push(i);
-        return pages;
-      },
+            .leaderboard-title p {
+                color: var(--text-muted);
+                font-weight: var(--font-weight-semibold);
+                font-size: var(--font-size-sm);
+                margin-top: 4px;
+            }
 
-      updateTimestamp() {
-        this.lastUpdatedText = this.lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      },
-    };
-  }
-</script>
-</body>
+            .refresh-info {
+                background: rgba(13, 71, 255, 0.15);
+                border-radius: 40px;
+                padding: 6px 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: var(--font-size-xs);
+                font-weight: var(--font-weight-semibold);
+                color: var(--primary-blue);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                box-shadow: var(--shadow-glow);
+            }
+
+            .refresh-info span:first-child {
+                font-size: 1.2rem;
+                animation: pulse 2s infinite;
+            }
+
+            @keyframes pulse {
+                0% {
+                    opacity: 0.6;
+                }
+                50% {
+                    opacity: 1;
+                }
+                100% {
+                    opacity: 0.6;
+                }
+            }
+
+            /* ── TABS ── */
+            .tabs-wrapper {
+                margin-bottom: 1.5rem;
+                position: relative;
+            }
+
+            .tabs-nav {
+                display: flex;
+                gap: 4px;
+                background: rgba(21, 28, 50, 0.7);
+                border-radius: var(--radius-md);
+                padding: 4px;
+                width: fit-content;
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                backdrop-filter: blur(10px);
+                box-shadow: var(--shadow-glow);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .tabs-nav::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(
+                    90deg,
+                    var(--primary-blue),
+                    var(--secondary-purple)
+                );
+                opacity: 0.1;
+                z-index: 0;
+            }
+
+            .tab-btn {
+                background: none;
+                border: none;
+                color: var(--text-muted);
+                font-family: var(--font-primary);
+                font-weight: var(--font-weight-semibold);
+                font-size: var(--font-size-sm);
+                padding: 9px 18px;
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                transition: all var(--transition-fast);
+                white-space: nowrap;
+                position: relative;
+                z-index: 1;
+            }
+
+            .tab-btn.active {
+                background: linear-gradient(
+                    90deg,
+                    var(--primary-blue),
+                    var(--secondary-purple)
+                );
+                color: var(--text-white);
+                box-shadow: var(--shadow-glow);
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            }
+
+            .tab-btn:hover:not(.active) {
+                background: rgba(255, 255, 255, 0.07);
+                color: var(--text-white);
+                box-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
+            }
+
+            /* ── TAB-SPECIFIC CONTROLS ── */
+            .tab-controls {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 1.25rem;
+            }
+
+            .control-label {
+                font-size: var(--font-size-xs);
+                font-weight: var(--font-weight-semibold);
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .select-control {
+                background: rgba(21, 28, 50, 0.7);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                border-radius: var(--radius-sm);
+                color: var(--text-white);
+                font-family: var(--font-primary);
+                font-weight: var(--font-weight-semibold);
+                font-size: var(--font-size-sm);
+                padding: 8px 12px;
+                cursor: pointer;
+                outline: none;
+                transition:
+                    border-color var(--transition-fast),
+                    box-shadow var(--transition-fast);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
+            }
+
+            .select-control:focus {
+                border-color: var(--primary-blue);
+                box-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
+            }
+
+            .date-input {
+                background: rgba(21, 28, 50, 0.7);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                border-radius: var(--radius-sm);
+                color: var(--text-white);
+                font-family: var(--font-primary);
+                font-weight: var(--font-weight-semibold);
+                font-size: var(--font-size-sm);
+                padding: 8px 12px;
+                outline: none;
+                transition:
+                    border-color var(--transition-fast),
+                    box-shadow var(--transition-fast);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
+                color-scheme: dark;
+            }
+
+            .date-input:focus {
+                border-color: var(--primary-blue);
+                box-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
+            }
+
+            .apply-btn {
+                background: linear-gradient(
+                    90deg,
+                    var(--primary-blue),
+                    var(--secondary-purple)
+                );
+                color: var(--text-white);
+                border: none;
+                border-radius: var(--radius-sm);
+                font-family: var(--font-primary);
+                font-weight: var(--font-weight-black);
+                font-size: var(--font-size-sm);
+                padding: 9px 18px;
+                cursor: pointer;
+                transition:
+                    all var(--transition-fast),
+                    transform var(--transition-fast);
+                box-shadow: var(--shadow-glow);
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            }
+
+            .apply-btn:hover {
+                background: linear-gradient(
+                    90deg,
+                    var(--secondary-purple),
+                    var(--primary-blue)
+                );
+                transform: translateY(-2px);
+                box-shadow: 0 0 20px rgba(13, 71, 255, 0.5);
+            }
+
+            /* TABLE WRAPPER */
+            .table-wrapper {
+                background: rgba(21, 28, 50, 0.7);
+                border-radius: var(--radius-md);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                overflow-x: auto;
+                overflow-y: hidden;
+                box-shadow: var(--shadow-card);
+                backdrop-filter: blur(12px);
+                position: relative;
+            }
+
+            .leaderboard-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.9rem;
+                min-width: 620px;
+            }
+
+            .leaderboard-table th {
+                text-align: left;
+                padding: 1rem 1rem;
+                background: rgba(13, 71, 255, 0.1);
+                color: var(--text-muted);
+                font-weight: var(--font-weight-bold);
+                font-size: var(--font-size-xs);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                border-bottom: 1px solid rgba(13, 71, 255, 0.3);
+                position: relative;
+                z-index: 2;
+            }
+
+            .leaderboard-table td {
+                padding: 0.9rem 1rem;
+                border-bottom: 1px solid rgba(13, 71, 255, 0.15);
+                font-weight: var(--font-weight-semibold);
+                transition: all var(--transition-fast);
+                position: relative;
+                z-index: 1;
+            }
+
+            .leaderboard-table tr:hover td {
+                background: rgba(13, 71, 255, 0.15);
+                box-shadow: inset 0 0 10px rgba(13, 71, 255, 0.1);
+            }
+
+            /* rank */
+            .rank-cell {
+                font-weight: var(--font-weight-black);
+                color: var(--gold);
+                width: 70px;
+                position: relative;
+                z-index: 2;
+            }
+
+            .rank-1 {
+                color: var(--gold);
+                font-size: 1.2em;
+                text-shadow: 0 0 10px rgba(248, 198, 58, 0.5);
+                position: relative;
+                z-index: 2;
+            }
+
+            .rank-2 {
+                color: #c0c0c0;
+                position: relative;
+                z-index: 2;
+            }
+
+            .rank-3 {
+                color: #cd7f32;
+                position: relative;
+                z-index: 2;
+            }
+
+            /* delta cell */
+            .delta-cell {
+                width: 70px;
+                font-weight: var(--font-weight-black);
+                text-align: center;
+                position: relative;
+                z-index: 2;
+            }
+
+            .delta-up {
+                color: var(--success-green);
+                text-shadow: 0 0 5px rgba(0, 210, 106, 0.3);
+            }
+
+            .delta-down {
+                color: var(--danger-red);
+                text-shadow: 0 0 5px rgba(255, 61, 77, 0.3);
+            }
+
+            .delta-equal {
+                color: var(--text-muted);
+            }
+
+            .team-name {
+                font-weight: var(--font-weight-black);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .team-badge {
+                width: 24px;
+                height: 24px;
+                background: rgba(13, 71, 255, 0.2);
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.7rem;
+                flex-shrink: 0;
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
+            }
+
+            .username-sub {
+                font-size: var(--font-size-xs);
+                color: var(--text-muted);
+                font-weight: var(--font-weight-semibold);
+            }
+
+            /* ── POINTS BREAKDOWN ── */
+            .points-cell {
+                min-width: 180px;
+            }
+
+            .points-total {
+                font-weight: var(--font-weight-black);
+                color: var(--success-green);
+                font-size: 1rem;
+                text-shadow: 0 0 5px rgba(0, 210, 106, 0.3);
+            }
+
+            .points-breakdown {
+                display: flex;
+                gap: 10px;
+                margin-top: 4px;
+                flex-wrap: wrap;
+            }
+
+            .pts-tag {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                font-size: var(--font-size-xs);
+                font-weight: var(--font-weight-semibold);
+                padding: 2px 8px;
+                border-radius: 50px;
+                transition: all var(--transition-fast);
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .pts-tag.fantasy {
+                background: rgba(13, 71, 255, 0.15);
+                color: var(--primary-blue);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+            }
+
+            .pts-tag.predictor {
+                background: rgba(123, 44, 255, 0.15);
+                color: var(--secondary-purple);
+                border: 1px solid rgba(123, 44, 255, 0.3);
+            }
+
+            .pts-tag .tag-icon {
+                font-size: 0.8em;
+                opacity: 0.8;
+            }
+
+            /* highlighted row (current user) */
+            .current-user-row td {
+                background: linear-gradient(
+                    90deg,
+                    rgba(13, 71, 255, 0.15),
+                    rgba(123, 44, 255, 0.1)
+                );
+                border-bottom: 1px solid rgba(13, 71, 255, 0.3);
+            }
+
+            .current-user-row td:first-child {
+                border-left: 4px solid var(--primary-blue);
+            }
+
+            .user-badge {
+                background: linear-gradient(
+                    90deg,
+                    var(--primary-blue),
+                    var(--secondary-purple)
+                );
+                color: var(--text-white);
+                font-size: var(--font-size-xs);
+                font-weight: var(--font-weight-black);
+                padding: 2px 8px;
+                border-radius: 50px;
+                margin-left: 8px;
+                flex-shrink: 0;
+                box-shadow: 0 0 5px rgba(13, 71, 255, 0.3);
+                text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
+            }
+
+            /* pagination */
+            .pagination {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                align-items: center;
+                gap: 10px;
+                margin-top: 2rem;
+            }
+
+            .page-btn {
+                background: rgba(21, 28, 50, 0.7);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                padding: 8px 14px;
+                border-radius: 50px;
+                font-weight: var(--font-weight-semibold);
+                color: var(--text-muted);
+                transition: all var(--transition-fast);
+                cursor: pointer;
+                font-family: var(--font-primary);
+                box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
+                backdrop-filter: blur(10px);
+            }
+
+            .page-btn.active {
+                background: linear-gradient(
+                    90deg,
+                    var(--primary-blue),
+                    var(--secondary-purple)
+                );
+                color: var(--text-white);
+                border-color: transparent;
+                box-shadow: var(--shadow-glow);
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            }
+
+            .page-btn:hover:not(.disabled) {
+                background: rgba(13, 71, 255, 0.2);
+                color: var(--primary-blue);
+                transform: translateY(-1px);
+                box-shadow: 0 0 15px rgba(13, 71, 255, 0.4);
+            }
+
+            .page-btn.disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+
+            .page-indicator {
+                color: var(--text-muted);
+                font-weight: var(--font-weight-semibold);
+                background: rgba(21, 28, 50, 0.7);
+                padding: 6px 14px;
+                border-radius: 50px;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
+            }
+
+            /* empty / loading */
+            .empty-row td {
+                text-align: center;
+                padding: 3rem;
+                color: var(--text-muted);
+                font-weight: var(--font-weight-semibold);
+            }
+
+            .loading-row td {
+                text-align: center;
+                padding: 3rem;
+                color: var(--primary-blue);
+                font-weight: var(--font-weight-semibold);
+            }
+
+            .spinner {
+                display: inline-block;
+                width: 18px;
+                height: 18px;
+                border: 2px solid rgba(13, 71, 255, 0.3);
+                border-top-color: var(--primary-blue);
+                border-radius: 50%;
+                animation: spin 0.7s linear infinite;
+                vertical-align: middle;
+                margin-right: 8px;
+                box-shadow: 0 0 5px rgba(13, 71, 255, 0.3);
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            /* matchday pills */
+            .matchday-pills {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-bottom: 1.25rem;
+            }
+
+            .md-pill {
+                background: rgba(21, 28, 50, 0.7);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                border-radius: 50px;
+                padding: 6px 14px;
+                font-size: var(--font-size-sm);
+                font-weight: var(--font-weight-semibold);
+                color: var(--text-muted);
+                cursor: pointer;
+                transition: all var(--transition-fast);
+                font-family: var(--font-primary);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 0 5px rgba(13, 71, 255, 0.1);
+            }
+
+            .md-pill.active {
+                background: linear-gradient(
+                    90deg,
+                    var(--primary-blue),
+                    var(--secondary-purple)
+                );
+                color: var(--text-white);
+                border-color: transparent;
+                box-shadow: var(--shadow-glow);
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            }
+
+            .md-pill:hover:not(.active) {
+                background: rgba(13, 71, 255, 0.2);
+                color: var(--primary-blue);
+                box-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
+            }
+
+            .md-pill.no-data {
+                opacity: 0.4;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+
+            /* legend */
+            .points-legend {
+                display: flex;
+                gap: 16px;
+                flex-wrap: wrap;
+                margin-bottom: 1rem;
+                font-size: var(--font-size-xs);
+                font-weight: var(--font-weight-semibold);
+                color: var(--text-muted);
+                align-items: center;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .legend-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                flex-shrink: 0;
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .legend-dot.fantasy {
+                background: var(--primary-blue);
+                box-shadow: 0 0 5px rgba(13, 71, 255, 0.5);
+            }
+
+            .legend-dot.predictor {
+                background: var(--secondary-purple);
+                box-shadow: 0 0 5px rgba(123, 44, 255, 0.5);
+            }
+
+            .legend-dot.total {
+                background: var(--success-green);
+                box-shadow: 0 0 5px rgba(0, 210, 106, 0.5);
+            }
+
+            .footer-note {
+                text-align: center;
+                margin-top: 2rem;
+                font-size: var(--font-size-xs);
+                color: var(--text-muted);
+                opacity: 0.7;
+            }
+
+            /* Animations */
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .leaderboard-table tr {
+                animation: fadeIn 0.5s ease-out forwards;
+                opacity: 0;
+            }
+
+            .empty-state {
+                padding: 3rem 1rem;
+                text-align: center;
+                color: var(--text-muted);
+                font-weight: var(--font-weight-semibold);
+            }
+
+            .leaderboard-table tr:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+            .leaderboard-table tr:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .leaderboard-table tr:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+            .leaderboard-table tr:nth-child(4) {
+                animation-delay: 0.4s;
+            }
+            .leaderboard-table tr:nth-child(5) {
+                animation-delay: 0.5s;
+            }
+            .leaderboard-table tr:nth-child(6) {
+                animation-delay: 0.6s;
+            }
+            .leaderboard-table tr:nth-child(7) {
+                animation-delay: 0.7s;
+            }
+            .leaderboard-table tr:nth-child(8) {
+                animation-delay: 0.8s;
+            }
+            .leaderboard-table tr:nth-child(9) {
+                animation-delay: 0.9s;
+            }
+            .leaderboard-table tr:nth-child(10) {
+                animation-delay: 1s;
+            }
+
+            /* Responsive */
+            @media (max-width: 680px) {
+                .leaderboard-table th,
+                .leaderboard-table td {
+                    padding: 0.7rem 0.8rem;
+                    font-size: var(--font-size-xs);
+                }
+
+                .rank-cell {
+                    width: 55px;
+                }
+                .delta-cell {
+                    width: 55px;
+                }
+                .user-badge {
+                    font-size: var(--font-size-xs);
+                    margin-left: 4px;
+                }
+                .leaderboard-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                }
+                .tabs-nav {
+                    width: 100%;
+                }
+                .tab-btn {
+                    flex: 1;
+                    text-align: center;
+                    padding: 9px 10px;
+                }
+                .points-breakdown {
+                    gap: 6px;
+                }
+                .pts-tag {
+                    font-size: var(--font-size-xs);
+                    padding: 2px 6px;
+                }
+
+                .leaderboard-title h1 {
+                    font-size: 1.8rem;
+                }
+
+                .refresh-info {
+                    padding: 4px 12px;
+                    font-size: var(--font-size-xs);
+                }
+
+                .tabs-wrapper {
+                    margin-bottom: 1rem;
+                }
+
+                .tab-controls {
+                    margin-bottom: 1rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- ── MAIN NAVIGATION ── -->
+        <nav class="main-nav">
+            <div class="nav-container">
+                <a href="/" class="nav-brand">
+                    <span class="nav-logo-icon">⚽</span>
+                    Fantasy SV
+                </a>
+                <button
+                    class="nav-mobile-toggle"
+                    onclick="
+                        document
+                            .getElementById('nav-links')
+                            .classList.toggle('active')
+                    "
+                >
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="nav-links" id="nav-links">
+                    <a href="/squad-builder" class="nav-link">Mi Equipo</a>
+                    <a href="/schedule" class="nav-link">Calendario</a>
+                    <a href="/predictor" class="nav-link">Predicciones</a>
+                    <a href="/leaderboard" class="nav-link active"
+                        >Clasificación</a
+                    >
+                    <a href="/profile" class="nav-link">Perfil</a>
+                    <a href="/leagues" class="nav-link">Ligas Privadas</a>
+                    <span id="nav-auth"></span>
+                </div>
+            </div>
+        </nav>
+
+        <main x-data="leaderboardApp()" x-init="init()">
+            <div class="leaderboard-container">
+                <!-- Header -->
+                <div class="leaderboard-header">
+                    <div class="leaderboard-title">
+                        <h1>🏆 Clasificación</h1>
+                        <p x-text="headerSubtitle"></p>
+                    </div>
+                    <div class="refresh-info">
+                        <span>🔄</span>
+                        <span
+                            >Actualizado: <span x-text="lastUpdatedText"></span
+                        ></span>
+                        <button
+                            @click="refreshData()"
+                            style="
+                                background: none;
+                                border: none;
+                                color: inherit;
+                                cursor: pointer;
+                                font-weight: bold;
+                            "
+                        >
+                            ⟳
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="tabs-wrapper">
+                    <div class="tabs-nav">
+                        <button
+                            class="tab-btn"
+                            :class="{ active: activeTab === 'global' }"
+                            @click="switchTab('global')"
+                        >
+                            🌍 Global
+                        </button>
+                        <button
+                            class="tab-btn"
+                            :class="{ active: activeTab === 'matchday' }"
+                            @click="switchTab('matchday')"
+                        >
+                            📅 Por Jornada
+                        </button>
+                        <button
+                            class="tab-btn"
+                            :class="{ active: activeTab === 'dates' }"
+                            @click="switchTab('dates')"
+                        >
+                            📆 Por Fechas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── TAB: GLOBAL ── -->
+                <div x-show="activeTab === 'global'" x-transition>
+                    <!-- Legend -->
+                    <div class="points-legend">
+                        <span
+                            style="
+                                color: var(--text-muted);
+                                font-weight: 700;
+                                font-size: 0.78rem;
+                            "
+                            >Desglose:</span
+                        >
+                        <div class="legend-item">
+                            <div class="legend-dot total"></div>
+                            <span>Total</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot fantasy"></div>
+                            <span>Fantasy</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot predictor"></div>
+                            <span>Predictor</span>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <template
+                            x-if="!loading && paginatedGlobal.length === 0"
+                        >
+                            <div class="empty-state">
+                                🏟️ Sin datos disponibles todavía
+                            </div>
+                        </template>
+                        <table
+                            x-show="loading || paginatedGlobal.length > 0"
+                            class="leaderboard-table"
+                        >
+                            <thead>
+                                <tr>
+                                    <th>Rango</th>
+                                    <th>Equipo / Usuario</th>
+                                    <th style="text-align: center">Δ</th>
+                                    <th>Puntos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-if="!loading">
+                                    <template
+                                        x-for="team in paginatedGlobal"
+                                        :key="team.id"
+                                    >
+                                        <tr
+                                            :class="team.is_current_user ? 'current-user-row' : ''"
+                                        >
+                                            <!-- Rank -->
+                                            <td class="rank-cell">
+                                                <span
+                                                    :class="'rank-' + team.rank"
+                                                    x-text="team.rank"
+                                                ></span>
+                                            </td>
+
+                                            <!-- Team / User -->
+                                            <td class="team-name">
+                                                <span class="team-badge"
+                                                    >⚡</span
+                                                >
+                                                <div>
+                                                    <div
+                                                        style="
+                                                            display: flex;
+                                                            align-items: center;
+                                                            gap: 6px;
+                                                        "
+                                                    >
+                                                        <span
+                                                            x-text="team.name"
+                                                        ></span>
+                                                        <span
+                                                            x-show="team.is_current_user"
+                                                            class="user-badge"
+                                                            >Tú</span
+                                                        >
+                                                    </div>
+                                                    <div
+                                                        class="username-sub"
+                                                        x-text="'@' + team.user_username"
+                                                    ></div>
+                                                </div>
+                                            </td>
+
+                                            <!-- Delta -->
+                                            <td class="delta-cell">
+                                                <template
+                                                    x-if="team.previous_rank !== null && team.previous_rank !== undefined"
+                                                >
+                                                    <div>
+                                                        <template
+                                                            x-if="team.previous_rank > team.rank"
+                                                        >
+                                                            <span
+                                                                class="delta-up"
+                                                                >▲
+                                                                <span
+                                                                    x-text="team.previous_rank - team.rank"
+                                                                ></span
+                                                            ></span>
+                                                        </template>
+                                                        <template
+                                                            x-if="team.previous_rank < team.rank"
+                                                        >
+                                                            <span
+                                                                class="delta-down"
+                                                                >▼
+                                                                <span
+                                                                    x-text="team.rank - team.previous_rank"
+                                                                ></span
+                                                            ></span>
+                                                        </template>
+                                                        <template
+                                                            x-if="team.previous_rank === team.rank"
+                                                        >
+                                                            <span
+                                                                class="delta-equal"
+                                                                >=</span
+                                                            >
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <template
+                                                    x-if="team.previous_rank === null || team.previous_rank === undefined"
+                                                >
+                                                    <span class="delta-equal"
+                                                        >–</span
+                                                    >
+                                                </template>
+                                            </td>
+
+                                            <!-- Points breakdown -->
+                                            <td class="points-cell">
+                                                <div
+                                                    class="points-total"
+                                                    x-text="team.total_points + ' pts'"
+                                                ></div>
+                                                <div class="points-breakdown">
+                                                    <span
+                                                        class="pts-tag fantasy"
+                                                    >
+                                                        <span class="tag-icon"
+                                                            >⚽</span
+                                                        >
+                                                        <span
+                                                            x-text="team.fantasy_points"
+                                                        ></span>
+                                                    </span>
+                                                    <span
+                                                        class="pts-tag predictor"
+                                                    >
+                                                        <span class="tag-icon"
+                                                            >🎯</span
+                                                        >
+                                                        <span
+                                                            x-text="team.predictor_points"
+                                                        ></span>
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Global -->
+                    <div class="pagination" x-show="totalPagesGlobal > 1">
+                        <button
+                            class="page-btn"
+                            :class="{ disabled: currentPageGlobal === 1 }"
+                            @click="prevPageGlobal()"
+                            :disabled="currentPageGlobal === 1"
+                        >
+                            ← Anterior
+                        </button>
+                        <template
+                            x-for="page in visiblePagesGlobal"
+                            :key="page"
+                        >
+                            <button
+                                class="page-btn"
+                                :class="{ active: currentPageGlobal === page }"
+                                @click="goToPageGlobal(page)"
+                                x-text="page"
+                            ></button>
+                        </template>
+                        <button
+                            class="page-btn"
+                            :class="{ disabled: currentPageGlobal === totalPagesGlobal }"
+                            @click="nextPageGlobal()"
+                            :disabled="currentPageGlobal === totalPagesGlobal"
+                        >
+                            Siguiente →
+                        </button>
+                        <span
+                            class="page-indicator"
+                            x-text="`Página ${currentPageGlobal} de ${totalPagesGlobal}`"
+                        ></span>
+                    </div>
+                </div>
+
+                <!-- ── TAB: MATCHDAY ── -->
+                <div x-show="activeTab === 'matchday'" x-transition>
+                    <div x-show="matchdays.length > 0" class="matchday-pills">
+                        <template x-for="md in matchdays" :key="md.id">
+                            <button
+                                class="md-pill"
+                                :class="{ active: selectedMatchdayId === md.id, 'no-data': !matchdayLeaderboard[md.id] || matchdayLeaderboard[md.id].length === 0 }"
+                                @click="selectMatchday(md.id)"
+                                x-text="md.name"
+                            ></button>
+                        </template>
+                    </div>
+                    <div
+                        x-show="matchdays.length === 0 && !loading"
+                        style="
+                            color: var(--text-muted);
+                            font-size: 0.85rem;
+                            margin-bottom: 1rem;
+                        "
+                    >
+                        Cargando jornadas...
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rango</th>
+                                    <th>Equipo / Usuario</th>
+                                    <th>Pts Jornada</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr x-show="loading" class="loading-row">
+                                    <td colspan="3">
+                                        <span class="spinner"></span>
+                                        Cargando...
+                                    </td>
+                                </tr>
+                                <template x-if="!loading">
+                                    <template
+                                        x-for="team in paginatedMatchday"
+                                        :key="team.id"
+                                    >
+                                        <tr
+                                            :class="team.is_current_user ? 'current-user-row' : ''"
+                                        >
+                                            <td class="rank-cell">
+                                                <span
+                                                    :class="'rank-' + team.rank"
+                                                    x-text="team.rank"
+                                                ></span>
+                                            </td>
+                                            <td class="team-name">
+                                                <span class="team-badge"
+                                                    >⚡</span
+                                                >
+                                                <div>
+                                                    <div
+                                                        style="
+                                                            display: flex;
+                                                            align-items: center;
+                                                            gap: 6px;
+                                                        "
+                                                    >
+                                                        <span
+                                                            x-text="team.name"
+                                                        ></span>
+                                                        <span
+                                                            x-show="team.is_current_user"
+                                                            class="user-badge"
+                                                            >Tú</span
+                                                        >
+                                                    </div>
+                                                    <div
+                                                        class="username-sub"
+                                                        x-text="'@' + team.user_username"
+                                                    ></div>
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="points-val"
+                                                x-text="team.total_points + ' pts'"
+                                            ></td>
+                                        </tr>
+                                    </template>
+                                </template>
+                                <tr
+                                    x-show="!loading && paginatedMatchday.length === 0"
+                                    class="empty-row"
+                                >
+                                    <td colspan="3">
+                                        <span
+                                            x-show="selectedMatchdayId === null"
+                                            >Selecciona una jornada arriba</span
+                                        >
+                                        <span
+                                            x-show="selectedMatchdayId !== null"
+                                            >Sin resultados para esta jornada
+                                            todavía</span
+                                        >
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Matchday -->
+                    <div class="pagination" x-show="totalPagesMatchday > 1">
+                        <button
+                            class="page-btn"
+                            :class="{ disabled: currentPageMatchday === 1 }"
+                            @click="prevPageMatchday()"
+                            :disabled="currentPageMatchday === 1"
+                        >
+                            ← Anterior
+                        </button>
+                        <template
+                            x-for="page in visiblePagesMatchday"
+                            :key="page"
+                        >
+                            <button
+                                class="page-btn"
+                                :class="{ active: currentPageMatchday === page }"
+                                @click="goToPageMatchday(page)"
+                                x-text="page"
+                            ></button>
+                        </template>
+                        <button
+                            class="page-btn"
+                            :class="{ disabled: currentPageMatchday === totalPagesMatchday }"
+                            @click="nextPageMatchday()"
+                            :disabled="currentPageMatchday === totalPagesMatchday"
+                        >
+                            Siguiente →
+                        </button>
+                        <span
+                            class="page-indicator"
+                            x-text="`Página ${currentPageMatchday} de ${totalPagesMatchday}`"
+                        ></span>
+                    </div>
+                </div>
+
+                <!-- ── TAB: DATE RANGE ── -->
+                <div x-show="activeTab === 'dates'" x-transition>
+                    <div class="tab-controls">
+                        <span class="control-label">Desde</span>
+                        <input
+                            type="date"
+                            class="date-input"
+                            x-model="dateFrom"
+                        />
+                        <span class="control-label">Hasta</span>
+                        <input
+                            type="date"
+                            class="date-input"
+                            x-model="dateTo"
+                        />
+                        <button
+                            class="apply-btn"
+                            @click="loadDatesLeaderboard()"
+                        >
+                            Buscar
+                        </button>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rango</th>
+                                    <th>Equipo / Usuario</th>
+                                    <th>Puntos (Período)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr x-show="loadingDates" class="loading-row">
+                                    <td colspan="3">
+                                        <span class="spinner"></span>
+                                        Cargando...
+                                    </td>
+                                </tr>
+                                <template x-if="!loadingDates">
+                                    <template
+                                        x-for="team in paginatedDates"
+                                        :key="team.id"
+                                    >
+                                        <tr
+                                            :class="team.is_current_user ? 'current-user-row' : ''"
+                                        >
+                                            <td class="rank-cell">
+                                                <span
+                                                    :class="'rank-' + team.rank"
+                                                    x-text="team.rank"
+                                                ></span>
+                                            </td>
+                                            <td class="team-name">
+                                                <span class="team-badge"
+                                                    >⚡</span
+                                                >
+                                                <div>
+                                                    <div
+                                                        style="
+                                                            display: flex;
+                                                            align-items: center;
+                                                            gap: 6px;
+                                                        "
+                                                    >
+                                                        <span
+                                                            x-text="team.name"
+                                                        ></span>
+                                                        <span
+                                                            x-show="team.is_current_user"
+                                                            class="user-badge"
+                                                            >Tú</span
+                                                        >
+                                                    </div>
+                                                    <div
+                                                        class="username-sub"
+                                                        x-text="'@' + team.user_username"
+                                                    ></div>
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="points-val"
+                                                x-text="team.total_points + ' pts'"
+                                            ></td>
+                                        </tr>
+                                    </template>
+                                </template>
+                                <tr
+                                    x-show="!loadingDates && datesSearched && paginatedDates.length === 0"
+                                    class="empty-row"
+                                >
+                                    <td colspan="3">
+                                        📭 Sin resultados para ese rango de
+                                        fechas
+                                    </td>
+                                </tr>
+                                <tr
+                                    x-show="!loadingDates && !datesSearched"
+                                    class="empty-row"
+                                >
+                                    <td colspan="3">
+                                        📅 Selecciona un rango de fechas y
+                                        presiona Buscar
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Dates -->
+                    <div class="pagination" x-show="totalPagesDates > 1">
+                        <button
+                            class="page-btn"
+                            :class="{ disabled: currentPageDates === 1 }"
+                            @click="prevPageDates()"
+                            :disabled="currentPageDates === 1"
+                        >
+                            ← Anterior
+                        </button>
+                        <template x-for="page in visiblePagesDates" :key="page">
+                            <button
+                                class="page-btn"
+                                :class="{ active: currentPageDates === page }"
+                                @click="goToPageDates(page)"
+                                x-text="page"
+                            ></button>
+                        </template>
+                        <button
+                            class="page-btn"
+                            :class="{ disabled: currentPageDates === totalPagesDates }"
+                            @click="nextPageDates()"
+                            :disabled="currentPageDates === totalPagesDates"
+                        >
+                            Siguiente →
+                        </button>
+                        <span
+                            class="page-indicator"
+                            x-text="`Página ${currentPageDates} de ${totalPagesDates}`"
+                        ></span>
+                    </div>
+                </div>
+
+                <div class="footer-note">
+                    * Los puntos se actualizan automáticamente tras cada cálculo
+                    de jornada. Fila resaltada = tu equipo. El ranking global
+                    suma puntos de Fantasy y Predictor.
+                </div>
+            </div>
+        </main>
+
+        <script>
+            function leaderboardApp() {
+                return {
+                    // ── STATE ──
+                    activeTab: "global",
+                    loading: false,
+                    loadingDates: false,
+
+                    // Global
+                    globalLeaderboard: [],
+                    currentPageGlobal: 1,
+
+                    // Matchday
+                    matchdays: [],
+                    matchdayLeaderboard: {},
+                    selectedMatchdayId: null,
+                    currentPageMatchday: 1,
+
+                    // Dates
+                    datesLeaderboard: [],
+                    dateFrom: "",
+                    dateTo: "",
+                    datesSearched: false,
+                    currentPageDates: 1,
+
+                    // Shared
+                    itemsPerPage: 10,
+                    lastUpdated: new Date(),
+                    lastUpdatedText: "",
+
+                    // ── INIT ──
+                    async init() {
+                        await requireRole("user");
+                        setupNavAuth();
+                        this.updateTimestamp();
+                        await this.loadGlobal();
+                        await this.loadMatchdayData();
+                        const today = new Date();
+                        const y = today.getFullYear();
+                        const m = String(today.getMonth() + 1).padStart(2, "0");
+                        this.dateFrom = `${y}-${m}-01`;
+                        this.dateTo = today.toISOString().slice(0, 10);
+                    },
+
+                    get headerSubtitle() {
+                        if (this.activeTab === "global")
+                            return "Temporada 2026 · Fantasy + Predictor";
+                        if (this.activeTab === "matchday") {
+                            const md = this.matchdays.find(
+                                (m) => m.id === this.selectedMatchdayId,
+                            );
+                            return md
+                                ? `Jornada: ${md.name}`
+                                : "Selecciona una jornada";
+                        }
+                        if (this.activeTab === "dates") {
+                            return this.datesSearched
+                                ? `Período: ${this.dateFrom} → ${this.dateTo}`
+                                : "Clasificación por rango de fechas";
+                        }
+                        return "";
+                    },
+
+                    switchTab(tab) {
+                        this.activeTab = tab;
+                    },
+
+                    async refreshData() {
+                        if (this.activeTab === "global")
+                            await this.loadGlobal();
+                        else if (this.activeTab === "matchday")
+                            await this.loadMatchdayData();
+                        else if (
+                            this.activeTab === "dates" &&
+                            this.datesSearched
+                        )
+                            await this.loadDatesLeaderboard();
+                        this.lastUpdated = new Date();
+                        this.updateTimestamp();
+                    },
+
+                    // ── GLOBAL ──
+                    async loadGlobal() {
+                        this.loading = true;
+                        this.globalLeaderboard = [];
+                        this.currentPageGlobal = 1;
+                        try {
+                            const resp = await authFetch(
+                                "/squad/global_leaderboard",
+                            );
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                // Ensure fantasy_points / predictor_points default to 0 if absent
+                                this.globalLeaderboard = (
+                                    data.leaderboard || []
+                                ).map((e) => ({
+                                    ...e,
+                                    fantasy_points: e.fantasy_points ?? 0,
+                                    predictor_points: e.predictor_points ?? 0,
+                                }));
+                            }
+                        } catch (e) {
+                            console.warn("Error loading global leaderboard", e);
+                        }
+                        this.loading = false;
+                    },
+
+                    get paginatedGlobal() {
+                        const s =
+                            (this.currentPageGlobal - 1) * this.itemsPerPage;
+                        return this.globalLeaderboard.slice(
+                            s,
+                            s + this.itemsPerPage,
+                        );
+                    },
+                    get totalPagesGlobal() {
+                        return Math.ceil(
+                            this.globalLeaderboard.length / this.itemsPerPage,
+                        );
+                    },
+                    get visiblePagesGlobal() {
+                        return this._visiblePages(
+                            this.currentPageGlobal,
+                            this.totalPagesGlobal,
+                        );
+                    },
+                    goToPageGlobal(p) {
+                        if (p >= 1 && p <= this.totalPagesGlobal)
+                            this.currentPageGlobal = p;
+                    },
+                    prevPageGlobal() {
+                        this.goToPageGlobal(this.currentPageGlobal - 1);
+                    },
+                    nextPageGlobal() {
+                        this.goToPageGlobal(this.currentPageGlobal + 1);
+                    },
+
+                    // ── MATCHDAY ──
+                    async loadMatchdayData() {
+                        this.loading = true;
+                        try {
+                            const seasonsResp = await fetch("/seasons");
+                            if (!seasonsResp.ok)
+                                throw new Error("seasons failed");
+                            const seasonsData = await seasonsResp.json();
+                            const seasons = seasonsData.seasons || [];
+                            const activeSeason =
+                                seasons.find((s) => s.status === "active") ||
+                                seasons[seasons.length - 1];
+                            if (!activeSeason) {
+                                this.loading = false;
+                                return;
+                            }
+
+                            const mdsResp = await fetch(
+                                `/seasons/${activeSeason.id}/matchdays`,
+                            );
+                            if (!mdsResp.ok)
+                                throw new Error("matchdays failed");
+                            const mdsData = await mdsResp.json();
+                            this.matchdays = mdsData.matchdays || [];
+
+                            const lbResp = await authFetch(
+                                "/squad/matchday_leaderboard",
+                            );
+                            if (lbResp.ok) {
+                                const lbData = await lbResp.json();
+                                const raw = lbData.leaderboard || {};
+                                this.matchdayLeaderboard = {};
+                                for (const [k, v] of Object.entries(raw)) {
+                                    this.matchdayLeaderboard[parseInt(k)] = v;
+                                }
+                            }
+
+                            const withData = this.matchdays.filter((md) => {
+                                const d = this.matchdayLeaderboard[md.id];
+                                return d && d.length > 0;
+                            });
+                            if (withData.length > 0) {
+                                this.selectedMatchdayId =
+                                    withData[withData.length - 1].id;
+                            } else if (this.matchdays.length > 0) {
+                                this.selectedMatchdayId = this.matchdays[0].id;
+                            }
+                        } catch (e) {
+                            console.warn("Error loading matchday data", e);
+                        }
+                        this.loading = false;
+                    },
+
+                    selectMatchday(id) {
+                        this.selectedMatchdayId = id;
+                        this.currentPageMatchday = 1;
+                    },
+
+                    get currentMatchdayTeams() {
+                        if (this.selectedMatchdayId === null) return [];
+                        return (
+                            this.matchdayLeaderboard[this.selectedMatchdayId] ||
+                            []
+                        );
+                    },
+                    get paginatedMatchday() {
+                        const s =
+                            (this.currentPageMatchday - 1) * this.itemsPerPage;
+                        return this.currentMatchdayTeams.slice(
+                            s,
+                            s + this.itemsPerPage,
+                        );
+                    },
+                    get totalPagesMatchday() {
+                        return Math.ceil(
+                            this.currentMatchdayTeams.length /
+                                this.itemsPerPage,
+                        );
+                    },
+                    get visiblePagesMatchday() {
+                        return this._visiblePages(
+                            this.currentPageMatchday,
+                            this.totalPagesMatchday,
+                        );
+                    },
+                    goToPageMatchday(p) {
+                        if (p >= 1 && p <= this.totalPagesMatchday)
+                            this.currentPageMatchday = p;
+                    },
+                    prevPageMatchday() {
+                        this.goToPageMatchday(this.currentPageMatchday - 1);
+                    },
+                    nextPageMatchday() {
+                        this.goToPageMatchday(this.currentPageMatchday + 1);
+                    },
+
+                    // ── DATES ──
+                    async loadDatesLeaderboard() {
+                        if (!this.dateFrom || !this.dateTo) return;
+                        this.loadingDates = true;
+                        this.datesLeaderboard = [];
+                        this.currentPageDates = 1;
+                        this.datesSearched = false;
+                        try {
+                            const url = `/squad/weekly_leaderboard?start_date=${this.dateFrom}&end_date=${this.dateTo}`;
+                            const resp = await authFetch(url);
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                this.datesLeaderboard = data.leaderboard || [];
+                            }
+                        } catch (e) {
+                            console.warn("Error loading dates leaderboard", e);
+                        }
+                        this.datesSearched = true;
+                        this.loadingDates = false;
+                    },
+
+                    get paginatedDates() {
+                        const s =
+                            (this.currentPageDates - 1) * this.itemsPerPage;
+                        return this.datesLeaderboard.slice(
+                            s,
+                            s + this.itemsPerPage,
+                        );
+                    },
+                    get totalPagesDates() {
+                        return Math.ceil(
+                            this.datesLeaderboard.length / this.itemsPerPage,
+                        );
+                    },
+                    get visiblePagesDates() {
+                        return this._visiblePages(
+                            this.currentPageDates,
+                            this.totalPagesDates,
+                        );
+                    },
+                    goToPageDates(p) {
+                        if (p >= 1 && p <= this.totalPagesDates)
+                            this.currentPageDates = p;
+                    },
+                    prevPageDates() {
+                        this.goToPageDates(this.currentPageDates - 1);
+                    },
+                    nextPageDates() {
+                        this.goToPageDates(this.currentPageDates + 1);
+                    },
+
+                    // ── HELPERS ──
+                    _visiblePages(current, total) {
+                        let start = Math.max(1, current - 2);
+                        let end = Math.min(total, start + 4);
+                        if (end - start < 4) start = Math.max(1, end - 4);
+                        const pages = [];
+                        for (let i = start; i <= end; i++) pages.push(i);
+                        return pages;
+                    },
+
+                    updateTimestamp() {
+                        this.lastUpdatedText =
+                            this.lastUpdated.toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+                            });
+                    },
+                };
+            }
+        </script>
+    </body>
 </html>
