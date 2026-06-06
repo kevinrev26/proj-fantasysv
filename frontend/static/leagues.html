@@ -1,1198 +1,1551 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>Ligas Privadas — Fantasy SV</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="/js/auth.js"></script>
-  <script src="/js/nav.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Archivo:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <style>
-    :root {
-      /* New color palette */
-      --primary-blue: #0D47FF;
-      --secondary-purple: #7B2CFF;
-      --success-green: #00D26A;
-      --danger-red: #FF3D4D;
-      --gold: #F8C63A;
-      --background-dark: #0B1020;
-      --surface-dark: #151C32;
-      --text-white: #FFFFFF;
-      --text-muted: #A6B0C3;
-      --radius: 16px;
-      --radius-sm: 10px;
-      --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.5);
-      --shadow-glow: 0 0 20px rgba(13, 71, 255, 0.5);
-      --font-primary: 'Inter', sans-serif;
-      --font-heading: 'Oswald', sans-serif;
-      --font-display: 'Rajdhani', sans-serif;
-      --font-mono: 'Archivo', monospace;
-    }
-    
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
+        <title>Ligas Privadas — Fantasy SV</title>
+        <link rel="stylesheet" href="style.css" />
+        <script src="/js/auth.js"></script>
+        <script src="/js/nav.js"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&family=Archivo:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+        ></script>
+        <style>
+            :root {
+                /* New color palette */
+                --primary-blue: #0d47ff;
+                --secondary-purple: #7b2cff;
+                --success-green: #00d26a;
+                --danger-red: #ff3d4d;
+                --gold: #f8c63a;
+                --background-dark: #0b1020;
+                --surface-dark: #151c32;
+                --text-white: #ffffff;
+                --text-muted: #a6b0c3;
+                --radius: 16px;
+                --radius-sm: 10px;
+                --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.5);
+                --shadow-glow: 0 0 20px rgba(13, 71, 255, 0.5);
+                --font-primary: "Inter", sans-serif;
+                --font-heading: "Oswald", sans-serif;
+                --font-display: "Rajdhani", sans-serif;
+                --font-mono: "Archivo", monospace;
+            }
 
-    body {
-      font-family: var(--font-primary);
-      background: var(--background-dark);
-      color: var(--text-white);
-      min-height: 100vh;
-      overflow-x: hidden;
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(13, 71, 255, 0.05) 0%, transparent 20%),
-        radial-gradient(circle at 90% 80%, rgba(123, 44, 255, 0.05) 0%, transparent 20%);
-    }
+            *,
+            *::before,
+            *::after {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-    /* ── PAGE WRAPPER ── */
-    .page-wrap {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 2rem 1rem 4rem;
-    }
+            body {
+                font-family: var(--font-primary);
+                background: var(--background-dark);
+                color: var(--text-white);
+                min-height: 100vh;
+                overflow-x: hidden;
+                background-image:
+                    radial-gradient(
+                        circle at 10% 20%,
+                        rgba(13, 71, 255, 0.05) 0%,
+                        transparent 20%
+                    ),
+                    radial-gradient(
+                        circle at 90% 80%,
+                        rgba(123, 44, 255, 0.05) 0%,
+                        transparent 20%
+                    );
+            }
 
-    /* ── PAGE HEADER ── */
-    .page-header {
-      margin-bottom: 2rem;
-      position: relative;
-      overflow: hidden;
-      padding: 1.5rem;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, rgba(13, 71, 255, 0.15), rgba(123, 44, 255, 0.15));
-      border: 1px solid rgba(13, 71, 255, 0.2);
-      box-shadow: var(--shadow-glow);
-    }
-    .page-header h1 {
-      font-family: var(--font-heading);
-      font-size: 2.2rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--gold), var(--primary-blue));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      position: relative;
-      display: inline-block;
-    }
-    .page-header h1::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 0;
-      width: 100%;
-      height: 3px;
-      background: linear-gradient(90deg, var(--gold), var(--primary-blue));
-      border-radius: 2px;
-    }
-    .page-header p {
-      color: var(--text-muted);
-      font-size: 1rem;
-      font-weight: 500;
-      margin-top: 10px;
-      max-width: 600px;
-    }
-    .page-meta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-top: 18px;
-    }
-    .meta-pill {
-      background: rgba(13, 71, 255, 0.2);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      border-radius: 50px;
-      padding: 8px 18px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--primary-blue);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .meta-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--primary-blue);
-      box-shadow: 0 0 8px rgba(13, 71, 255, 0.7);
-    }
-    .refresh-btn {
-      background: rgba(13, 71, 255, 0.15);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      border-radius: 50px;
-      color: var(--text-muted);
-      font-family: var(--font-primary);
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 8px 18px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .refresh-btn:hover { 
-      color: var(--gold);
-      border-color: var(--gold);
-      background: rgba(248, 198, 58, 0.15);
-      box-shadow: 0 0 15px rgba(248, 198, 58, 0.3);
-    }
+            /* ── PAGE WRAPPER ── */
+            .page-wrap {
+                max-width: 960px;
+                margin: 0 auto;
+                padding: 2rem 1rem 4rem;
+            }
 
-    /* ── TABS ── */
-    .tabs-bar {
-      display: flex;
-      gap: 6px;
-      background: rgba(21, 28, 50, 0.7);
-      border-radius: var(--radius);
-      padding: 6px;
-      margin-bottom: 2rem;
-      border: 1px solid rgba(13, 71, 255, 0.2);
-      width: fit-content;
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow-card);
-    }
-    .tab-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-family: var(--font-primary);
-      font-weight: 600;
-      font-size: 0.9rem;
-      padding: 12px 24px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      white-space: nowrap;
-      letter-spacing: 0.02em;
-      position: relative;
-      overflow: hidden;
-      border: 1px solid transparent;
-    }
-    .tab-btn.active {
-      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
-      color: var(--text-white);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 0 15px rgba(13, 71, 255, 0.5);
-    }
-    .tab-btn.active::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
-      z-index: 1;
-    }
-    .tab-btn:hover:not(.active) {
-      background: rgba(255,255,255,0.07);
-      color: var(--text-white);
-      transform: translateY(-2px);
-    }
+            /* ── PAGE HEADER ── */
+            .page-header {
+                margin-bottom: 2rem;
+                position: relative;
+                overflow: hidden;
+                padding: 1.5rem;
+                border-radius: var(--radius);
+                background: linear-gradient(
+                    135deg,
+                    rgba(13, 71, 255, 0.15),
+                    rgba(123, 44, 255, 0.15)
+                );
+                border: 1px solid rgba(13, 71, 255, 0.2);
+                box-shadow: var(--shadow-glow);
+            }
+            .page-header h1 {
+                font-family: var(--font-heading);
+                font-size: 2.2rem;
+                font-weight: 700;
+                background: linear-gradient(
+                    135deg,
+                    var(--gold),
+                    var(--primary-blue)
+                );
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+                letter-spacing: -0.02em;
+                margin-bottom: 0.5rem;
+                text-transform: uppercase;
+                position: relative;
+                display: inline-block;
+            }
+            .page-header h1::after {
+                content: "";
+                position: absolute;
+                bottom: -5px;
+                left: 0;
+                width: 100%;
+                height: 3px;
+                background: linear-gradient(
+                    90deg,
+                    var(--gold),
+                    var(--primary-blue)
+                );
+                border-radius: 2px;
+            }
+            .page-header p {
+                color: var(--text-muted);
+                font-size: 1rem;
+                font-weight: 500;
+                margin-top: 10px;
+                max-width: 600px;
+            }
+            .page-meta {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin-top: 18px;
+            }
+            .meta-pill {
+                background: rgba(13, 71, 255, 0.2);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                border-radius: 50px;
+                padding: 8px 18px;
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--primary-blue);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                backdrop-filter: blur(4px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+            .meta-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--primary-blue);
+                box-shadow: 0 0 8px rgba(13, 71, 255, 0.7);
+            }
+            .refresh-btn {
+                background: rgba(13, 71, 255, 0.15);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                border-radius: 50px;
+                color: var(--text-muted);
+                font-family: var(--font-primary);
+                font-size: 0.85rem;
+                font-weight: 600;
+                padding: 8px 18px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(4px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+            .refresh-btn:hover {
+                color: var(--gold);
+                border-color: var(--gold);
+                background: rgba(248, 198, 58, 0.15);
+                box-shadow: 0 0 15px rgba(248, 198, 58, 0.3);
+            }
 
-    /* ── CARD ── */
-    .card {
-      background: rgba(21, 28, 50, 0.5);
-      border-radius: var(--radius);
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: var(--shadow-card);
-      overflow: hidden;
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(13, 71, 255, 0.2);
-      position: relative;
-      overflow: hidden;
-    }
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(13, 71, 255, 0.05), rgba(123, 44, 255, 0.05));
-      pointer-events: none;
-      z-index: 0;
-    }
-    .card-header {
-      padding: 1.5rem 1.5rem;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      position: relative;
-      z-index: 1;
-    }
-    .card-title {
-      font-family: var(--font-heading);
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--text-white);
-      letter-spacing: 0.01em;
-      text-transform: uppercase;
-      position: relative;
-      padding-bottom: 5px;
-    }
-    .card-title::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 50px;
-      height: 2px;
-      background: linear-gradient(90deg, var(--gold), var(--primary-blue));
-      border-radius: 2px;
-    }
-    .card-sub {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      font-weight: 500;
-      margin-top: 5px;
-    }
-    .card-body {
-      padding: 1.5rem;
-    }
+            /* ── TABS ── */
+            .tabs-bar {
+                display: flex;
+                gap: 6px;
+                background: rgba(21, 28, 50, 0.7);
+                border-radius: var(--radius);
+                padding: 6px;
+                margin-bottom: 2rem;
+                border: 1px solid rgba(13, 71, 255, 0.2);
+                width: fit-content;
+                backdrop-filter: blur(12px);
+                box-shadow: var(--shadow-card);
+            }
+            .tab-btn {
+                background: none;
+                border: none;
+                color: var(--text-muted);
+                font-family: var(--font-primary);
+                font-weight: 600;
+                font-size: 0.9rem;
+                padding: 12px 24px;
+                border-radius: 12px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                white-space: nowrap;
+                letter-spacing: 0.02em;
+                position: relative;
+                overflow: hidden;
+                border: 1px solid transparent;
+            }
+            .tab-btn.active {
+                background: linear-gradient(
+                    135deg,
+                    var(--primary-blue),
+                    var(--secondary-purple)
+                );
+                color: var(--text-white);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 0 15px rgba(13, 71, 255, 0.5);
+            }
+            .tab-btn.active::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(
+                    135deg,
+                    rgba(255, 255, 255, 0.1),
+                    transparent
+                );
+                z-index: 1;
+            }
+            .tab-btn:hover:not(.active) {
+                background: rgba(255, 255, 255, 0.07);
+                color: var(--text-white);
+                transform: translateY(-2px);
+            }
 
-    /* ── TWO-COL LAYOUT ── */
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
-    @media (max-width: 640px) {
-      .two-col { grid-template-columns: 1fr; }
-    }
+            /* ── CARD ── */
+            .card {
+                background: rgba(21, 28, 50, 0.5);
+                border-radius: var(--radius);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: var(--shadow-card);
+                overflow: hidden;
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(13, 71, 255, 0.2);
+                position: relative;
+                overflow: hidden;
+            }
+            .card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(
+                    135deg,
+                    rgba(13, 71, 255, 0.05),
+                    rgba(123, 44, 255, 0.05)
+                );
+                pointer-events: none;
+                z-index: 0;
+            }
+            .card-header {
+                padding: 1.5rem 1.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+                position: relative;
+                z-index: 1;
+            }
+            .card-title {
+                font-family: var(--font-heading);
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: var(--text-white);
+                letter-spacing: 0.01em;
+                text-transform: uppercase;
+                position: relative;
+                padding-bottom: 5px;
+            }
+            .card-title::after {
+                content: "";
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 50px;
+                height: 2px;
+                background: linear-gradient(
+                    90deg,
+                    var(--gold),
+                    var(--primary-blue)
+                );
+                border-radius: 2px;
+            }
+            .card-sub {
+                font-size: 0.9rem;
+                color: var(--text-muted);
+                font-weight: 500;
+                margin-top: 5px;
+            }
+            .card-body {
+                padding: 1.5rem;
+            }
 
-    /* ── FORM ── */
-    .form-group { margin-bottom: 1.5rem; }
-    .form-group:last-of-type { margin-bottom: 0; }
-    .form-label {
-      display: block;
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      position: relative;
-    }
-    .form-label::after {
-      content: '';
-      position: absolute;
-      bottom: -4px;
-      left: 0;
-      width: 30px;
-      height: 1px;
-      background: var(--primary-blue);
-    }
-    .form-control {
-      width: 100%;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      color: var(--text-white);
-      font-family: var(--font-primary);
-      font-weight: 500;
-      font-size: 1rem;
-      outline: none;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(4px);
-    }
-    .form-control::placeholder { color: var(--text-muted); font-weight: 400; }
-    .form-control:focus {
-      border-color: var(--gold);
-      background: rgba(248, 198, 58, 0.08);
-      box-shadow: 0 0 10px rgba(248, 198, 58, 0.3);
-    }
+            /* ── TWO-COL LAYOUT ── */
+            .two-col {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            @media (max-width: 640px) {
+                .two-col {
+                    grid-template-columns: 1fr;
+                }
+            }
 
-    /* ── BUTTONS ── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
-      color: var(--text-white);
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: var(--font-primary);
-      font-weight: 700;
-      font-size: 1rem;
-      padding: 14px 24px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      letter-spacing: 0.01em;
-      margin-top: 1.5rem;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 6px 15px rgba(13, 71, 255, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .btn:hover:not(:disabled) {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(13, 71, 255, 0.5);
-    }
-    .btn:hover:not(:disabled)::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
-    }
-    .btn:disabled { 
-      opacity: 0.6; 
-      cursor: not-allowed; 
-      transform: none;
-      box-shadow: 0 6px 15px rgba(13, 71, 255, 0.1);
-    }
-    .btn-ghost {
-      background: rgba(255,255,255,0.07);
-      color: var(--text-muted);
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .btn-ghost:hover:not(:disabled) {
-      background: rgba(255,255,255,0.13);
-      color: var(--text-white);
-      transform: translateY(-2px);
-    }
-    .btn-sm {
-      padding: 10px 20px;
-      font-size: 0.9rem;
-      margin-top: 0;
-    }
+            /* ── FORM ── */
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+            .form-group:last-of-type {
+                margin-bottom: 0;
+            }
+            .form-label {
+                display: block;
+                font-size: 0.9rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--text-muted);
+                margin-bottom: 8px;
+                position: relative;
+            }
+            .form-label::after {
+                content: "";
+                position: absolute;
+                bottom: -4px;
+                left: 0;
+                width: 30px;
+                height: 1px;
+                background: var(--primary-blue);
+            }
+            .form-control {
+                width: 100%;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: var(--radius-sm);
+                padding: 12px 16px;
+                color: var(--text-white);
+                font-family: var(--font-primary);
+                font-weight: 500;
+                font-size: 1rem;
+                outline: none;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(4px);
+            }
+            .form-control::placeholder {
+                color: var(--text-muted);
+                font-weight: 400;
+            }
+            .form-control:focus {
+                border-color: var(--gold);
+                background: rgba(248, 198, 58, 0.08);
+                box-shadow: 0 0 10px rgba(248, 198, 58, 0.3);
+            }
 
-    /* ── MESSAGES ── */
-    .msg {
-      margin-top: 1.5rem;
-      padding: 14px 18px;
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      font-size: 0.95rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      animation: fadeIn 0.3s ease;
-    }
-    .msg-success {
-      background: rgba(0, 210, 106, 0.15);
-      border-left: 4px solid var(--success-green);
-      color: var(--success-green);
-      box-shadow: 0 4px 12px rgba(0, 210, 106, 0.2);
-    }
-    .msg-error {
-      background: rgba(255, 61, 77, 0.15);
-      border-left: 4px solid var(--danger-red);
-      color: var(--danger-red);
-      box-shadow: 0 4px 12px rgba(255, 61, 77, 0.2);
-    }
+            /* ── BUTTONS ── */
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                background: linear-gradient(
+                    135deg,
+                    var(--primary-blue),
+                    var(--secondary-purple)
+                );
+                color: var(--text-white);
+                border: none;
+                border-radius: var(--radius-sm);
+                font-family: var(--font-primary);
+                font-weight: 700;
+                font-size: 1rem;
+                padding: 14px 24px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                letter-spacing: 0.01em;
+                margin-top: 1.5rem;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 6px 15px rgba(13, 71, 255, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .btn:hover:not(:disabled) {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 20px rgba(13, 71, 255, 0.5);
+            }
+            .btn:hover:not(:disabled)::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(
+                    135deg,
+                    rgba(255, 255, 255, 0.1),
+                    transparent
+                );
+            }
+            .btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: 0 6px 15px rgba(13, 71, 255, 0.1);
+            }
+            .btn-ghost {
+                background: rgba(255, 255, 255, 0.07);
+                color: var(--text-muted);
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+            .btn-ghost:hover:not(:disabled) {
+                background: rgba(255, 255, 255, 0.13);
+                color: var(--text-white);
+                transform: translateY(-2px);
+            }
+            .btn-sm {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                margin-top: 0;
+            }
 
-    /* ── SPINNER ── */
-    .spinner {
-      display: inline-block;
-      width: 18px; height: 18px;
-      border: 2px solid rgba(13, 71, 255, 0.3);
-      border-top-color: var(--primary-blue);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      flex-shrink: 0;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-center {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 2.5rem;
-      color: var(--text-muted);
-      font-weight: 500;
-      font-size: 1rem;
-    }
+            /* ── MESSAGES ── */
+            .msg {
+                margin-top: 1.5rem;
+                padding: 14px 18px;
+                border-radius: var(--radius-sm);
+                font-weight: 600;
+                font-size: 0.95rem;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                animation: fadeIn 0.3s ease;
+            }
+            .msg-success {
+                background: rgba(0, 210, 106, 0.15);
+                border-left: 4px solid var(--success-green);
+                color: var(--success-green);
+                box-shadow: 0 4px 12px rgba(0, 210, 106, 0.2);
+            }
+            .msg-error {
+                background: rgba(255, 61, 77, 0.15);
+                border-left: 4px solid var(--danger-red);
+                color: var(--danger-red);
+                box-shadow: 0 4px 12px rgba(255, 61, 77, 0.2);
+            }
 
-    /* ── LEAGUE LIST ── */
-    .league-list { display: flex; flex-direction: column; }
-    .league-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1.2rem;
-      padding: 1.2rem 1.5rem;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      transition: all 0.3s ease;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-    }
-    .league-row:last-child { border-bottom: none; }
-    .league-row:hover { 
-      background: rgba(13, 71, 255, 0.15); 
-      transform: translateX(5px);
-    }
-    .league-row.selected { 
-      background: rgba(13, 71, 255, 0.25); 
-      border-left: 4px solid var(--gold);
-    }
-    .league-row.selected::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, rgba(13, 71, 255, 0.1), transparent);
-      z-index: 1;
-    }
-    .league-row-info { flex: 1; min-width: 0; }
-    .league-row-name {
-      font-weight: 700;
-      font-size: 1.1rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      position: relative;
-      padding-right: 30px;
-    }
-    .league-row-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 8px;
-    }
-    .league-row-date {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-    .season-tag {
-      font-size: 0.8rem;
-      font-weight: 600;
-      background: rgba(13, 71, 255, 0.2);
-      color: var(--primary-blue);
-      border-radius: 6px;
-      padding: 4px 10px;
-      border: 1px solid rgba(13, 71, 255, 0.3);
-    }
-    .league-row-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .arrow-icon {
-      color: var(--text-muted);
-      font-size: 1.2rem;
-      transition: all 0.3s ease;
-      position: relative;
-      z-index: 2;
-    }
-    .league-row:hover .arrow-icon,
-    .league-row.selected .arrow-icon { 
-      color: var(--gold); 
-      transform: translateX(5px); 
-    }
+            /* ── SPINNER ── */
+            .spinner {
+                display: inline-block;
+                width: 18px;
+                height: 18px;
+                border: 2px solid rgba(13, 71, 255, 0.3);
+                border-top-color: var(--primary-blue);
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                flex-shrink: 0;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            .loading-center {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                padding: 2.5rem;
+                color: var(--text-muted);
+                font-weight: 500;
+                font-size: 1rem;
+            }
 
-    /* ── EMPTY STATE ── */
-    .empty-state {
-      padding: 3rem 2rem;
-      text-align: center;
-      color: var(--text-muted);
-      font-weight: 500;
-      font-size: 1rem;
-      line-height: 1.6;
-      position: relative;
-      overflow: hidden;
-    }
-    .empty-state::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(13, 71, 255, 0.05), rgba(123, 44, 255, 0.05));
-      z-index: 0;
-    }
-    .empty-icon {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-      opacity: 0.4;
-      display: block;
-      position: relative;
-      z-index: 1;
-    }
+            /* ── LEAGUE LIST ── */
+            .league-list {
+                display: flex;
+                flex-direction: column;
+            }
+            .league-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1.2rem;
+                padding: 1.2rem 1.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                transition: all 0.3s ease;
+                cursor: pointer;
+                position: relative;
+                overflow: hidden;
+            }
+            .league-row:last-child {
+                border-bottom: none;
+            }
+            .league-row:hover {
+                background: rgba(13, 71, 255, 0.15);
+                transform: translateX(5px);
+            }
+            .league-row.selected {
+                background: rgba(13, 71, 255, 0.25);
+                border-left: 4px solid var(--gold);
+            }
+            .league-row.selected::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(
+                    90deg,
+                    rgba(13, 71, 255, 0.1),
+                    transparent
+                );
+                z-index: 1;
+            }
+            .league-row-info {
+                flex: 1;
+                min-width: 0;
+            }
+            .league-row-name {
+                font-weight: 700;
+                font-size: 1.1rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                position: relative;
+                padding-right: 30px;
+            }
+            .league-row-meta {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-top: 8px;
+            }
+            .league-row-date {
+                font-size: 0.85rem;
+                color: var(--text-muted);
+                font-weight: 500;
+            }
+            .season-tag {
+                font-size: 0.8rem;
+                font-weight: 600;
+                background: rgba(13, 71, 255, 0.2);
+                color: var(--primary-blue);
+                border-radius: 6px;
+                padding: 4px 10px;
+                border: 1px solid rgba(13, 71, 255, 0.3);
+            }
+            .league-row-actions {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-shrink: 0;
+            }
+            .arrow-icon {
+                color: var(--text-muted);
+                font-size: 1.2rem;
+                transition: all 0.3s ease;
+                position: relative;
+                z-index: 2;
+            }
+            .league-row:hover .arrow-icon,
+            .league-row.selected .arrow-icon {
+                color: var(--gold);
+                transform: translateX(5px);
+            }
 
-    /* ── LEAGUE DETAIL PANEL ── */
-    .detail-panel {
-      margin-top: 2rem;
-      animation: fadeIn 0.5s ease;
-    }
-    .detail-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-    }
-    .detail-title {
-      font-family: var(--font-heading);
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--text-white);
-      text-transform: uppercase;
-      position: relative;
-      padding-bottom: 8px;
-    }
-    .detail-title::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 70px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--gold), var(--primary-blue));
-      border-radius: 2px;
-    }
-    .detail-subtitle {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      font-weight: 500;
-      margin-top: 5px;
-    }
-    .code-block {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: var(--radius-sm);
-      padding: 12px 18px;
-      margin-top: 1.5rem;
-      margin-bottom: 1.5rem;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(248, 198, 58, 0.2);
-    }
-    .code-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-    .code-value {
-      font-family: var(--font-mono);
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: 0.4em;
-      color: var(--gold);
-      flex: 1;
-      text-transform: uppercase;
-      position: relative;
-    }
-    .copy-btn {
-      background: rgba(13, 71, 255, 0.2);
-      border: 1px solid rgba(13, 71, 255, 0.3);
-      border-radius: 8px;
-      color: var(--primary-blue);
-      font-family: var(--font-primary);
-      font-weight: 600;
-      font-size: 0.85rem;
-      padding: 8px 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      white-space: nowrap;
-      backdrop-filter: blur(4px);
-    }
-    .copy-btn:hover { 
-      background: rgba(13, 71, 255, 0.3);
-      color: var(--gold);
-      border-color: var(--gold);
-    }
-    .copy-btn.copied { 
-      color: var(--text-white);
-      background: var(--gold);
-      border-color: var(--gold);
-    }
+            /* ── EMPTY STATE ── */
+            .empty-state {
+                padding: 3rem 2rem;
+                text-align: center;
+                color: var(--text-muted);
+                font-weight: 500;
+                font-size: 1rem;
+                line-height: 1.6;
+                position: relative;
+                overflow: hidden;
+            }
+            .empty-state::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(
+                    135deg,
+                    rgba(13, 71, 255, 0.05),
+                    rgba(123, 44, 255, 0.05)
+                );
+                z-index: 0;
+            }
+            .empty-icon {
+                font-size: 2.5rem;
+                margin-bottom: 1rem;
+                opacity: 0.4;
+                display: block;
+                position: relative;
+                z-index: 1;
+            }
 
-    /* ── LEADERBOARD TABLE ── */
-    .table-wrap {
-      background: rgba(0,0,0,0.2);
-      border-radius: var(--radius-sm);
-      overflow-x: auto;
-      border: 1px solid rgba(255,255,255,0.06);
-      backdrop-filter: blur(8px);
-      margin-bottom: 1.5rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-    .lb-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 1rem;
-      min-width: 400px;
-    }
-    .lb-table th {
-      text-align: left;
-      padding: 1rem 1.2rem;
-      background: rgba(13, 71, 255, 0.15);
-      color: var(--text-muted);
-      font-weight: 600;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      position: relative;
-      z-index: 1;
-    }
-    .lb-table td {
-      padding: 1rem 1.2rem;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      font-weight: 600;
-      position: relative;
-      z-index: 1;
-    }
-    .lb-table tr:last-child td { border-bottom: none; }
-    .lb-table tr:hover td { 
-      background: rgba(13, 71, 255, 0.15); 
-      transform: translateY(-2px);
-    }
-    .rank-cell { 
-      font-weight: 700; 
-      color: var(--gold); 
-      width: 60px; 
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
-    .rank-1 { 
-      color: var(--gold); 
-      position: relative;
-      z-index: 1;
-    }
-    .rank-2 { 
-      color: #C0C0C0; 
-      position: relative;
-      z-index: 1;
-    }
-    .rank-3 { 
-      color: #CD7F32; 
-      position: relative;
-      z-index: 1;
-    }
-    .team-col { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 3px; 
-      position: relative;
-      z-index: 1;
-    }
-    .team-nm { 
-      font-weight: 700; 
-      font-size: 1.05rem; 
-      position: relative;
-      z-index: 1;
-    }
-    .team-usr { 
-      font-size: 0.8rem; 
-      color: var(--text-muted); 
-      font-weight: 500; 
-      position: relative;
-      z-index: 1;
-    }
-    .pts-cell { 
-      font-weight: 800; 
-      color: var(--success-green);
-      position: relative;
-      z-index: 1;
-    }
-    .you-badge {
-      display: inline-block;
-      background: var(--gold);
-      color: var(--background-dark);
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 50px;
-      margin-left: 8px;
-      vertical-align: middle;
-      position: relative;
-      z-index: 1;
-    }
-    .current-user-row td { 
-      background: rgba(13, 71, 255, 0.2) !important; 
-      border-left: 4px solid var(--gold);
-    }
-    .current-user-row { 
-      border-left: 4px solid var(--gold);
-    }
+            /* ── LEAGUE DETAIL PANEL ── */
+            .detail-panel {
+                margin-top: 2rem;
+                animation: fadeIn 0.5s ease;
+            }
+            .detail-header {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 1.5rem;
+                flex-wrap: wrap;
+            }
+            .detail-title {
+                font-family: var(--font-heading);
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: var(--text-white);
+                text-transform: uppercase;
+                position: relative;
+                padding-bottom: 8px;
+            }
+            .detail-title::after {
+                content: "";
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 70px;
+                height: 3px;
+                background: linear-gradient(
+                    90deg,
+                    var(--gold),
+                    var(--primary-blue)
+                );
+                border-radius: 2px;
+            }
+            .detail-subtitle {
+                font-size: 0.95rem;
+                color: var(--text-muted);
+                font-weight: 500;
+                margin-top: 5px;
+            }
+            .code-block {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                background: rgba(0, 0, 0, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: var(--radius-sm);
+                padding: 12px 18px;
+                margin-top: 1.5rem;
+                margin-bottom: 1.5rem;
+                backdrop-filter: blur(8px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                border: 1px solid rgba(248, 198, 58, 0.2);
+            }
+            .code-label {
+                font-size: 0.85rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.07em;
+                color: var(--text-muted);
+                white-space: nowrap;
+            }
+            .code-value {
+                font-family: var(--font-mono);
+                font-size: 1.5rem;
+                font-weight: 700;
+                letter-spacing: 0.4em;
+                color: var(--gold);
+                flex: 1;
+                text-transform: uppercase;
+                position: relative;
+            }
+            .copy-btn {
+                background: rgba(13, 71, 255, 0.2);
+                border: 1px solid rgba(13, 71, 255, 0.3);
+                border-radius: 8px;
+                color: var(--primary-blue);
+                font-family: var(--font-primary);
+                font-weight: 600;
+                font-size: 0.85rem;
+                padding: 8px 16px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                white-space: nowrap;
+                backdrop-filter: blur(4px);
+            }
+            .copy-btn:hover {
+                background: rgba(13, 71, 255, 0.3);
+                color: var(--gold);
+                border-color: var(--gold);
+            }
+            .copy-btn.copied {
+                color: var(--text-white);
+                background: var(--gold);
+                border-color: var(--gold);
+            }
 
-    @media (max-width: 600px) {
-      .tabs-bar { width: 100%; }
-      .tab-btn { flex: 1; text-align: center; padding: 10px 10px; }
-      .code-value { font-size: 1.2rem; }
-      .detail-header { flex-direction: column; }
-      .page-header h1 { font-size: 1.8rem; }
-      .league-row { padding: 1rem 1.2rem; }
-    }
-  </style>
-</head>
-<body>
+            /* ── LEADERBOARD TABLE ── */
+            .table-wrap {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: var(--radius-sm);
+                overflow-x: auto;
+                border: 1px solid rgba(255, 255, 255, 0.06);
+                backdrop-filter: blur(8px);
+                margin-bottom: 1.5rem;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            }
+            .lb-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 1rem;
+                min-width: 400px;
+            }
+            .lb-table th {
+                text-align: left;
+                padding: 1rem 1.2rem;
+                background: rgba(13, 71, 255, 0.15);
+                color: var(--text-muted);
+                font-weight: 600;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                position: relative;
+                z-index: 1;
+            }
+            .lb-table td {
+                padding: 1rem 1.2rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+                font-weight: 600;
+                position: relative;
+                z-index: 1;
+            }
+            .lb-table tr:last-child td {
+                border-bottom: none;
+            }
+            .lb-table tr:hover td {
+                background: rgba(13, 71, 255, 0.15);
+                transform: translateY(-2px);
+            }
+            .rank-cell {
+                font-weight: 700;
+                color: var(--gold);
+                width: 60px;
+                text-align: center;
+                position: relative;
+                z-index: 1;
+            }
+            .rank-1 {
+                color: var(--gold);
+                position: relative;
+                z-index: 1;
+            }
+            .rank-2 {
+                color: #c0c0c0;
+                position: relative;
+                z-index: 1;
+            }
+            .rank-3 {
+                color: #cd7f32;
+                position: relative;
+                z-index: 1;
+            }
+            .team-col {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                position: relative;
+                z-index: 1;
+            }
+            .team-nm {
+                font-weight: 700;
+                font-size: 1.05rem;
+                position: relative;
+                z-index: 1;
+            }
+            .team-usr {
+                font-size: 0.8rem;
+                color: var(--text-muted);
+                font-weight: 500;
+                position: relative;
+                z-index: 1;
+            }
+            .pts-cell {
+                font-weight: 800;
+                color: var(--success-green);
+                position: relative;
+                z-index: 1;
+            }
+            .you-badge {
+                display: inline-block;
+                background: var(--gold);
+                color: var(--background-dark);
+                font-size: 0.7rem;
+                font-weight: 700;
+                padding: 3px 10px;
+                border-radius: 50px;
+                margin-left: 8px;
+                vertical-align: middle;
+                position: relative;
+                z-index: 1;
+            }
+            .current-user-row td {
+                background: rgba(13, 71, 255, 0.2) !important;
+                border-left: 4px solid var(--gold);
+            }
+            .current-user-row {
+                border-left: 4px solid var(--gold);
+            }
 
-<!-- NAVIGATION -->
-<nav class="main-nav">
-  <div class="nav-container">
-    <a href="/" class="nav-brand">
-      <span class="nav-logo-icon">⚽</span>
-      Fantasy SV
-    </a>
-    <button class="nav-mobile-toggle" onclick="document.getElementById('nav-links').classList.toggle('active')">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="nav-links" id="nav-links">
-      <a href="/squad-builder" class="nav-link">Mi Equipo</a>
-      <a href="/schedule" class="nav-link">Calendario</a>
-      <a href="/predictor" class="nav-link">Predicciones</a>
-      <a href="/leaderboard" class="nav-link">Clasificación</a>
-      <a href="/profile" class="nav-link">Perfil</a>
-      <a href="/leagues" class="nav-link active">Ligas Privadas</a>
-      <span id="nav-auth"></span>
-    </div>
-  </div>
-</nav>
-
-<main x-data="privateLeaguesApp()" x-init="init()">
-  <div class="page-wrap">
-
-    <!-- PAGE HEADER -->
-    <div class="page-header">
-      <h1>Ligas Privadas</h1>
-      <p>Crea tu propia liga, invita a amigos con un código y compite</p>
-      <div class="page-meta">
-        <div class="meta-pill">
-          <span class="meta-dot"></span>
-          <span x-text="myLeagues.length + ' liga' + (myLeagues.length !== 1 ? 's' : '') + ' activa' + (myLeagues.length !== 1 ? 's' : '')"></span>
-        </div>
-        <button class="refresh-btn" @click="refreshAll()">Actualizar</button>
-      </div>
-    </div>
-
-    <!-- TABS -->
-    <div class="tabs-bar">
-      <button class="tab-btn" :class="{ active: activeTab === 'mis-ligas' }" @click="activeTab = 'mis-ligas'">Mis Ligas</button>
-      <button class="tab-btn" :class="{ active: activeTab === 'crear' }" @click="activeTab = 'crear'">Crear Liga</button>
-      <button class="tab-btn" :class="{ active: activeTab === 'unirse' }" @click="activeTab = 'unirse'">Unirse</button>
-    </div>
-
-    <!-- ══ TAB: MIS LIGAS ══ -->
-    <div x-show="activeTab === 'mis-ligas'" x-transition>
-
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Mis Ligas Privadas</div>
-            <div class="card-sub">Selecciona una liga para ver su clasificación y código de invitación</div>
-          </div>
-        </div>
-
-        <!-- loading -->
-        <div x-show="loadingMyLeagues" class="loading-center">
-          <span class="spinner"></span> Cargando ligas...
-        </div>
-
-        <!-- empty -->
-        <div x-show="!loadingMyLeagues && myLeagues.length === 0" class="empty-state">
-          <div class="empty-icon">▦</div>
-          Aún no perteneces a ninguna liga privada.<br>
-          Crea una nueva o únete con un código de invitación.
-        </div>
-
-        <!-- list -->
-        <div class="league-list" x-show="!loadingMyLeagues && myLeagues.length > 0">
-          <template x-for="league in myLeagues" :key="league.private_league_id">
-            <div
-              class="league-row"
-              :class="{ selected: selectedLeagueId === league.private_league_id }"
-              @click="openLeague(league)"
-            >
-              <div class="league-row-info">
-                <div class="league-row-name" x-text="league.private_league_name"></div>
-                <div class="league-row-meta">
-                  <span class="league-row-date" x-text="'Unido el ' + formatDate(league.joined_at)"></span>
-                  <span class="season-tag" x-text="'Temporada ' + league.season_id"></span>
+            @media (max-width: 600px) {
+                .tabs-bar {
+                    width: 100%;
+                }
+                .tab-btn {
+                    flex: 1;
+                    text-align: center;
+                    padding: 10px 10px;
+                }
+                .code-value {
+                    font-size: 1.2rem;
+                }
+                .detail-header {
+                    flex-direction: column;
+                }
+                .page-header h1 {
+                    font-size: 1.8rem;
+                }
+                .league-row {
+                    padding: 1rem 1.2rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- NAVIGATION -->
+        <nav class="main-nav">
+            <div class="nav-container">
+                <a href="/" class="nav-brand">
+                    <span class="nav-logo-icon">⚽</span>
+                    Fantasy SV
+                </a>
+                <button
+                    class="nav-mobile-toggle"
+                    onclick="
+                        document
+                            .getElementById('nav-links')
+                            .classList.toggle('active')
+                    "
+                >
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="nav-links" id="nav-links">
+                    <a href="/squad-builder" class="nav-link">Mi Equipo</a>
+                    <a href="/schedule" class="nav-link">Calendario</a>
+                    <a href="/predictor" class="nav-link">Predicciones</a>
+                    <a href="/leaderboard" class="nav-link">Clasificación</a>
+                    <a href="/profile" class="nav-link">Perfil</a>
+                    <a href="/leagues" class="nav-link active"
+                        >Ligas Privadas</a
+                    >
+                    <span id="nav-auth"></span>
                 </div>
-              </div>
-              <div class="league-row-actions">
-                <span class="arrow-icon">›</span>
-              </div>
             </div>
-          </template>
-        </div>
-      </div>
+        </nav>
 
-      <!-- DETAIL PANEL (shown when a league is selected) -->
-      <div class="detail-panel" x-show="selectedLeagueId !== null" x-transition>
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title" x-text="selectedLeagueName"></div>
-              <div class="card-sub">Clasificación de la liga · Puntos acumulados</div>
-            </div>
-            <button class="btn btn-ghost btn-sm" @click="closeLeague()">Cerrar</button>
-          </div>
-
-          <!-- Invite Code -->
-          <div style="padding: 0 1.5rem;">
-            <div class="code-block" x-show="selectedJoinCode">
-              <div>
-                <div class="code-label">Código de invitación</div>
-                <div class="code-value" x-text="selectedJoinCode"></div>
-              </div>
-              <button
-                class="copy-btn"
-                :class="{ copied: codeCopied }"
-                @click="copyCode()"
-                x-text="codeCopied ? 'Copiado' : 'Copiar'"
-              ></button>
-            </div>
-          </div>
-
-          <!-- Leaderboard loading -->
-          <div x-show="loadingLeaderboard" class="loading-center">
-            <span class="spinner"></span> Cargando clasificación...
-          </div>
-
-          <!-- Leaderboard empty -->
-          <div x-show="!loadingLeaderboard && leaderboardData.length === 0" class="empty-state">
-            <div class="empty-icon">◷</div>
-            Sin puntuaciones registradas todavía.<br>
-            Los equipos aparecerán aquí tras la primera jornada cerrada.
-          </div>
-
-          <!-- Leaderboard table -->
-          <div style="padding: 0 1.5rem 1.5rem;" x-show="!loadingLeaderboard && leaderboardData.length > 0">
-            <div class="table-wrap">
-              <table class="lb-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Equipo</th>
-                    <th>Puntos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template x-for="(team, idx) in leaderboardData" :key="idx">
-                    <tr :class="team.is_current_user ? 'current-user-row' : ''">
-                      <td class="rank-cell">
-                        <span :class="'rank-' + (idx + 1)" x-text="idx + 1"></span>
-                      </td>
-                      <td>
-                        <div class="team-col">
-                          <div class="team-nm">
-                            <span x-text="team.fantasy_team_name"></span>
-                            <span x-show="team.is_current_user" class="you-badge">Tú</span>
-                          </div>
-                          <div class="team-usr" x-text="'@' + team.username"></div>
+        <main x-data="privateLeaguesApp()" x-init="init()">
+            <div class="page-wrap">
+                <!-- PAGE HEADER -->
+                <div class="page-header">
+                    <h1>Ligas Privadas</h1>
+                    <p>
+                        Crea tu propia liga, invita a amigos con un código y
+                        compite
+                    </p>
+                    <div class="page-meta">
+                        <div class="meta-pill">
+                            <span class="meta-dot"></span>
+                            <span
+                                x-text="myLeagues.length + ' liga' + (myLeagues.length !== 1 ? 's' : '') + ' activa' + (myLeagues.length !== 1 ? 's' : '')"
+                            ></span>
                         </div>
-                      </td>
-                      <td class="pts-cell" x-text="team.total_points + ' pts'"></td>
-                    </tr>
-                  </template>
-                </tbody>
-              </table>
+                        <button class="refresh-btn" @click="refreshAll()">
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TABS -->
+                <div class="tabs-bar">
+                    <button
+                        class="tab-btn"
+                        :class="{ active: activeTab === 'mis-ligas' }"
+                        @click="activeTab = 'mis-ligas'"
+                    >
+                        Mis Ligas
+                    </button>
+                    <button
+                        class="tab-btn"
+                        :class="{ active: activeTab === 'crear' }"
+                        @click="activeTab = 'crear'"
+                    >
+                        Crear Liga
+                    </button>
+                    <button
+                        class="tab-btn"
+                        :class="{ active: activeTab === 'unirse' }"
+                        @click="activeTab = 'unirse'"
+                    >
+                        Unirse
+                    </button>
+                </div>
+
+                <!-- ══ TAB: MIS LIGAS ══ -->
+                <div x-show="activeTab === 'mis-ligas'" x-transition>
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Mis Ligas Privadas</div>
+                                <div class="card-sub">
+                                    Selecciona una liga para ver su
+                                    clasificación y código de invitación
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- loading -->
+                        <div x-show="loadingMyLeagues" class="loading-center">
+                            <span class="spinner"></span> Cargando ligas...
+                        </div>
+
+                        <!-- empty -->
+                        <div
+                            x-show="!loadingMyLeagues && myLeagues.length === 0"
+                            class="empty-state"
+                        >
+                            <div class="empty-icon">▦</div>
+                            Aún no perteneces a ninguna liga privada.<br />
+                            Crea una nueva o únete con un código de invitación.
+                        </div>
+
+                        <!-- list -->
+                        <div
+                            class="league-list"
+                            x-show="!loadingMyLeagues && myLeagues.length > 0"
+                        >
+                            <template
+                                x-for="league in myLeagues"
+                                :key="league.private_league_id"
+                            >
+                                <div
+                                    class="league-row"
+                                    :class="{ selected: selectedLeagueId === league.private_league_id }"
+                                    @click="openLeague(league)"
+                                >
+                                    <div class="league-row-info">
+                                        <div
+                                            class="league-row-name"
+                                            x-text="league.private_league_name"
+                                        ></div>
+                                        <div class="league-row-meta">
+                                            <span
+                                                class="league-row-date"
+                                                x-text="'Unido el ' + formatDate(league.joined_at)"
+                                            ></span>
+                                            <span
+                                                class="season-tag"
+                                                x-text="'Temporada ' + league.season_id"
+                                            ></span>
+                                        </div>
+                                    </div>
+                                    <div class="league-row-actions">
+                                        <span class="arrow-icon">›</span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- DETAIL PANEL (shown when a league is selected) -->
+                    <div
+                        class="detail-panel"
+                        x-show="selectedLeagueId !== null"
+                        x-transition
+                    >
+                        <div class="card">
+                            <div class="card-header">
+                                <div>
+                                    <div
+                                        class="card-title"
+                                        x-text="selectedLeagueName"
+                                    ></div>
+                                    <div class="card-sub">
+                                        Clasificación de la liga · Puntos
+                                        acumulados
+                                    </div>
+                                </div>
+                                <button
+                                    class="btn btn-ghost btn-sm"
+                                    @click="closeLeague()"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+
+                            <!-- Invite Code -->
+                            <div style="padding: 0 1.5rem">
+                                <div
+                                    class="code-block"
+                                    x-show="selectedJoinCode"
+                                >
+                                    <div>
+                                        <div class="code-label">
+                                            Código de invitación
+                                        </div>
+                                        <div
+                                            class="code-value"
+                                            x-text="selectedJoinCode"
+                                        ></div>
+                                    </div>
+                                    <button
+                                        class="copy-btn"
+                                        :class="{ copied: codeCopied }"
+                                        @click="copyCode()"
+                                        x-text="codeCopied ? 'Copiado' : 'Copiar'"
+                                    ></button>
+                                </div>
+                            </div>
+
+                            <!-- Leaderboard loading -->
+                            <div
+                                x-show="loadingLeaderboard"
+                                class="loading-center"
+                            >
+                                <span class="spinner"></span> Cargando
+                                clasificación...
+                            </div>
+
+                            <!-- Leaderboard empty -->
+                            <div
+                                x-show="!loadingLeaderboard && leaderboardData.length === 0"
+                                class="empty-state"
+                            >
+                                <div class="empty-icon">◷</div>
+                                Sin puntuaciones registradas todavía.<br />
+                                Los equipos aparecerán aquí tras la primera
+                                jornada cerrada.
+                            </div>
+
+                            <!-- Leaderboard table -->
+                            <div
+                                style="padding: 0 1.5rem 1.5rem"
+                                x-show="!loadingLeaderboard && leaderboardData.length > 0"
+                            >
+                                <div class="table-wrap">
+                                    <table class="lb-table">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Equipo</th>
+                                                <th>Puntos</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template
+                                                x-for="(team, idx) in leaderboardData"
+                                                :key="idx"
+                                            >
+                                                <tr
+                                                    :class="team.is_current_user ? 'current-user-row' : ''"
+                                                >
+                                                    <td class="rank-cell">
+                                                        <span
+                                                            :class="'rank-' + (idx + 1)"
+                                                            x-text="idx + 1"
+                                                        ></span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="team-col">
+                                                            <div
+                                                                class="team-nm"
+                                                            >
+                                                                <span
+                                                                    x-text="team.fantasy_team_name"
+                                                                ></span>
+                                                                <span
+                                                                    x-show="team.is_current_user"
+                                                                    class="you-badge"
+                                                                    >Tú</span
+                                                                >
+                                                            </div>
+                                                            <div
+                                                                class="team-usr"
+                                                                x-text="'@' + team.username"
+                                                            ></div>
+                                                        </div>
+                                                    </td>
+                                                    <td
+                                                        class="pts-cell"
+                                                        x-text="team.total_points + ' pts'"
+                                                    ></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ TAB: CREAR ══ -->
+                <div x-show="activeTab === 'crear'" x-transition>
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Crear nueva liga</div>
+                                <div class="card-sub">
+                                    Se generará un código de 5 dígitos para
+                                    invitar a otros participantes
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Nombre de la liga</label
+                                >
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    x-model="newLeagueName"
+                                    placeholder="Ej: Amigos Cup 2026"
+                                    maxlength="60"
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Capacidad máxima de equipos
+                                    <span
+                                        style="
+                                            color: var(--text-muted);
+                                            font-weight: 500;
+                                        "
+                                        >(opcional)</span
+                                    ></label
+                                >
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    x-model="newLeagueMaxTeams"
+                                    placeholder="Sin límite"
+                                    min="2"
+                                    max="500"
+                                />
+                            </div>
+                            <button
+                                class="btn"
+                                @click="createLeague()"
+                                :disabled="creatingLeague"
+                            >
+                                <span
+                                    x-show="creatingLeague"
+                                    class="spinner"
+                                    style="
+                                        border-top-color: var(
+                                            --background-dark
+                                        );
+                                        border-color: rgba(11, 16, 32, 0.3);
+                                        border-top-color: var(
+                                            --background-dark
+                                        );
+                                    "
+                                ></span>
+                                <span
+                                    x-text="creatingLeague ? 'Creando...' : 'Crear liga'"
+                                ></span>
+                            </button>
+                            <div
+                                x-show="createMessage"
+                                class="msg"
+                                :class="createMsgClass"
+                                x-text="createMessage"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ TAB: UNIRSE ══ -->
+                <div x-show="activeTab === 'unirse'" x-transition>
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Unirse con código</div>
+                                <div class="card-sub">
+                                    Ingresa el código de 5 dígitos que te
+                                    compartió el administrador de la liga
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label"
+                                    >Código de 5 dígitos</label
+                                >
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    x-model="joinCode"
+                                    placeholder="12345"
+                                    maxlength="5"
+                                    inputmode="numeric"
+                                    style="
+                                        letter-spacing: 0.3em;
+                                        font-size: 1.3rem;
+                                        font-weight: 700;
+                                    "
+                                    @keyup.enter="joinLeague()"
+                                />
+                            </div>
+                            <button
+                                class="btn"
+                                @click="joinLeague()"
+                                :disabled="joiningLeague"
+                            >
+                                <span
+                                    x-show="joiningLeague"
+                                    class="spinner"
+                                    style="
+                                        border-color: rgba(11, 16, 32, 0.3);
+                                        border-top-color: var(
+                                            --background-dark
+                                        );
+                                    "
+                                ></span>
+                                <span
+                                    x-text="joiningLeague ? 'Uniéndose...' : 'Unirse a la liga'"
+                                ></span>
+                            </button>
+                            <div
+                                x-show="joinMessage"
+                                class="msg"
+                                :class="joinMsgClass"
+                                x-text="joinMessage"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            <!-- /page-wrap -->
+        </main>
 
-    <!-- ══ TAB: CREAR ══ -->
-    <div x-show="activeTab === 'crear'" x-transition>
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Crear nueva liga</div>
-            <div class="card-sub">Se generará un código de 5 dígitos para invitar a otros participantes</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="form-group">
-            <label class="form-label">Nombre de la liga</label>
-            <input type="text" class="form-control" x-model="newLeagueName" placeholder="Ej: Amigos Cup 2026" maxlength="60">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Capacidad máxima de equipos <span style="color:var(--text-muted);font-weight:500;">(opcional)</span></label>
-            <input type="number" class="form-control" x-model="newLeagueMaxTeams" placeholder="Sin límite" min="2" max="500">
-          </div>
-          <button class="btn" @click="createLeague()" :disabled="creatingLeague">
-            <span x-show="creatingLeague" class="spinner" style="border-top-color:var(--background-dark);border-color:rgba(11, 16, 32, 0.3);border-top-color:var(--background-dark);"></span>
-            <span x-text="creatingLeague ? 'Creando...' : 'Crear liga'"></span>
-          </button>
-          <div x-show="createMessage" class="msg" :class="createMsgClass" x-text="createMessage"></div>
-        </div>
-      </div>
-    </div>
+        <script>
+            function privateLeaguesApp() {
+                return {
+                    activeTab: "mis-ligas",
 
-    <!-- ══ TAB: UNIRSE ══ -->
-    <div x-show="activeTab === 'unirse'" x-transition>
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Unirse con código</div>
-            <div class="card-sub">Ingresa el código de 5 dígitos que te compartió el administrador de la liga</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="form-group">
-            <label class="form-label">Código de 5 dígitos</label>
-            <input
-              type="text"
-              class="form-control"
-              x-model="joinCode"
-              placeholder="12345"
-              maxlength="5"
-              inputmode="numeric"
-              style="letter-spacing: 0.3em; font-size: 1.3rem; font-weight: 700;"
-              @keyup.enter="joinLeague()"
-            >
-          </div>
-          <button class="btn" @click="joinLeague()" :disabled="joiningLeague">
-            <span x-show="joiningLeague" class="spinner" style="border-color:rgba(11, 16, 32, 0.3);border-top-color:var(--background-dark);"></span>
-            <span x-text="joiningLeague ? 'Uniéndose...' : 'Unirse a la liga'"></span>
-          </button>
-          <div x-show="joinMessage" class="msg" :class="joinMsgClass" x-text="joinMessage"></div>
-        </div>
-      </div>
-    </div>
+                    // Create
+                    newLeagueName: "",
+                    newLeagueMaxTeams: null,
+                    creatingLeague: false,
+                    createMessage: "",
+                    createMsgClass: "",
 
-  </div><!-- /page-wrap -->
-</main>
+                    // Join
+                    joinCode: "",
+                    joiningLeague: false,
+                    joinMessage: "",
+                    joinMsgClass: "",
 
-<script>
-function privateLeaguesApp() {
-  return {
-    activeTab: 'mis-ligas',
+                    // My leagues
+                    myLeagues: [],
+                    loadingMyLeagues: false,
 
-    // Create
-    newLeagueName: '',
-    newLeagueMaxTeams: null,
-    creatingLeague: false,
-    createMessage: '',
-    createMsgClass: '',
+                    // Selected league detail
+                    selectedLeagueId: null,
+                    selectedLeagueName: "",
+                    selectedJoinCode: "",
+                    codeCopied: false,
 
-    // Join
-    joinCode: '',
-    joiningLeague: false,
-    joinMessage: '',
-    joinMsgClass: '',
+                    // Leaderboard
+                    leaderboardData: [],
+                    loadingLeaderboard: false,
 
-    // My leagues
-    myLeagues: [],
-    loadingMyLeagues: false,
+                    async init() {
+                        await requireRole("user");
+                        setupNavAuth();
+                        await this.loadMyLeagues();
+                    },
 
-    // Selected league detail
-    selectedLeagueId: null,
-    selectedLeagueName: '',
-    selectedJoinCode: '',
-    codeCopied: false,
+                    async refreshAll() {
+                        await this.loadMyLeagues();
+                        if (this.selectedLeagueId !== null) {
+                            await this.fetchLeaderboard(this.selectedLeagueId);
+                        }
+                    },
 
-    // Leaderboard
-    leaderboardData: [],
-    loadingLeaderboard: false,
+                    // ── MY LEAGUES ──
+                    async loadMyLeagues() {
+                        this.loadingMyLeagues = true;
+                        try {
+                            const r = await authFetch(
+                                "/league/private/my-leagues",
+                            );
+                            if (r.ok) {
+                                this.myLeagues = await r.json();
+                            }
+                        } catch (e) {
+                            console.error("Error loading leagues", e);
+                        } finally {
+                            this.loadingMyLeagues = false;
+                        }
+                    },
 
-    async init() {
-      await requireRole('user');
-      setupNavAuth();
-      await this.loadMyLeagues();
-    },
+                    // ── OPEN LEAGUE DETAIL ──
+                    async openLeague(league) {
+                        // If already selected, toggle off
+                        if (
+                            this.selectedLeagueId === league.private_league_id
+                        ) {
+                            this.closeLeague();
+                            return;
+                        }
+                        this.selectedLeagueId = league.private_league_id;
+                        this.selectedLeagueName = league.private_league_name;
+                        this.selectedJoinCode = league.join_code || "";
+                        this.leaderboardData = [];
+                        this.codeCopied = false;
 
-    async refreshAll() {
-      await this.loadMyLeagues();
-      if (this.selectedLeagueId !== null) {
-        await this.fetchLeaderboard(this.selectedLeagueId);
-      }
-    },
+                        // If no join_code in my-leagues response, try fetching it
+                        // (the backend my-leagues endpoint returns the fields from MembershipResponse)
+                        // join_code isn't in MembershipResponse so we fetch via leaderboard call
+                        // and code must be retrieved via a separate detail endpoint if available.
+                        // Since there's no GET /league/private/{id} endpoint, we skip code for now
+                        // unless it was returned. We still show leaderboard.
+                        await this.fetchLeaderboard(league.private_league_id);
+                    },
 
-    // ── MY LEAGUES ──
-    async loadMyLeagues() {
-      this.loadingMyLeagues = true;
-      try {
-        const r = await authFetch('/league/private/my-leagues');
-        if (r.ok) {
-          this.myLeagues = await r.json();
-        }
-      } catch(e) {
-        console.error('Error loading leagues', e);
-      } finally {
-        this.loadingMyLeagues = false;
-      }
-    },
+                    closeLeague() {
+                        this.selectedLeagueId = null;
+                        this.selectedLeagueName = "";
+                        this.selectedJoinCode = "";
+                        this.leaderboardData = [];
+                        this.codeCopied = false;
+                    },
 
-    // ── OPEN LEAGUE DETAIL ──
-    async openLeague(league) {
-      // If already selected, toggle off
-      if (this.selectedLeagueId === league.private_league_id) {
-        this.closeLeague();
-        return;
-      }
-      this.selectedLeagueId = league.private_league_id;
-      this.selectedLeagueName = league.private_league_name;
-      this.selectedJoinCode = league.join_code || '';
-      this.leaderboardData = [];
-      this.codeCopied = false;
+                    async fetchLeaderboard(leagueId) {
+                        this.loadingLeaderboard = true;
+                        this.leaderboardData = [];
+                        try {
+                            const r = await authFetch(
+                                `/league/private/${leagueId}/leaderboard`,
+                            );
+                            if (r.ok) {
+                                const data = await r.json(); // [{fantasy_team_name, username, total_points}]
+                                this.leaderboardData = data.map((entry) => ({
+                                    ...entry,
+                                }));
+                            }
+                        } catch (e) {
+                            console.error("Error loading leaderboard", e);
+                        } finally {
+                            this.loadingLeaderboard = false;
+                        }
+                    },
 
-      // If no join_code in my-leagues response, try fetching it
-      // (the backend my-leagues endpoint returns the fields from MembershipResponse)
-      // join_code isn't in MembershipResponse so we fetch via leaderboard call
-      // and code must be retrieved via a separate detail endpoint if available.
-      // Since there's no GET /league/private/{id} endpoint, we skip code for now
-      // unless it was returned. We still show leaderboard.
-      await this.fetchLeaderboard(league.private_league_id);
-    },
+                    async copyCode() {
+                        if (!this.selectedJoinCode) return;
+                        try {
+                            await navigator.clipboard.writeText(
+                                this.selectedJoinCode,
+                            );
+                            this.codeCopied = true;
+                            setTimeout(() => {
+                                this.codeCopied = false;
+                            }, 2000);
+                        } catch (e) {
+                            // fallback
+                            const el = document.createElement("textarea");
+                            el.value = this.selectedJoinCode;
+                            document.body.appendChild(el);
+                            el.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(el);
+                            this.codeCopied = true;
+                            setTimeout(() => {
+                                this.codeCopied = false;
+                            }, 2000);
+                        }
+                    },
 
-    closeLeague() {
-      this.selectedLeagueId = null;
-      this.selectedLeagueName = '';
-      this.selectedJoinCode = '';
-      this.leaderboardData = [];
-      this.codeCopied = false;
-    },
+                    // ── CREATE ──
+                    async createLeague() {
+                        if (!this.newLeagueName.trim()) {
+                            this.createMessage =
+                                "El nombre de la liga es obligatorio";
+                            this.createMsgClass = "msg-error";
+                            return;
+                        }
+                        this.creatingLeague = true;
+                        this.createMessage = "";
+                        try {
+                            // Get active season
+                            const sr = await fetch("/seasons");
+                            if (!sr.ok)
+                                throw new Error(
+                                    "No se pudo obtener la temporada activa",
+                                );
+                            const sd = await sr.json();
+                            const seasons = sd.seasons || [];
+                            const active =
+                                seasons.find((s) => s.status === "active") ||
+                                seasons[seasons.length - 1];
+                            if (!active)
+                                throw new Error(
+                                    "No hay temporada activa disponible",
+                                );
 
-    async fetchLeaderboard(leagueId) {
-      this.loadingLeaderboard = true;
-      this.leaderboardData = [];
-      try {
-        const r = await authFetch(`/league/private/${leagueId}/leaderboard`);
-        if (r.ok) {
-          const data = await r.json(); // [{fantasy_team_name, username, total_points}]
-          this.leaderboardData = data.map(entry => ({
-            ...entry
-          }));
-        }
-      } catch(e) {
-        console.error('Error loading leaderboard', e);
-      } finally {
-        this.loadingLeaderboard = false;
-      }
-    },
+                            const payload = {
+                                name: this.newLeagueName.trim(),
+                                season_id: active.id,
+                                max_teams: this.newLeagueMaxTeams
+                                    ? parseInt(this.newLeagueMaxTeams)
+                                    : null,
+                            };
+                            const r = await authFetch("/league/private", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(payload),
+                            });
+                            if (r.ok) {
+                                const created = await r.json();
+                                umami.track("league_created", {
+                                    created_by_user_id:
+                                        created.created_by_user_id,
+                                    join_code: created.join_code,
+                                    name: created.name,
+                                });
+                                this.createMessage = `Liga "${created.name}" creada. Código: ${created.join_code}`;
+                                this.createMsgClass = "msg-success";
+                                this.newLeagueName = "";
+                                this.newLeagueMaxTeams = null;
+                                await this.loadMyLeagues();
+                                // Auto-switch to my leagues after 1.5s
+                                setTimeout(() => {
+                                    this.activeTab = "mis-ligas";
+                                    this.createMessage = "";
+                                }, 2000);
+                            } else {
+                                const err = await r.json();
+                                this.createMessage =
+                                    err.detail || "Error al crear la liga";
+                                this.createMsgClass = "msg-error";
+                            }
+                        } catch (err) {
+                            this.createMessage =
+                                err.message || "Error de conexión";
+                            this.createMsgClass = "msg-error";
+                        } finally {
+                            this.creatingLeague = false;
+                            if (this.createMsgClass === "msg-error") {
+                                setTimeout(() => {
+                                    this.createMessage = "";
+                                }, 5000);
+                            }
+                        }
+                    },
 
-    async copyCode() {
-      if (!this.selectedJoinCode) return;
-      try {
-        await navigator.clipboard.writeText(this.selectedJoinCode);
-        this.codeCopied = true;
-        setTimeout(() => { this.codeCopied = false; }, 2000);
-      } catch(e) {
-        // fallback
-        const el = document.createElement('textarea');
-        el.value = this.selectedJoinCode;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        this.codeCopied = true;
-        setTimeout(() => { this.codeCopied = false; }, 2000);
-      }
-    },
+                    // ── JOIN ──
+                    async joinLeague() {
+                        const code = this.joinCode.trim();
+                        if (!code || code.length !== 5 || !/^\d+$/.test(code)) {
+                            this.joinMessage =
+                                "El código debe ser exactamente 5 dígitos numéricos";
+                            this.joinMsgClass = "msg-error";
+                            return;
+                        }
+                        this.joiningLeague = true;
+                        this.joinMessage = "";
+                        try {
+                            const r = await authFetch("/league/private/join", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ join_code: code }),
+                            });
+                            if (r.ok) {
+                                const data = await r.json();
+                                this.joinMessage =
+                                    data.message ||
+                                    "Te has unido a la liga correctamente";
+                                this.joinMsgClass = "msg-success";
+                                this.joinCode = "";
+                                umami.track("league_joined");
+                                await this.loadMyLeagues();
+                                setTimeout(() => {
+                                    this.activeTab = "mis-ligas";
+                                    this.joinMessage = "";
+                                }, 2000);
+                            } else {
+                                const err = await r.json();
+                                this.joinMessage =
+                                    err.detail ||
+                                    "Código inválido o liga no disponible";
+                                this.joinMsgClass = "msg-error";
+                            }
+                        } catch (err) {
+                            this.joinMessage = "Error de conexión al unirse";
+                            this.joinMsgClass = "msg-error";
+                        } finally {
+                            this.joiningLeague = false;
+                            if (this.joinMsgClass === "msg-error") {
+                                setTimeout(() => {
+                                    this.joinMessage = "";
+                                }, 5000);
+                            }
+                        }
+                    },
 
-    // ── CREATE ──
-    async createLeague() {
-      if (!this.newLeagueName.trim()) {
-        this.createMessage = 'El nombre de la liga es obligatorio';
-        this.createMsgClass = 'msg-error';
-        return;
-      }
-      this.creatingLeague = true;
-      this.createMessage = '';
-      try {
-        // Get active season
-        const sr = await fetch('/seasons');
-        if (!sr.ok) throw new Error('No se pudo obtener la temporada activa');
-        const sd = await sr.json();
-        const seasons = sd.seasons || [];
-        const active = seasons.find(s => s.status === 'active') || seasons[seasons.length - 1];
-        if (!active) throw new Error('No hay temporada activa disponible');
-
-        const payload = {
-          name: this.newLeagueName.trim(),
-          season_id: active.id,
-          max_teams: this.newLeagueMaxTeams ? parseInt(this.newLeagueMaxTeams) : null
-        };
-        const r = await authFetch('/league/private', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (r.ok) {
-          const created = await r.json();
-          this.createMessage = `Liga "${created.name}" creada. Código: ${created.join_code}`;
-          this.createMsgClass = 'msg-success';
-          this.newLeagueName = '';
-          this.newLeagueMaxTeams = null;
-          await this.loadMyLeagues();
-          // Auto-switch to my leagues after 1.5s
-          setTimeout(() => { this.activeTab = 'mis-ligas'; this.createMessage = ''; }, 2000);
-        } else {
-          const err = await r.json();
-          this.createMessage = err.detail || 'Error al crear la liga';
-          this.createMsgClass = 'msg-error';
-        }
-      } catch(err) {
-        this.createMessage = err.message || 'Error de conexión';
-        this.createMsgClass = 'msg-error';
-      } finally {
-        this.creatingLeague = false;
-        if (this.createMsgClass === 'msg-error') {
-          setTimeout(() => { this.createMessage = ''; }, 5000);
-        }
-      }
-    },
-
-    // ── JOIN ──
-    async joinLeague() {
-      const code = this.joinCode.trim();
-      if (!code || code.length !== 5 || !/^\d+$/.test(code)) {
-        this.joinMessage = 'El código debe ser exactamente 5 dígitos numéricos';
-        this.joinMsgClass = 'msg-error';
-        return;
-      }
-      this.joiningLeague = true;
-      this.joinMessage = '';
-      try {
-        const r = await authFetch('/league/private/join', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ join_code: code })
-        });
-        if (r.ok) {
-          const data = await r.json();
-          this.joinMessage = data.message || 'Te has unido a la liga correctamente';
-          this.joinMsgClass = 'msg-success';
-          this.joinCode = '';
-          await this.loadMyLeagues();
-          setTimeout(() => { this.activeTab = 'mis-ligas'; this.joinMessage = ''; }, 2000);
-        } else {
-          const err = await r.json();
-          this.joinMessage = err.detail || 'Código inválido o liga no disponible';
-          this.joinMsgClass = 'msg-error';
-        }
-      } catch(err) {
-        this.joinMessage = 'Error de conexión al unirse';
-        this.joinMsgClass = 'msg-error';
-      } finally {
-        this.joiningLeague = false;
-        if (this.joinMsgClass === 'msg-error') {
-          setTimeout(() => { this.joinMessage = ''; }, 5000);
-        }
-      }
-    },
-
-    // ── UTILS ──
-    formatDate(iso) {
-      if (!iso) return '';
-      return new Date(iso).toLocaleDateString('es-SV', { day: '2-digit', month: 'short', year: 'numeric' });
-    }
-  };
-}
-</script>
-</body>
+                    // ── UTILS ──
+                    formatDate(iso) {
+                        if (!iso) return "";
+                        return new Date(iso).toLocaleDateString("es-SV", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                        });
+                    },
+                };
+            }
+        </script>
+    </body>
 </html>

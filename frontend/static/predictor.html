@@ -2519,6 +2519,7 @@
                                 e.message;
                         }
                         this.loading = false;
+                        // umami.track();
                     },
 
                     // ── LOAD PAST PREDICTIONS ──
@@ -2839,6 +2840,9 @@
                                 `✅ ${fx.home_team} vs ${fx.away_team} guardado`,
                                 "success",
                             );
+                            umami.track("prediction_submitted", {
+                                id: data.id,
+                            });
                         } catch (e) {
                             this.toast(`❌ ${e.message}`, "error");
                             fx.savedMsg = "";

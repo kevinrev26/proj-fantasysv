@@ -2402,6 +2402,7 @@
 
                     // ── INIT ──────────────────────────────────────────────────────────────────
                     async init() {
+                        // umami.track();
                         this.currentFormation = this.formations[0];
                         this.startCountdownTimer();
 
@@ -2526,6 +2527,7 @@
 
                     get filteredPlayers() {
                         const q = this.searchQuery.toLowerCase();
+                        umami.track("search_performed", {query: q, sort_order: this.sortOrder})
                         let players = this.activePlayers.filter((p) => {
                             if (
                                 this.filterPos !== "ALL" &&
@@ -2927,6 +2929,7 @@
                         }
                         this.normalizeSquad();
                         this.saveToLocalStorage();
+                        umami.track("player_added_to_squad", {player_name: player.name, player_id: player.id, player_pos: player.pos, player_cost: player.cost})
                     },
 
                     removePlayer(player) {
@@ -2946,6 +2949,7 @@
 
                         this.normalizeSquad()
                         this.saveToLocalStorage();
+                        umami.track("player_removed_from_squad", {player_name: player.name, player_id: player.id, player_pos: player.pos, player_cost: player.cost})
                     },
 
                     // ── FORMATION ─────────────────────────────────────────────────────────────
@@ -2954,8 +2958,10 @@
                             this.toast(this.lockMessage);
                             return;
                         }
+                        umami.track("formation_changed", {from: this.currentFormation, to: f})
                         this.currentFormation = f;
                         this.validateAndTrimSquad();
+                        umami.track("formation_changed")
                     },
 
                     normalizeSquad() {
@@ -3088,6 +3094,7 @@
                             this.toast(
                                 `★ capitán: ${this.selectedPlayers.find((p) => p.id === playerId)?.name}`,
                             );
+                            umami.track("captain_changed", {player_id: playerId})
                         }
                         this.saveToLocalStorage();
                     },
@@ -3162,6 +3169,7 @@
                             const data = await resp.json();
                             if (resp.ok) {
                                 this.showSuccess = true;
+                                umami.track("squad_saved")
                                 if (data.penalty_incurred)
                                     setTimeout(
                                         () =>
