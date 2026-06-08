@@ -78,6 +78,9 @@ async function logout() {
 
   localStorage.removeItem("jwt_token");
   localStorage.removeItem("user_id");
-  umami.track("logout");
+  // if (window.umami) {
+  //   window.umami.track("logout");
+  // }
+
   window.location.href = "/login";
 }

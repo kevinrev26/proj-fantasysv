@@ -1449,12 +1449,15 @@
                             });
                             if (r.ok) {
                                 const created = await r.json();
-                                umami.track("league_created", {
-                                    created_by_user_id:
-                                        created.created_by_user_id,
-                                    join_code: created.join_code,
-                                    name: created.name,
-                                });
+                                if (window.umami) {
+                                    window.umami.track("league_created", {
+                                        created_by_user_id:
+                                            created.created_by_user_id,
+                                        join_code: created.join_code,
+                                        name: created.name,
+                                    });
+                                }
+
                                 this.createMessage = `Liga "${created.name}" creada. Código: ${created.join_code}`;
                                 this.createMsgClass = "msg-success";
                                 this.newLeagueName = "";
@@ -1509,7 +1512,10 @@
                                     "Te has unido a la liga correctamente";
                                 this.joinMsgClass = "msg-success";
                                 this.joinCode = "";
-                                umami.track("league_joined");
+                                if (window.umami) {
+                                    window.umami.track("league_joined");
+                                }
+
                                 await this.loadMyLeagues();
                                 setTimeout(() => {
                                     this.activeTab = "mis-ligas";

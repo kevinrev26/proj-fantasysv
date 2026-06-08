@@ -283,6 +283,8 @@ def get_squad(
         return {
             "squad": [],
             "budget": 100,
+            # Default formation id.
+            "formation_id": "4-4-2",
             # "free_transfers_remaining": base_allowance,
             "is_locked": matchday.is_locked if matchday else False,
             "deadline": (
@@ -308,6 +310,7 @@ def get_squad(
     return {
         "squad": players,
         "budget": 100 - total_cost,
+        "formation_id": team.formation_id,
         # "free_transfers_remaining": free_remaining,
         "is_locked": matchday.is_locked if matchday else False,
         "deadline": matchday.lock_at_utc if matchday else False,
@@ -592,22 +595,24 @@ def update_squad(
         db.add(team)
         db.flush()
 
+    team.formation_id = payload.formation_id
+
     # COMMENTED, SEE _compute_available_free_transfers
     # base_allowance = _get_config_int(db, "free_transfers_per_matchday", 1)
 
-    current_fps = {
-        fp.player_id: fp
-        for fp in db.query(models.FantasyPlayer)
-        .filter(models.FantasyPlayer.fantasy_team_id == team.id)
-        .all()
-    }
-    new_player_ids = {p.player_id for p in payload.players}
-    old_player_ids = set(current_fps.keys())
+    # current_fps = {
+    #     fp.player_id: fp
+    #     for fp in db.query(models.FantasyPlayer)
+    #     .filter(models.FantasyPlayer.fantasy_team_id == team.id)
+    #     .all()
+    # }
+    # new_player_ids = {p.player_id for p in payload.players}
+    # old_player_ids = set(current_fps.keys())
 
-    removed_ids = old_player_ids - new_player_ids
-    added_ids = new_player_ids - old_player_ids
+    # removed_ids = old_player_ids - new_player_ids
+    # added_ids = new_player_ids - old_player_ids
 
-    is_initialization = len(old_player_ids) == 0
+    # is_initialization = len(old_player_ids) == 0
     # COMMENTED, SEE _compute_available_free_transfers
     # total_penalty = 0
 
@@ -1050,10 +1055,13 @@ def get_player_points_for_matchday(
     # Get all player points for this matchday and team
     player_points = (
         db.query(models.PlayerPoints)
-        .join(models.FantasyPlayer, models.PlayerPoints.fantasy_player_id == models.FantasyPlayer.id)
+        .join(
+            models.FantasyPlayer,
+            models.PlayerPoints.fantasy_player_id == models.FantasyPlayer.id,
+        )
         .filter(
             models.PlayerPoints.matchday_id == matchday_id,
-            models.FantasyPlayer.fantasy_team_id == team.id
+            models.FantasyPlayer.fantasy_team_id == team.id,
         )
         .all()
     )
@@ -1063,20 +1071,22 @@ def get_player_points_for_matchday(
     for pp in player_points:
         fp = pp.fantasy_player
         p = fp.player
-        result.append({
-            "player_id": p.id,
-            "name": p.name,
-            "pos": p.position.value,
-            "club": p.team.name if p.team else "",
-            "slot": fp.slot.value,
-            "is_x2_joker": fp.is_x2_joker,
-            "points": pp.points,
-        })
+        result.append(
+            {
+                "player_id": p.id,
+                "name": p.name,
+                "pos": p.position.value,
+                "club": p.team.name if p.team else "",
+                "slot": fp.slot.value,
+                "is_x2_joker": fp.is_x2_joker,
+                "points": pp.points,
+            }
+        )
 
     return {"players": result}
 
 
-@router.get("/points/all")
+@router.get("/players/points")
 def get_player_points_all_matchdays(
     request: Request,
     current_user: models.User = Depends(get_current_user),
@@ -1095,8 +1105,13 @@ def get_player_points_all_matchdays(
     # Get all matchdays with player points for this team
     matchday_points = (
         db.query(models.Matchday, models.PlayerPoints, models.FantasyPlayer)
-        .join(models.PlayerPoints, models.PlayerPoints.matchday_id == models.Matchday.id)
-        .join(models.FantasyPlayer, models.PlayerPoints.fantasy_player_id == models.FantasyPlayer.id)
+        .join(
+            models.PlayerPoints, models.PlayerPoints.matchday_id == models.Matchday.id
+        )
+        .join(
+            models.FantasyPlayer,
+            models.PlayerPoints.fantasy_player_id == models.FantasyPlayer.id,
+        )
         .filter(models.FantasyPlayer.fantasy_team_id == team.id)
         .order_by(models.Matchday.id.asc())
         .all()
@@ -1105,7 +1120,7 @@ def get_player_points_all_matchdays(
     # Group by matchday
     result = []
     matchday_map = {}
-    
+
     for matchday, player_point, fantasy_player in matchday_points:
         if matchday.id not in matchday_map:
             matchday_map[matchday.id] = {
@@ -1114,21 +1129,23 @@ def get_player_points_all_matchdays(
                     "name": matchday.name,
                     "status": matchday.status.value,
                 },
-                "players": []
+                "players": [],
             }
-        
+
         p = fantasy_player.player
-        matchday_map[matchday.id]["players"].append({
-            "player_id": p.id,
-            "name": p.name,
-            "pos": p.position.value,
-            "club": p.team.name if p.team else "",
-            "slot": fantasy_player.slot.value,
-            "is_x2_joker": fantasy_player.is_x2_joker,
-            "points": player_point.points,
-        })
+        matchday_map[matchday.id]["players"].append(
+            {
+                "player_id": p.id,
+                "name": p.name,
+                "pos": p.position.value,
+                "club": p.team.name if p.team else "",
+                "slot": fantasy_player.slot.value,
+                "is_x2_joker": fantasy_player.is_x2_joker,
+                "points": player_point.points,
+            }
+        )
 
     # Convert to list
     result = list(matchday_map.values())
-    
+
     return {"matchdays": result}

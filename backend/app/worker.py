@@ -140,7 +140,7 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
         player_points = PlayerPoints(
             fantasy_player_id=fp.id,
             matchday_id=matchday_id,
-            points=scored["final_points"]
+            points=scored["final_points"],
         )
         db_session.add(player_points)
 
@@ -286,6 +286,13 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                 # Note: This assumes is_x2_joker is set per matchday.
                 # If you need per‑matchday selection, you'll need a separate table.
                 scored = apply_wildcard_multiplier(raw, fp.is_x2_joker)
+
+                player_points = PlayerPoints(
+                    fantasy_player_id=fp.id,
+                    matchday_id=matchday_id,
+                    points=scored["final_points"],
+                )
+                db.add(player_points)
 
                 total_points += scored["final_points"]
                 logger.debug(

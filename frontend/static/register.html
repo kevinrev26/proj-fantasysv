@@ -778,7 +778,9 @@
                                         loginData.access_token,
                                     );
                                     // Redirect to onboarding
-                                    umami.track("signup");
+                                    if (window.umami) {
+                                        umami.track("signup");
+                                    }
                                     window.location.href = "/onboarding.html";
                                 } else {
                                     const errorData = await loginResp.json();

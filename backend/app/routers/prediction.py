@@ -5,7 +5,7 @@ from typing import List, Optional
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, desc, func, or_
+from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from .. import models
@@ -525,7 +525,11 @@ def get_user_predictions(
     """
     query = (
         db.query(models.Prediction)
+        # 1. Join the fixture model so we can order by its attributes
+        .join(models.Prediction.fixture)
         .filter(models.Prediction.user_id == current_user.id)
+        # 2. Order by kickoff_utc ascending (closest chronological date first)
+        .order_by(asc(models.Fixture.kickoff_utc))
         .options(
             joinedload(models.Prediction.fixture).joinedload(models.Fixture.matchday),
             joinedload(models.Prediction.fixture).joinedload(models.Fixture.home_team),
@@ -662,7 +666,7 @@ def get_available_fixtures_for_prediction(
             joinedload(models.Fixture.away_team),
             joinedload(models.Fixture.result),
         )
-        .order_by(models.Fixture.kickoff_utc.desc())
+        .order_by(models.Fixture.kickoff_utc.asc())
         .all()
     )
 

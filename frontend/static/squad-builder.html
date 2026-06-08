@@ -984,7 +984,7 @@
                                     <img :src="sponsorLeft.src" :alt="sponsorLeft.alt||'Sponsor'" />
                                 </template>
                                 <template x-if="!sponsorLeft || sponsorLeft.type==='text'">
-                                    <span class="pitch3d-banner-text" x-text="sponsorLeft ? sponsorLeft.text : 'SPONSOR'"></span>
+                                    <span class="pitch3d-banner-text" x-text="sponsorLeft ? sponsorLeft.text : ''"></span>
                                 </template>
                             </div>
                             <div class="pitch3d-banner" id="sponsor-right">
@@ -992,7 +992,7 @@
                                     <img :src="sponsorRight.src" :alt="sponsorRight.alt||'Sponsor'" />
                                 </template>
                                 <template x-if="!sponsorRight || sponsorRight.type==='text'">
-                                    <span class="pitch3d-banner-text" x-text="sponsorRight ? sponsorRight.text : 'SPONSOR'"></span>
+                                    <span class="pitch3d-banner-text" x-text="sponsorRight ? sponsorRight.text : ''"></span>
                                 </template>
                             </div>
                         </div>
@@ -1724,6 +1724,7 @@
                     type="text"
                     placeholder="🔍 Buscar jugador…"
                     x-model="searchQuery"
+                    @input.debounce.500ms="trackSearch()"
                 />
 
                 <!-- Position + Tier row -->
@@ -1733,7 +1734,7 @@
                             class="filt-pill"
                             :class="filterPos===pos&&'active'"
                             @click="filterPos=pos"
-                            x-text="pos"
+                            x-text="posLabel(pos)"
                         ></button>
                     </template>
                     <div class="filt-divider"></div>
@@ -1761,7 +1762,7 @@
                             class="filt-pill filt-team"
                             :class="filterTeam===club&&'active'"
                             @click="filterTeam=club"
-                            x-text="club"
+                            x-text="translateTeam(club)"
                         ></button>
                     </template>
                 </div>
@@ -1806,12 +1807,11 @@
                             <svg viewBox="0 0 60 55" class="row-jersey" :class="'jersey-color-'+p.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(p.club) + ';'">
                                 <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke="rgba(255,255,255,0.25)" stroke-width="1" />
                             </svg>
-
                         </div>
                         <div class="row-info">
                             <div class="row-name" x-text="p.name"></div>
                             <div class="row-meta">
-                                <span class="row-club" x-text="p.club"></span>
+                                <span class="row-club" x-text="translateTeam(p.club)"></span>
                                 <span
                                     class="row-tier-badge"
                                     :class="'tb-'+p.tier.toLowerCase()"
@@ -1823,7 +1823,7 @@
                             <span
                                 class="row-pos"
                                 :class="'pos-badge-'+p.pos.toLowerCase()"
-                                x-text="p.pos"
+                                x-text="translatePos(p.pos)"
                             ></span>
                             <span class="row-cost" x-text="p.cost+' $'"></span>
                             <span class="row-check" x-show="isSelected(p.id)"
@@ -1947,7 +1947,7 @@
                 </div>
                 <template x-for="p in benchPlayers" :key="p.id">
                     <div class="squad-row">
-                        <svg viewBox="0 0 60 55" class="bench-jersey" :class="'jersey-color-'+bench.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(bench.club) + ';'">
+                        <svg viewBox="0 0 60 55" class="bench-jersey" :class="'jersey-color-'+p.pos.toLowerCase()" :style="'--jersey-color:' + getTeamColor(p.club) + ';'">
                             <path d="M10 12 L0 22 L12 26 L12 54 L48 54 L48 26 L60 22 L50 12 L38 18 C36 8 24 8 22 18 Z" fill="var(--jersey-color)" stroke-width="1" />
                         </svg>
 
@@ -2016,7 +2016,7 @@
             <div x-show="selectedMatchday && selectedMatchday.players.length > 0" class="points-table-wrapper">
                 <div class="comp-card" style="margin-top: 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 class="comp-card-title" x-text="selectedMatchday.matchday.name"></h3>
+                        <h3 class="comp-card-title" x-text="selectedMatchday?.matchday?.name || ''"></h3>
                         <div class="stat-pill stat-pill--green">
                             🏆 Total: <strong x-text="selectedMatchdayTotalPoints"></strong> pts
                         </div>
@@ -2027,10 +2027,10 @@
                                 <tr><th>Jugador</th><th>Pos</th><th>Equipo</th><th>Puntos</th><th>×2</th></tr>
                             </thead>
                             <tbody>
-                                <template x-for="p in selectedMatchday.players" :key="p.player_id">
+                                <template x-for="p in (selectedMatchday?.players || [])" :key="p.player_id">
                                     <tr>
                                         <td class="points-player" x-text="p.name"></td>
-                                        <td class="points-pos" x-text="p.pos"></td>
+                                        <td class="points-pos" x-text="translatePos(p.pos)"></td>
                                         <td class="points-club" x-text="p.club"></td>
                                         <td class="points-value" :class="p.is_x2_joker ? 'points-double' : ''">
                                             <span x-text="p.points.toFixed(1)"></span>
@@ -2350,54 +2350,54 @@
                     players: [],
 
                     TEAM_MAP: {
-                      "Uruguay":            { id: 1,  color: "#6CB4EE" }, // Sky Blue
-                      "Germany":            { id: 2,  color: "#FFFFFF" }, // White
-                      "Spain":              { id: 3,  color: "#C60B1E" }, // Red
-                      "Paraguay":           { id: 4,  color: "#D52B1E" }, // Red
-                      "Argentina":          { id: 5,  color: "#75AADB" }, // Sky Blue
-                      "Ghana":              { id: 6,  color: "#FFFFFF" }, // White
-                      "Brazil":             { id: 7,  color: "#F7E017" }, // Yellow
-                      "Portugal":           { id: 8,  color: "#C8102E" }, // Red
-                      "Japan":              { id: 9,  color: "#0033A0" }, // Blue
-                      "Mexico":             { id: 10, color: "#006847" }, // Green
-                      "England":            { id: 11, color: "#FFFFFF" }, // White
-                      "United States":      { id: 12, color: "#1E3A8A" }, // Navy Blue
-                      "South Korea":        { id: 13, color: "#E10600" }, // Red
-                      "France":             { id: 14, color: "#1D428A" }, // Blue
-                      "South Africa":       { id: 15, color: "#F7E017" }, // Yellow
-                      "Algeria":            { id: 16, color: "#FFFFFF" }, // White
-                      "Australia":          { id: 17, color: "#F7C600" }, // Gold
-                      "New Zealand":        { id: 18, color: "#000000" }, // Black
-                      "Switzerland":        { id: 19, color: "#DA291C" }, // Red
-                      "Ecuador":            { id: 20, color: "#F7E017" }, // Yellow
-                      "Sweden":             { id: 21, color: "#FFCD00" }, // Yellow
-                      "Czechia":            { id: 22, color: "#C8102E" }, // Red
-                      "Croatia":            { id: 23, color: "#FFFFFF" }, // White
-                      "Saudi Arabia":       { id: 24, color: "#006C35" }, // Green
-                      "Tunisia":            { id: 25, color: "#E70013" }, // Red
-                      "Turkey":             { id: 26, color: "#FFFFFF" }, // White
-                      "Senegal":            { id: 27, color: "#FFFFFF" }, // White
-                      "Belgium":            { id: 28, color: "#D0103A" }, // Red
-                      "Morocco":            { id: 29, color: "#C1272D" }, // Red
-                      "Austria":            { id: 30, color: "#ED2939" }, // Red
-                      "Colombia":           { id: 31, color: "#FCD116" }, // Yellow
-                      "Egypt":              { id: 32, color: "#E41E20" }, // Red
-                      "Canada":             { id: 33, color: "#D80621" }, // Red
-                      "Haiti":              { id: 34, color: "#0038A8" }, // Blue
-                      "Iran":               { id: 35, color: "#FFFFFF" }, // White
-                      "Bosnia-Herzegovina": { id: 36, color: "#0057B8" }, // Blue
-                      "Panama":             { id: 37, color: "#C8102E" }, // Red
-                      "Cape Verde Islands": { id: 38, color: "#003893" }, // Blue
-                      "Congo DR":           { id: 39, color: "#00A3E0" }, // Sky Blue
-                      "Ivory Coast":        { id: 40, color: "#F77F00" }, // Orange
-                      "Qatar":              { id: 41, color: "#8A1538" }, // Maroon
-                      "Jordan":             { id: 42, color: "#FFFFFF" }, // White
-                      "Iraq":               { id: 43, color: "#FFFFFF" }, // White
-                      "Uzbekistan":         { id: 44, color: "#FFFFFF" }, // White
-                      "Netherlands":        { id: 45, color: "#FF6F00" }, // Orange
-                      "Norway":             { id: 46, color: "#BA0C2F" }, // Red
-                      "Scotland":           { id: 47, color: "#005EB8" }, // Blue
-                      "Curaçao":            { id: 48, color: "#003DA5" }, // Blue
+                      "Uruguay":            { id: 1,  color: "#6CB4EE", es: "Uruguay" }, // Sky Blue
+                      "Germany":            { id: 2,  color: "#FFFFFF", es: "Alemania" }, // White
+                      "Spain":              { id: 3,  color: "#C60B1E", es: "España" }, // Red
+                      "Paraguay":           { id: 4,  color: "#D52B1E", es: "Paraguay" }, // Red
+                      "Argentina":          { id: 5,  color: "#75AADB", es: "Argentina" }, // Sky Blue
+                      "Ghana":              { id: 6,  color: "#FFFFFF", es: "Ghana" }, // White
+                      "Brazil":             { id: 7,  color: "#F7E017", es: "Brasil" }, // Yellow
+                      "Portugal":           { id: 8,  color: "#C8102E", es: "Portugal" }, // Red
+                      "Japan":              { id: 9,  color: "#0033A0", es: "Japón" }, // Blue
+                      "Mexico":             { id: 10, color: "#006847", es: "México" }, // Green
+                      "England":            { id: 11, color: "#FFFFFF", es: "Inglaterra" }, // White
+                      "United States":      { id: 12, color: "#1E3A8A", es: "Estados Unidos" }, // Navy Blue
+                      "South Korea":        { id: 13, color: "#E10600", es: "Corea del Sur" }, // Red
+                      "France":             { id: 14, color: "#1D428A", es: "Francia" }, // Blue
+                      "South Africa":       { id: 15, color: "#F7E017", es: "Sudáfrica" }, // Yellow
+                      "Algeria":            { id: 16, color: "#FFFFFF", es: "Argelia" }, // White
+                      "Australia":          { id: 17, color: "#F7C600", es: "Australia" }, // Gold
+                      "New Zealand":        { id: 18, color: "#000000", es: "Nueva Zelanda" }, // Black
+                      "Switzerland":        { id: 19, color: "#DA291C", es: "Suiza" }, // Red
+                      "Ecuador":            { id: 20, color: "#F7E017", es: "Ecuador" }, // Yellow
+                      "Sweden":             { id: 21, color: "#FFCD00", es: "Suecia" }, // Yellow
+                      "Czechia":            { id: 22, color: "#C8102E", es: "Chequia" }, // Red
+                      "Croatia":            { id: 23, color: "#FFFFFF", es: "Croacia" }, // White
+                      "Saudi Arabia":       { id: 24, color: "#006C35", es: "Arabia Saudita" }, // Green
+                      "Tunisia":            { id: 25, color: "#E70013", es: "Túnez" }, // Red
+                      "Turkey":             { id: 26, color: "#FFFFFF", es: "Turquía" }, // White
+                      "Senegal":            { id: 27, color: "#FFFFFF", es: "Senegal" }, // White
+                      "Belgium":            { id: 28, color: "#D0103A", es: "Bélgica" }, // Red
+                      "Morocco":            { id: 29, color: "#C1272D", es: "Marruecos" }, // Red
+                      "Austria":            { id: 30, color: "#ED2939", es: "Austria" }, // Red
+                      "Colombia":           { id: 31, color: "#FCD116", es: "Colombia" }, // Yellow
+                      "Egypt":              { id: 32, color: "#E41E20", es: "Egipto" }, // Red
+                      "Canada":             { id: 33, color: "#D80621", es: "Canadá" }, // Red
+                      "Haiti":              { id: 34, color: "#0038A8", es: "Haití" }, // Blue
+                      "Iran":               { id: 35, color: "#FFFFFF", es: "Irán" }, // White
+                      "Bosnia-Herzegovina": { id: 36, color: "#0057B8", es: "Bosnia y Herzegovina" }, // Blue
+                      "Panama":             { id: 37, color: "#C8102E", es: "Panamá" }, // Red
+                      "Cape Verde Islands": { id: 38, color: "#003893", es: "Islas de Cabo Verde" }, // Blue
+                      "Congo DR":           { id: 39, color: "#00A3E0", es: "RD Congo" }, // Sky Blue
+                      "Ivory Coast":        { id: 40, color: "#F77F00", es: "Costa de Marfil" }, // Orange
+                      "Qatar":              { id: 41, color: "#8A1538", es: "Catar" }, // Maroon
+                      "Jordan":             { id: 42, color: "#FFFFFF", es: "Jordania" }, // White
+                      "Iraq":               { id: 43, color: "#FFFFFF", es: "Irak" }, // White
+                      "Uzbekistan":         { id: 44, color: "#FFFFFF", es: "Uzbekistán" }, // White
+                      "Netherlands":        { id: 45, color: "#FF6F00", es: "Países Bajos" }, // Orange
+                      "Norway":             { id: 46, color: "#BA0C2F", es: "Noruega" }, // Red
+                      "Scotland":           { id: 47, color: "#005EB8", es: "Escocia" }, // Blue
+                      "Curaçao":            { id: 48, color: "#003DA5", es: "Curazao" }, // Blue
                     },
 
                     // ── INIT ──────────────────────────────────────────────────────────────────
@@ -2448,6 +2448,8 @@
                                     ? new Date(d.deadline)
                                     : null;
                                 this.serverLocked = !!d.is_locked;
+                                const idx = this.formations.findIndex(f => f.id === d.formation_id); // → 0
+                                this.currentFormation = this.formations[idx];
                                 if (d.squad && d.squad.length > 0) {
                                     // Rebuild selectedPlayers in starter/bench order from API
                                     const starters = d.squad.filter(
@@ -2527,7 +2529,7 @@
 
                     get filteredPlayers() {
                         const q = this.searchQuery.toLowerCase();
-                        umami.track("search_performed", {query: q, sort_order: this.sortOrder})
+
                         let players = this.activePlayers.filter((p) => {
                             if (
                                 this.filterPos !== "ALL" &&
@@ -2685,6 +2687,13 @@
                             pos: pos,
                             player: playersOfPos[i] || null
                         }));
+                    },
+
+                    trackSearch() {
+                        window.umami?.track("search_performed", {
+                            query: this.searchQuery,
+                            sort_order: this.sortOrder
+                        });
                     },
 
                     jerseyCardClass(player) {
@@ -2929,7 +2938,10 @@
                         }
                         this.normalizeSquad();
                         this.saveToLocalStorage();
-                        umami.track("player_added_to_squad", {player_name: player.name, player_id: player.id, player_pos: player.pos, player_cost: player.cost})
+                        // if (window.umami) {
+                        //   window.umami.track("player_added_to_squad", {player_name: player.name, player_id: player.id, player_pos: player.pos, player_cost: player.cost})
+                        // }
+
                     },
 
                     removePlayer(player) {
@@ -2949,7 +2961,10 @@
 
                         this.normalizeSquad()
                         this.saveToLocalStorage();
-                        umami.track("player_removed_from_squad", {player_name: player.name, player_id: player.id, player_pos: player.pos, player_cost: player.cost})
+                        // if (window.umami) {
+                        //   window.umami.track("player_removed_from_squad", {player_name: player.name, player_id: player.id, player_pos: player.pos, player_cost: player.cost})
+                        // }
+
                     },
 
                     // ── FORMATION ─────────────────────────────────────────────────────────────
@@ -2958,10 +2973,12 @@
                             this.toast(this.lockMessage);
                             return;
                         }
-                        umami.track("formation_changed", {from: this.currentFormation, to: f})
+                        // if (window.umami) {
+                        //   window.umami.track("formation_changed", {from: this.currentFormation, to: f})
+                        // }
+
                         this.currentFormation = f;
                         this.validateAndTrimSquad();
-                        umami.track("formation_changed")
                     },
 
                     normalizeSquad() {
@@ -3094,7 +3111,10 @@
                             this.toast(
                                 `★ capitán: ${this.selectedPlayers.find((p) => p.id === playerId)?.name}`,
                             );
-                            umami.track("captain_changed", {player_id: playerId})
+                            // if (window.umami) {
+                            //   window.umami.track("captain_changed", {player_id: playerId})
+                            // }
+
                         }
                         this.saveToLocalStorage();
                     },
@@ -3136,11 +3156,20 @@
                     },
                     posLabel(p) {
                         return {
-                            GK: "Porteros",
-                            DF: "Defensores",
-                            MF: "Mediocampistas",
-                            FW: "Delanteros",
+                            ALL: "Todos",
+                            GK: "POR",
+                            DF: "DEF",
+                            MF: "MED",
+                            FW: "DEL",
                         }[p];
+                    },
+
+                    translatePos(pos) {
+                        return { GK: 'POR', DF: 'DEF', MF: 'MC', FW: 'DEL' }[pos] ?? pos;
+                    },
+
+                    translateTeam(name) {
+                        return this.TEAM_MAP[name]?.es ?? name;
                     },
 
                     async submitSquad() {
@@ -3169,7 +3198,10 @@
                             const data = await resp.json();
                             if (resp.ok) {
                                 this.showSuccess = true;
-                                umami.track("squad_saved")
+                                // if (window.umami) {
+                                //   window.umami.track("squad_saved")
+                                // }
+
                                 if (data.penalty_incurred)
                                     setTimeout(
                                         () =>
@@ -3233,7 +3265,7 @@
                         this.pointsLoading = true;
                         this.pointsError = null;
                         try {
-                            const resp = await authFetch("/squad/points/all");
+                            const resp = await authFetch("/squad/players/points");
                             if (!resp.ok) throw new Error("Error al cargar puntos");
                             const data = await resp.json();
                             this.pointsMatchdays = data.matchdays || [];

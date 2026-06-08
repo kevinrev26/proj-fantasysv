@@ -220,6 +220,7 @@ class Matchday(Base):
     team_scores = relationship(
         "TeamScore", back_populates="matchday", cascade="all, delete-orphan"
     )
+    player_points = relationship("PlayerPoints", back_populates="matchday")
 
 
 class Fixture(Base):
@@ -322,6 +323,7 @@ class FantasyTeam(Base):
     )
 
     user = relationship("User", back_populates="fantasy_teams")
+    formation_id = Column(String, nullable=False)
     season = relationship("Season", back_populates="fantasy_teams")
     fantasy_players = relationship(
         "FantasyPlayer", back_populates="fantasy_team", cascade="all, delete-orphan"
@@ -359,6 +361,9 @@ class FantasyPlayer(Base):
 
     fantasy_team = relationship("FantasyTeam", back_populates="fantasy_players")
     player = relationship("Player", back_populates="fantasy_players")
+    player_points = relationship(
+        "PlayerPoints", back_populates="fantasy_player", cascade="all, delete-orphan"
+    )
 
 
 class PlayerScore(Base):

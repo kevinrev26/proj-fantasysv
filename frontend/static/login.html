@@ -656,21 +656,30 @@
                                         if (
                                             user.onboarding_complete === false
                                         ) {
-                                            umami.track("login", {
-                                                redirect: "ONBOARDING",
-                                            });
+                                            if (window.umami) {
+                                                window.umami.track("login", {
+                                                    redirect: "ONBOARDING",
+                                                });
+                                            }
+
                                             window.location.href =
                                                 "/onboarding";
                                         } else if (user.role === "admin") {
-                                            umami.track("login", {
-                                                redirect: "ADMIN",
-                                            });
+                                            if (window.umami) {
+                                                window.umami.track("login", {
+                                                    redirect: "ADMIN",
+                                                });
+                                            }
+
                                             window.location.href =
                                                 "/admin-dashboard";
                                         } else {
-                                            umami.track("login", {
-                                                redirect: "SQUAD-BUILDER",
-                                            });
+                                            if (window.umami) {
+                                                window.umami.track("login", {
+                                                    redirect: "SQUAD-BUILDER",
+                                                });
+                                            }
+
                                             window.location.href =
                                                 "/squad-builder";
                                         }

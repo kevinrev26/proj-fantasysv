@@ -2580,19 +2580,22 @@
                             const pred = f.existing_prediction;
                             return {
                                 ...f,
+                                pastDeadline: new Date(f.kickoff_utc) <= now,
                                 localHome: pred ? pred.predicted_home_goals : 0,
                                 localAway: pred ? pred.predicted_away_goals : 0,
                                 localExtraHome: pred
-                                    ? pred.predicted_extra_time_home_goals
+                                    ? (pred.predicted_extra_time_home_goals ??
+                                      0)
                                     : 0,
                                 localExtraAway: pred
-                                    ? pred.predicted_extra_time_away_goals
+                                    ? (pred.predicted_extra_time_away_goals ??
+                                      0)
                                     : 0,
                                 localPenaltyHome: pred
-                                    ? pred.predicted_penalty_home_goals
+                                    ? (pred.predicted_penalty_home_goals ?? 0)
                                     : 0,
                                 localPenaltyAway: pred
-                                    ? pred.predicted_penalty_away_goals
+                                    ? (pred.predicted_penalty_away_goals ?? 0)
                                     : 0,
                                 localJoker: pred ? pred.is_joker : false,
                                 saving: false,
@@ -2840,9 +2843,11 @@
                                 `✅ ${fx.home_team} vs ${fx.away_team} guardado`,
                                 "success",
                             );
-                            umami.track("prediction_submitted", {
-                                id: data.id,
-                            });
+                            if (window.umami) {
+                                window.umami.track("prediction_submitted", {
+                                    id: data.id,
+                                });
+                            }
                         } catch (e) {
                             this.toast(`❌ ${e.message}`, "error");
                             fx.savedMsg = "";
@@ -2911,7 +2916,7 @@
                             return;
                         }
 
-                        predictions: openFixtures.map((f) => ({
+                        const predictions = openFixtures.map((f) => ({
                             fixture_id: f.fixture_id,
                             predicted_home_goals: f.localHome ?? 0,
                             predicted_away_goals: f.localAway ?? 0,
