@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import List
 
 import sentry_sdk
@@ -287,12 +287,24 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                 # If you need per‑matchday selection, you'll need a separate table.
                 scored = apply_wildcard_multiplier(raw, fp.is_x2_joker)
 
-                player_points = PlayerPoints(
-                    fantasy_player_id=fp.id,
-                    matchday_id=matchday_id,
-                    points=scored["final_points"],
+                existing_pp = (
+                    db.query(PlayerPoints)
+                    .filter(
+                        PlayerPoints.fantasy_player_id == fp.id,
+                        PlayerPoints.matchday_id == matchday_id,
+                    )
+                    .first()
                 )
-                db.add(player_points)
+                if existing_pp:
+                    existing_pp.points = scored["final_points"]
+                else:
+                    db.add(
+                        PlayerPoints(
+                            fantasy_player_id=fp.id,
+                            matchday_id=matchday_id,
+                            points=scored["final_points"],
+                        )
+                    )
 
                 total_points += scored["final_points"]
                 logger.debug(
@@ -334,12 +346,24 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
             else:
                 team_score.cumulative_points = total_points
 
-            leaderboard_entry = LeaderboardWeeklyEntry(
-                fantasy_team_id=fantasy_team.id,
-                total_points=total_points,
+            leaderboard_entry = (
+                db.query(LeaderboardWeeklyEntry)
+                .filter(
+                    LeaderboardWeeklyEntry.fantasy_team_id == fantasy_team.id,
+                    LeaderboardWeeklyEntry.date == date.today(),
+                )
+                .first()
             )
+            if leaderboard_entry:
+                leaderboard_entry.total_points = total_points
+            else:
+                db.add(
+                    LeaderboardWeeklyEntry(
+                        fantasy_team_id=fantasy_team.id,
+                        total_points=total_points,
+                    )
+                )
             db.add(team_score)
-            db.add(leaderboard_entry)
             logger.debug(
                 "Team score updated", team_score_id=team_score.id, points=total_points
             )
