@@ -103,3 +103,12 @@ class PlayerResponseDetail(BaseModel):
     class Config:
         from_attributes = True
 
+class TempPasswordResponse(BaseModel):
+    temporary_password: str
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+class ChangePasswordResponse(BaseModel):
+    message: str

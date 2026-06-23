@@ -1,5 +1,7 @@
 import redis
 import structlog
+import secrets
+import string
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -166,7 +168,8 @@ def get_current_user_profile(request: Request, db: Session = Depends(get_db)):
 # ── Login ─────────────────────────────────────────────────────────────────────
 @router.post("/login", response_model=schemas.Token)
 def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
 ):
     user = (
         db.query(models.User)
@@ -177,9 +180,34 @@ def login_for_access_token(
         .first()
     )
 
-    if not user or not security.verify_password(
-        form_data.password, user.hashed_password
-    ):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Check temporary password from Redis
+    password_valid = False
+
+    r = get_redis()
+    temp_key = f"temp_password:{user.id}"
+    temp_hash = r.get(temp_key)
+
+    if temp_hash:
+        if isinstance(temp_hash, bytes):
+            temp_hash = temp_hash.decode("utf-8")
+        if security.verify_password(form_data.password, temp_hash):
+            password_valid = True
+
+    # Fall back to permanent password
+    if not password_valid:
+        password_valid = security.verify_password(
+            form_data.password,
+            user.hashed_password
+        )
+
+    if not password_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -240,3 +268,85 @@ def logout(request: Request):
         logger.warning(
             "Logout token missing jti/exp — cannot blocklist", payload=payload
         )
+
+
+# ── Admin Reset Password ─────────────────────────────────────────────────────────────────────
+@router.post("/admin/users/{user_id}/reset-password", response_model=schemas.TempPasswordResponse)
+def reset_user_password(
+    user_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    # Verify admin role
+    current_user_id = get_current_user_id_from_token(request)
+    current_user = db.query(models.User).filter(models.User.id == current_user_id).first()
+    print(current_user_id)
+    print(current_user.role)
+    if not current_user or current_user.role != models.UserRole.admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    # Get user to reset
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Generate temporary password
+    temporary_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
+
+    # Hash the temporary password
+    hashed_password = security.hash_password(temporary_password)
+
+    # Store in Redis with 2-hour TTL
+    r = get_redis()
+    key = f"temp_password:{user.id}"
+    r.setex(key, 7200, hashed_password)  # 2 hours
+
+    return {"temporary_password": temporary_password}
+
+
+# ── Change Password ─────────────────────────────────────────────────────────────────────
+@router.post("/change-password", response_model=schemas.ChangePasswordResponse)
+def change_password(
+    payload: schemas.ChangePasswordRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    user_id = get_current_user_id_from_token(request)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Verify current password — check temp password first, then permanent
+    password_valid = False
+
+    r = get_redis()
+    temp_key = f"temp_password:{user.id}"
+    temp_hash = r.get(temp_key)
+
+    if temp_hash:
+        if security.verify_password(payload.current_password, temp_hash):
+            password_valid = True
+
+    if not password_valid:
+        password_valid = security.verify_password(
+            payload.current_password, user.hashed_password
+        )
+
+    if not password_valid:
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    # Validate new password strength
+    if len(payload.new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters")
+
+    # Hash and update password
+    hashed_password = security.hash_password(payload.new_password)
+    user.hashed_password = hashed_password
+    db.commit()
+    db.refresh(user)
+
+    # Clear temp password now that a real one is set
+    if temp_hash:
+        r.delete(temp_key)
+
+    return {"message": "Password changed successfully"}

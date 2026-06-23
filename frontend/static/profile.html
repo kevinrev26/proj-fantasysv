@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" x-data="profileApp()" x-init="init()">
+<html lang="es" x-data="profileApp()" x-init="init()">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Profile — Fantasy SV</title>
+  <title>Perfil — Fantasy SV</title>
   <link rel="stylesheet" href="style.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Archivo:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -22,13 +22,13 @@
       --surface-dark: #151C32;
       --text-white: #FFFFFF;
       --text-muted: #A6B0C3;
-      
+
       /* Typography */
       --font-primary: 'Inter', sans-serif;
       --font-heading: 'Rajdhani', sans-serif;
       --font-display: 'Oswald', sans-serif;
       --font-mono: 'Archivo', monospace;
-      
+
       /* Spacing */
       --spacing-xs: 4px;
       --spacing-sm: 8px;
@@ -36,47 +36,47 @@
       --spacing-lg: 24px;
       --spacing-xl: 32px;
       --spacing-2xl: 48px;
-      
+
       /* Border Radius */
       --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 20px;
       --radius-xl: 24px;
-      
+
       /* Shadows */
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+      --shadow-md: 0 4px 16px rgba(0, 0, 255, 0.4);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 255, 0.5);
       --shadow-glow-blue: 0 0 12px rgba(13, 71, 255, 0.5);
       --shadow-glow-purple: 0 0 12px rgba(123, 44, 255, 0.5);
       --shadow-glow-green: 0 0 12px rgba(0, 210, 106, 0.5);
-      
+
       /* Transitions */
       --transition-fast: 0.2s ease;
       --transition-medium: 0.3s ease;
       --transition-slow: 0.4s ease;
     }
-    
+
     /* Base Styles */
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    
+
     body {
       font-family: var(--font-primary);
       background: var(--background-dark);
       color: var(--text-white);
       min-height: 100dvh;
       overflow-x: hidden;
-      background-image: 
+      background-image:
         radial-gradient(circle at 10% 20%, rgba(13, 71, 255, 0.1) 0%, transparent 20%),
         radial-gradient(circle at 90% 80%, rgba(123, 44, 255, 0.1) 0%, transparent 20%),
         linear-gradient(to bottom, var(--background-dark), #080b14);
       background-attachment: fixed;
     }
-    
+
     button {
       font-family: var(--font-primary);
       cursor: pointer;
@@ -84,7 +84,7 @@
       background: none;
       transition: var(--transition-medium);
     }
-    
+
     /* Main Navigation */
     .main-nav {
       position: sticky;
@@ -97,7 +97,7 @@
       padding: 0 20px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
-    
+
     .nav-container {
       max-width: 1200px;
       margin: 0 auto;
@@ -106,7 +106,7 @@
       justify-content: space-between;
       height: 64px;
     }
-    
+
     .nav-brand {
       display: flex;
       align-items: center;
@@ -119,29 +119,29 @@
       transition: transform 0.2s;
       position: relative;
     }
-    
+
     .nav-brand:hover {
       transform: scale(1.02);
       text-shadow: 0 0 10px rgba(13, 71, 255, 0.7);
     }
-    
+
     .nav-logo-icon {
       font-size: 1.6rem;
       filter: drop-shadow(0 0 8px rgba(13, 71, 255, 0.7));
       animation: pulse 2s infinite;
     }
-    
+
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
-    
+
     .nav-links {
       display: flex;
       align-items: center;
       gap: 24px;
     }
-    
+
     .nav-link {
       text-decoration: none;
       color: var(--text-muted);
@@ -152,11 +152,11 @@
       padding: 6px 0;
       letter-spacing: 0.02em;
     }
-    
+
     .nav-link:hover {
       color: var(--primary-blue);
     }
-    
+
     .nav-link::after {
       content: "";
       position: absolute;
@@ -169,22 +169,22 @@
       border-radius: 2px;
       box-shadow: 0 0 8px rgba(13, 71, 255, 0.5);
     }
-    
+
     .nav-link:hover::after {
       width: 100%;
     }
-    
+
     .nav-link.active {
       color: var(--primary-blue);
       font-weight: 700;
     }
-    
+
     .nav-link.active::after {
       width: 100%;
       background: var(--primary-blue);
       box-shadow: 0 0 10px rgba(13, 71, 255, 0.7);
     }
-    
+
     .sign-out-btn {
       background: rgba(255, 95, 109, 0.15);
       color: var(--danger-red);
@@ -199,7 +199,7 @@
       align-items: center;
       gap: 6px;
     }
-    
+
     .sign-out-btn:hover {
       background: var(--danger-red);
       color: var(--text-white);
@@ -207,7 +207,7 @@
       box-shadow: 0 4px 12px rgba(255, 95, 109, 0.3);
       animation: pulse 1.5s infinite;
     }
-    
+
     .nav-mobile-toggle {
       display: none;
       flex-direction: column;
@@ -217,7 +217,7 @@
       border: none;
       padding: 5px;
     }
-    
+
     .nav-mobile-toggle span {
       width: 24px;
       height: 2px;
@@ -225,12 +225,12 @@
       border-radius: 2px;
       transition: 0.3s;
     }
-    
+
     @media (max-width: 768px) {
       .nav-mobile-toggle {
         display: flex;
       }
-      
+
       .nav-links {
         position: absolute;
         top: 64px;
@@ -248,14 +248,14 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
       }
-      
+
       .nav-links.active {
         transform: translateY(0);
         opacity: 1;
         pointer-events: all;
       }
     }
-    
+
     /* Profile Page */
     .profile-page {
       max-width: 520px;
@@ -264,7 +264,7 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .profile-page::before {
       content: "";
       position: absolute;
@@ -272,12 +272,12 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: 
+      background:
         radial-gradient(circle at 15% 25%, rgba(13, 71, 255, 0.05) 0%, transparent 25%),
         radial-gradient(circle at 85% 75%, rgba(123, 44, 255, 0.05) 0%, transparent 25%);
       z-index: -1;
     }
-    
+
     /* Profile Card */
     .profile-card {
       background: rgba(21, 28, 50, 0.7);
@@ -291,13 +291,13 @@
       overflow: hidden;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    
+
     .profile-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       border-color: rgba(13, 71, 255, 0.3);
     }
-    
+
     .profile-card::before {
       content: "";
       position: absolute;
@@ -308,12 +308,12 @@
       background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
       animation: glow 2s infinite;
     }
-    
+
     @keyframes glow {
       0%, 100% { opacity: 0.7; }
       50% { opacity: 1; }
     }
-    
+
     /* Profile Avatar */
     .profile-avatar {
       width: 90px;
@@ -330,7 +330,7 @@
       overflow: hidden;
       border: 2px solid rgba(255, 255, 255, 0.1);
     }
-    
+
     .profile-avatar::after {
       content: "";
       position: absolute;
@@ -342,12 +342,12 @@
       transform: translateX(-100%);
       animation: shine 3s infinite;
     }
-    
+
     @keyframes shine {
       0% { transform: translateX(-100%); }
       100% { transform: translateX(100%); }
     }
-    
+
     /* Profile Name */
     .profile-name {
       text-align: center;
@@ -359,7 +359,7 @@
       letter-spacing: 0.5px;
       text-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
     }
-    
+
     /* Profile Email */
     .profile-email {
       text-align: center;
@@ -368,7 +368,7 @@
       margin: 0 0 var(--spacing-lg);
       font-weight: 500;
     }
-    
+
     /* Profile Badges */
     .profile-badge {
       display: inline-flex;
@@ -386,28 +386,28 @@
       transition: all 0.3s ease;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
-    
+
     .badge-active {
       background: rgba(0, 210, 106, 0.15);
       border: 1px solid rgba(0, 210, 106, 0.4);
       color: var(--success-green);
       box-shadow: 0 0 15px rgba(0, 210, 106, 0.2);
     }
-    
+
     .badge-inactive {
       background: rgba(255, 61, 77, 0.15);
       border: 1px solid rgba(255, 61, 77, 0.4);
       color: var(--danger-red);
       box-shadow: 0 0 15px rgba(255, 61, 77, 0.2);
     }
-    
+
     .badge-admin {
       background: rgba(248, 198, 58, 0.15);
       border: 1px solid rgba(248, 198, 58, 0.4);
       color: var(--gold);
       box-shadow: 0 0 15px rgba(248, 198, 58, 0.2);
     }
-    
+
     /* Section Title */
     .section-title {
       font-size: 0.85rem;
@@ -419,7 +419,7 @@
       position: relative;
       padding-bottom: 8px;
     }
-    
+
     .section-title::after {
       content: "";
       position: absolute;
@@ -431,12 +431,12 @@
       border-radius: 2px;
       box-shadow: 0 0 8px rgba(13, 71, 255, 0.5);
     }
-    
+
     /* Form Group */
     .form-group {
       margin-bottom: var(--spacing-lg);
     }
-    
+
     .form-group label {
       display: block;
       font-size: 0.9rem;
@@ -445,7 +445,7 @@
       margin-bottom: var(--spacing-xs);
       letter-spacing: 0.02em;
     }
-    
+
     .form-input {
       width: 100%;
       padding: 14px 16px;
@@ -460,13 +460,13 @@
       box-sizing: border-box;
       font-weight: 500;
     }
-    
+
     .form-input:focus {
       border-color: var(--primary-blue);
       background: rgba(13, 71, 255, 0.1);
       box-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
     }
-    
+
     /* Buttons */
     .btn {
       padding: 14px 24px;
@@ -488,7 +488,7 @@
       overflow: hidden;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
-    
+
     .btn::after {
       content: "";
       position: absolute;
@@ -500,11 +500,11 @@
       transform: translateX(-100%);
       transition: transform 0.5s ease;
     }
-    
+
     .btn:hover::after {
       transform: translateX(100%);
     }
-    
+
     .btn-primary {
       background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
       color: var(--text-white);
@@ -514,45 +514,45 @@
       font-weight: 800;
       letter-spacing: 0.03em;
     }
-    
+
     .btn-primary:hover {
       opacity: 0.95;
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(13, 71, 255, 0.4);
     }
-    
+
     .btn-primary:disabled {
       opacity: 0.4;
       cursor: not-allowed;
       transform: none;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
-    
+
     .btn-ghost {
       background: rgba(255, 255, 255, 0.07);
       border: 1px solid rgba(255, 255, 255, 0.12);
       color: var(--text-white);
       font-weight: 600;
     }
-    
+
     .btn-ghost:hover {
       background: rgba(255, 255, 255, 0.12);
       transform: translateY(-1px);
     }
-    
+
     .btn-danger {
       background: rgba(255, 61, 77, 0.15);
       border: 1px solid rgba(255, 61, 77, 0.4);
       color: var(--danger-red);
       font-weight: 700;
     }
-    
+
     .btn-danger:hover {
       background: rgba(255, 61, 77, 0.25);
       transform: translateY(-1px);
       box-shadow: 0 4px 15px rgba(255, 61, 77, 0.3);
     }
-    
+
     /* Alert */
     .alert {
       padding: 14px 16px;
@@ -565,26 +565,26 @@
       gap: 8px;
       animation: fadeIn 0.3s ease;
     }
-    
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    
+
     .alert-success {
       background: rgba(0, 210, 106, 0.15);
       border: 1px solid rgba(0, 210, 106, 0.4);
       color: var(--success-green);
       box-shadow: 0 0 15px rgba(0, 210, 106, 0.2);
     }
-    
+
     .alert-error {
       background: rgba(255, 61, 77, 0.15);
       border: 1px solid rgba(255, 61, 77, 0.4);
       color: var(--danger-red);
       box-shadow: 0 0 15px rgba(255, 61, 77, 0.2);
     }
-    
+
     /* Stats Grid */
     .stat-grid {
       display: grid;
@@ -592,7 +592,7 @@
       gap: var(--spacing-md);
       margin-bottom: var(--spacing-lg);
     }
-    
+
     .stat-box {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -604,13 +604,13 @@
       overflow: hidden;
       backdrop-filter: blur(5px);
     }
-    
+
     .stat-box:hover {
       transform: translateY(-5px);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
       border-color: rgba(13, 71, 255, 0.3);
     }
-    
+
     .stat-box::before {
       content: "";
       position: absolute;
@@ -620,7 +620,7 @@
       height: 2px;
       background: linear-gradient(90deg, var(--primary-blue), var(--secondary-purple));
     }
-    
+
     .stat-value {
       font-size: 2rem;
       font-weight: 800;
@@ -630,7 +630,7 @@
       margin-bottom: var(--spacing-xs);
       text-shadow: 0 0 10px rgba(13, 71, 255, 0.3);
     }
-    
+
     .stat-label {
       font-size: 0.85rem;
       color: var(--text-muted);
@@ -638,7 +638,7 @@
       font-weight: 500;
       letter-spacing: 0.03em;
     }
-    
+
     /* Skeleton */
     .skeleton {
       background: rgba(255, 255, 255, 0.07);
@@ -647,61 +647,61 @@
       animation: pulse 1.5s ease-in-out infinite;
       width: 100%;
     }
-    
+
     .skeleton.avatar {
       width: 90px;
       height: 90px;
       border-radius: 50%;
       margin: 0 auto var(--spacing-md);
     }
-    
+
     .skeleton.name {
       width: 60%;
       height: 24px;
       margin: 0 auto 12px;
     }
-    
+
     .skeleton.email {
       width: 40%;
       height: 18px;
       margin: 0 auto 20px;
     }
-    
+
     .skeleton.badge {
       width: 100px;
       height: 28px;
       margin: 0 auto 16px;
     }
-    
+
     .skeleton.stat {
       width: 100%;
       height: 60px;
     }
-    
+
     @keyframes pulse {
       0%, 100% { opacity: 0.6; }
       50% { opacity: 1; }
     }
-    
+
     /* Responsive */
     @media (max-width: 768px) {
       .profile-page {
         padding: var(--spacing-md) var(--spacing-sm) var(--spacing-2xl);
       }
-      
+
       .profile-card {
         padding: var(--spacing-lg);
       }
-      
+
       .stat-grid {
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
       }
-      
+
       .stat-box {
         padding: var(--spacing-md);
       }
-      
+
       .stat-value {
         font-size: 1.6rem;
       }
@@ -764,52 +764,73 @@
         <p class="profile-email" x-text="user.email"></p>
         <div style="text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
           <span class="profile-badge" :class="user.is_active ? 'badge-active' : 'badge-inactive'"
-                x-text="user.is_active ? '✓ Active' : '⚠ Not Activated'"></span>
-          <span x-show="user.role === 'admin'" class="profile-badge badge-admin">⭐ Admin</span>
+                x-text="user.is_active ? '✓ Activo' : '⚠ No Activado'"></span>
+          <span x-show="user.role === 'admin'" class="profile-badge badge-admin">⭐ Administrador</span>
         </div>
       </div>
 
       <!-- Stats card -->
       <div class="profile-card">
-        <div class="section-title">Season Stats</div>
+        <div class="section-title">Estadísticas de Temporada</div>
         <div class="stat-grid">
           <div class="stat-box">
             <div class="stat-value" x-text="stats.totalPoints ?? '—'"></div>
-            <div class="stat-label">Total Points</div>
+            <div class="stat-label">Puntos Totales</div>
           </div>
           <div class="stat-box">
             <div class="stat-value" x-text="stats.rank ? '#' + stats.rank : '—'"></div>
-            <div class="stat-label">Ranking</div>
+            <div class="stat-label">Clasificación</div>
           </div>
           <div class="stat-box">
             <div class="stat-value" x-text="stats.teamName ?? '—'"></div>
-            <div class="stat-label">Team Name</div>
+            <div class="stat-label">Nombre del Equipo</div>
           </div>
           <div class="stat-box">
             <div class="stat-value" x-text="stats.matchdayPoints ?? '—'"></div>
-            <div class="stat-label">Last GW</div>
+            <div class="stat-label">Última Jornada</div>
           </div>
         </div>
       </div>
 
       <!-- Edit team name -->
       <div class="profile-card">
-        <div class="section-title">Edit Team Name</div>
+        <div class="section-title">Editar Nombre del Equipo</div>
         <div x-show="teamNameMsg" class="alert" :class="teamNameSuccess ? 'alert-success' : 'alert-error'" x-text="teamNameMsg"></div>
         <div class="form-group">
-          <label>Team Name</label>
+          <label>Nombre del Equipo</label>
           <input type="text" class="form-input" x-model="editTeamName" maxlength="50"
-                 placeholder="Your team name" @keydown.enter="saveTeamName()"/>
+                 placeholder="Nombre de tu equipo" @keydown.enter="saveTeamName()"/>
         </div>
         <button class="btn btn-primary" @click="saveTeamName()" :disabled="savingTeamName || editTeamName.trim().length < 2">
-          <span x-text="savingTeamName ? 'Saving…' : 'Save Team Name'"></span>
+          <span x-text="savingTeamName ? 'Guardando…' : 'Guardar Nombre del Equipo'"></span>
+        </button>
+      </div>
+
+      <!-- Change Password -->
+      <div class="profile-card">
+        <div class="section-title">Cambiar Contraseña</div>
+        <div x-show="changePasswordMsg" class="alert" :class="changePasswordSuccess ? 'alert-success' : 'alert-error'" x-text="changePasswordMsg"></div>
+        <div class="form-group">
+          <label>Contraseña Actual</label>
+          <input type="password" class="form-input" x-model="currentPassword" required/>
+        </div>
+        <div class="form-group">
+          <label>Nueva Contraseña</label>
+          <input type="password" class="form-input" x-model="newPassword" required/>
+        </div>
+        <div class="form-group">
+          <label>Confirmar Nueva Contraseña</label>
+          <input type="password" class="form-input" x-model="confirmNewPassword" required/>
+        </div>
+        <button class="btn btn-primary" @click="changePassword()" :disabled="changingPassword">
+          <span x-text="changingPassword ? 'Cambiando...' : 'Cambiar Contraseña'"></span>
         </button>
       </div>
 
       <!-- Sign out / danger zone -->
       <div class="profile-card">
-        <div class="section-title">Account</div>
-        <button class="btn btn-danger" style="width:100%;" @click="signOut()">Sign Out</button>
+        <div class="section-title">Cuenta</div>
+        <button class="btn btn-danger" style="width:100%;" @click="signOut()">Cerrar Sesión</button>
       </div>
     </div>
   </template>
@@ -818,7 +839,7 @@
   <template x-if="!loading && !user">
     <div class="profile-card" style="text-align:center;">
       <div style="font-size:3rem;margin-bottom:16px;">⚠️</div>
-      <p style="color:rgba(255,255,255,0.5);">Could not load profile. <a href="/register" style="color:#00d4aa;">Register</a> or check your connection.</p>
+      <p style="color:rgba(255,255,255,0.5);">No se pudo cargar el perfil. <a href="/register" style="color:#00d4aa;">Regístrate</a> o verifica tu conexión.</p>
     </div>
   </template>
 
@@ -840,6 +861,12 @@ function profileApp() {
     savingTeamName: false,
     teamNameMsg: '',
     teamNameSuccess: false,
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
+    changingPassword: false,
+    changePasswordMsg: '',
+    changePasswordSuccess: false,
 
     async init() {
       await requireRole('user')
@@ -899,20 +926,67 @@ function profileApp() {
         });
         const data = await resp.json();
         if (resp.ok) {
-          this.teamNameMsg = '✓ Team name updated!';
+          this.teamNameMsg = '✓ ¡Nombre del equipo actualizado!';
           this.teamNameSuccess = true;
           this.stats.teamName = name;
         } else {
-          this.teamNameMsg = data.detail || 'Failed to update team name.';
+          this.teamNameMsg = data.detail || 'Error al actualizar el nombre del equipo.';
           this.teamNameSuccess = false;
         }
       } catch (e) {
-        this.teamNameMsg = 'Network error.';
+        this.teamNameMsg = 'Error de red.';
         this.teamNameSuccess = false;
       } finally {
         this.savingTeamName = false;
         setTimeout(() => { this.teamNameMsg = ''; }, 3000);
       }
+    },
+
+    changePassword() {
+      if (this.newPassword !== this.confirmNewPassword) {
+        this.changePasswordMsg = 'Las nuevas contraseñas no coinciden';
+        this.changePasswordSuccess = false;
+        return;
+      }
+
+      if (this.newPassword.length < 8) {
+        this.changePasswordMsg = 'La nueva contraseña debe tener al menos 8 caracteres';
+        this.changePasswordSuccess = false;
+        return;
+      }
+
+      this.changingPassword = true;
+      this.changePasswordMsg = '';
+
+      authFetch('/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          current_password: this.currentPassword,
+          new_password: this.newPassword
+        })
+      })
+      .then(async response => {
+        const data = await response.json();
+        this.changingPassword = false;
+        if (response.ok) {
+          this.changePasswordMsg = 'Contraseña cambiada exitosamente';
+          this.changePasswordSuccess = true;
+          this.currentPassword = '';
+          this.newPassword = '';
+          this.confirmNewPassword = '';
+        } else {
+          this.changePasswordMsg = data.detail || 'Error al cambiar la contraseña';
+          this.changePasswordSuccess = false;
+        }
+      })
+      .catch(error => {
+        this.changingPassword = false;
+        this.changePasswordMsg = 'Error de red';
+        this.changePasswordSuccess = false;
+      });
     },
 
     signOut() {
