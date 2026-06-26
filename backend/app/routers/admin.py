@@ -672,7 +672,7 @@ def bulk_create_fixtures(
             )
 
     # Replace fixtures
-    db.query(models.Fixture).filter(models.Fixture.matchday_id == matchday_id).delete()
+    # db.query(models.Fixture).filter(models.Fixture.matchday_id == matchday_id).delete()
     for f in payload.fixtures:
         kickoff = f.kickoff_utc
         if kickoff.tzinfo is None:

@@ -24,6 +24,7 @@ from .models import (
     PredictionMatchdayStats,
     PredictionScore,
     TeamScore,
+    PlayerScoreHistory,
 )
 from .scoring import (
     apply_wildcard_multiplier,
@@ -143,6 +144,28 @@ def score_matchday_for_fantasy_team(matchday_id: int, fantasy_team_id: int, db_s
             points=scored["final_points"],
         )
         db_session.add(player_points)
+
+        # CREATE OR UPDATE PlayerScoreHistory record
+        player_score_history = (
+            db_session.query(PlayerScoreHistory)
+            .filter(
+                PlayerScoreHistory.player_score_id == player_stats.id,
+                PlayerScoreHistory.fantasy_team_id == fantasy_team_id,
+                PlayerScoreHistory.matchday_id == matchday_id,
+            )
+            .first()
+        )
+
+        if player_score_history:
+            player_score_history.points = scored["final_points"]
+        else:
+            player_score_history = PlayerScoreHistory(
+                player_score_id=player_stats.id,
+                fantasy_team_id=fantasy_team_id,
+                matchday_id=matchday_id,
+                points=scored["final_points"],
+            )
+            db_session.add(player_score_history)
 
         # 7. Accumulate team total
         total_team_points += scored["final_points"]
@@ -305,6 +328,28 @@ def recalculate_matchday_scores_task(self, matchday_id: int):
                             points=scored["final_points"],
                         )
                     )
+
+                # CREATE OR UPDATE PlayerScoreHistory record
+                player_score_history = (
+                    db.query(PlayerScoreHistory)
+                    .filter(
+                        PlayerScoreHistory.player_score_id == ps.id,
+                        PlayerScoreHistory.fantasy_team_id == fantasy_team.id,
+                        PlayerScoreHistory.matchday_id == matchday_id,
+                    )
+                    .first()
+                )
+
+                if player_score_history:
+                    player_score_history.points = scored["final_points"]
+                else:
+                    player_score_history = PlayerScoreHistory(
+                        player_score_id=ps.id,
+                        fantasy_team_id=fantasy_team.id,
+                        matchday_id=matchday_id,
+                        points=scored["final_points"],
+                    )
+                    db.add(player_score_history)
 
                 total_points += scored["final_points"]
                 logger.debug(
@@ -471,19 +516,18 @@ def calculate_prediction_points_task(self, fixture_id: int):
             logger.warning("Fixture has no result yet, aborting", fixture_id=fixture_id)
             return
 
+        is_knockout = fixture.is_knockout
+
+        # Determine actual match outcome (excluding penalty shootouts)
         actual_home = result.home_goals
         actual_away = result.away_goals
 
-        # Determine actual outcome: "home", "away", or "draw"
         if actual_home > actual_away:
             actual_outcome = "home"
         elif actual_away > actual_home:
             actual_outcome = "away"
         else:
             actual_outcome = "draw"
-
-        fixture = db.query(Fixture).filter(Fixture.id == fixture_id).first()
-        is_knockout = fixture.is_knockout if fixture else False
 
         # 2. Load all predictions for this fixture
         predictions = (
@@ -498,7 +542,6 @@ def calculate_prediction_points_task(self, fixture_id: int):
             "Scoring predictions", fixture_id=fixture_id, count=len(predictions)
         )
 
-        # Track which users need their matchday stats updated
         affected_users = set()
 
         for prediction in predictions:
@@ -509,7 +552,9 @@ def calculate_prediction_points_task(self, fixture_id: int):
             pred_home = prediction.predicted_home_goals
             pred_away = prediction.predicted_away_goals
 
-            # Exact score: 3 points
+            # ------------------------------------------------------------------
+            # Scenario A: Exact match score (Regular time + Extra time if applicable)
+            # ------------------------------------------------------------------
             if pred_home == actual_home and pred_away == actual_away:
                 exact_score_points = 3
             else:
@@ -521,41 +566,47 @@ def calculate_prediction_points_task(self, fixture_id: int):
                 else:
                     pred_outcome = "draw"
 
-                # Correct outcome only: 1 point
+                # ------------------------------------------------------------------
+                # Scenario B: Correct Outcome (Home win, Away win, or Draw)
+                # This inherently handles:
+                # - Wins in regular time
+                # - Wins after extra time (if goals differ)
+                # - Draws heading into penalties
+                # ------------------------------------------------------------------
                 if pred_outcome == actual_outcome:
                     correct_outcome_points = 1
 
+            # ------------------------------------------------------------------
+            # Scenario C: Penalty Shootout (Only applies if actual match was a draw)
+            # ------------------------------------------------------------------
             if is_knockout and result.penalty_shootout:
-                # Predicted penalty winner
                 pred_pen_home = prediction.predicted_penalty_home_goals
                 pred_pen_away = prediction.predicted_penalty_away_goals
+                
                 if pred_pen_home > pred_pen_away:
                     pred_pen_winner = "home"
                 elif pred_pen_away > pred_pen_home:
                     pred_pen_winner = "away"
                 else:
-                    pred_pen_winner = (
-                        None  # draw in penalties (should not happen in real matches)
-                    )
+                    pred_pen_winner = None
 
-                actual_pen_winner = (
-                    result.winner
-                )  # "home" or "away" (already computed from penalties)
+                actual_pen_winner = result.winner  # "home" or "away"
 
                 if pred_pen_winner is not None and pred_pen_winner == actual_pen_winner:
-                    correct_penalty_winner_points = 2  # award 2 points
+                    correct_penalty_winner_points = 2
 
+            # Sum up points
             raw_points = (
                 exact_score_points
                 + correct_outcome_points
                 + correct_penalty_winner_points
             )
 
-            # Apply joker multiplier (x2) if this prediction has is_joker=True
+            # Apply joker multiplier (x2)
             joker_applied = prediction.is_joker
             points_earned = raw_points * 2 if joker_applied else raw_points
 
-            # Upsert PredictionScore (safe to re-run on result correction)
+            # Upsert PredictionScore
             score = (
                 db.query(PredictionScore)
                 .filter(PredictionScore.prediction_id == prediction.id)
@@ -568,12 +619,6 @@ def calculate_prediction_points_task(self, fixture_id: int):
                 score.correct_penalty_winner_points = correct_penalty_winner_points
                 score.joker_multiplier_applied = joker_applied
                 score.calculated_at = datetime.now(timezone.utc)
-
-                logger.debug(
-                    "Updated existing prediction score",
-                    prediction_id=prediction.id,
-                    points_earned=points_earned,
-                )
             else:
                 score = PredictionScore(
                     prediction_id=prediction.id,
@@ -585,11 +630,6 @@ def calculate_prediction_points_task(self, fixture_id: int):
                     calculated_at=datetime.now(timezone.utc),
                 )
                 db.add(score)
-                logger.debug(
-                    "Created new prediction score",
-                    prediction_id=prediction.id,
-                    points_earned=points_earned,
-                )
 
             affected_users.add(prediction.user_id)
 
@@ -599,8 +639,6 @@ def calculate_prediction_points_task(self, fixture_id: int):
         matchday_id = fixture.matchday_id
 
         for user_id in affected_users:
-            # Sum all scored predictions for this user across the whole matchday
-            # (not just this fixture — another fixture in the matchday may already be scored)
             user_predictions = (
                 db.query(Prediction)
                 .join(Fixture, Fixture.id == Prediction.fixture_id)
@@ -642,13 +680,6 @@ def calculate_prediction_points_task(self, fixture_id: int):
                     else None,
                 )
                 db.add(stats)
-
-            logger.debug(
-                "Updated matchday stats",
-                user_id=user_id,
-                matchday_id=matchday_id,
-                total_points=total_points,
-            )
 
         db.commit()
         logger.info(

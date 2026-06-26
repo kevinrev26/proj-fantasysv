@@ -64,6 +64,7 @@ class PhaseName(enum.Enum):
     group = "group"
     quarterfinal = "quarterfinal"
     semifinal = "semifinal"
+    third_place = "thirdplace"
     final = "final"
 
 
@@ -351,6 +352,7 @@ class FantasyPlayer(Base):
     slot = Column(SQLEnum(FantasySlot), default=FantasySlot.starter, nullable=False)
     formation_position = Column(String, nullable=False)
     is_x2_joker = Column(Boolean, default=False, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
     # Optimistic-lock / audit field (NEW)
     updated_at = Column(
         DateTime(timezone=True),
@@ -637,3 +639,27 @@ class PlayerPoints(Base):
 
     # Ensure unique combination of fantasy_player_id and matchday_id
     __table_args__ = (UniqueConstraint("fantasy_player_id", "matchday_id"),)
+
+
+class PlayerScoreHistory(Base):
+    __tablename__ = "player_score_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    player_score_id = Column(Integer, ForeignKey("player_score.id"), nullable=False)
+    fantasy_team_id = Column(Integer, ForeignKey("fantasy_team.id"), nullable=False)
+    matchday_id = Column(Integer, ForeignKey("matchday.id"), nullable=False)
+    points = Column(Integer, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    # Relationships
+    player_score = relationship("PlayerScore")
+    fantasy_team = relationship("FantasyTeam")
+    matchday = relationship("Matchday")

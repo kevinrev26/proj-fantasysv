@@ -297,6 +297,8 @@ def get_squad(
     players = []
     total_cost = 0
     for fp in team.fantasy_players:
+        if not fp.is_active:  # Skip inactive players
+            continue
         players.append(
             {
                 "player_id": fp.player_id,
@@ -638,25 +640,42 @@ def update_squad(
     #     total_penalty = paid * 4
 
     # Replace squad
-    db.query(models.FantasyPlayer).filter(
-        models.FantasyPlayer.fantasy_team_id == team.id
-    ).delete()
+    # Instead of deleting all fantasy_players, set is_active=False for existing players
+    # and add new ones with is_active=True
+    existing_player_ids = {fp.player_id for fp in team.fantasy_players if fp.is_active}
+    new_player_ids = {p.player_id for p in payload.players}
 
-    for slot_data in payload.players:
-        fp_enum = (
-            models.FantasySlot.starter
-            if slot_data.slot == "starter"
-            else models.FantasySlot.bench
-        )
-        db.add(
-            models.FantasyPlayer(
-                fantasy_team_id=team.id,
-                player_id=slot_data.player_id,
-                slot=fp_enum,
-                formation_position=slot_data.formation_position,
-                is_x2_joker=slot_data.is_x2_joker,
-            )
-        )
+    # Mark players that are no longer in the new squad as inactive
+    players_to_deactivate = existing_player_ids - new_player_ids
+    if players_to_deactivate:
+        db.query(models.FantasyPlayer)\
+            .filter(
+                models.FantasyPlayer.fantasy_team_id == team.id,
+                models.FantasyPlayer.player_id.in_(list(players_to_deactivate)),
+                models.FantasyPlayer.is_active.is_(True)
+            )\
+            .update({models.FantasyPlayer.is_active: False})
+
+    # Add new players with is_active=True
+    players_to_activate = new_player_ids - existing_player_ids
+    if players_to_activate:
+        for slot_data in payload.players:
+            if slot_data.player_id in players_to_activate:
+                fp_enum = (
+                    models.FantasySlot.starter
+                    if slot_data.slot == "starter"
+                    else models.FantasySlot.bench
+                )
+                db.add(
+                    models.FantasyPlayer(
+                        fantasy_team_id=team.id,
+                        player_id=slot_data.player_id,
+                        slot=fp_enum,
+                        formation_position=slot_data.formation_position,
+                        is_x2_joker=slot_data.is_x2_joker,
+                        is_active=True,
+                    )
+                )
 
     # COMMENTED, SEE _compute_available_free_transfers
     # Record transfer history
@@ -738,6 +757,20 @@ def set_captain(
     for fp in team.fantasy_players:
         fp.is_x2_joker = fp.player_id == payload.player_id and payload.is_x2_joker
 
+    # Add validation that player exists and is active
+    if not team.fantasy_players:
+        raise HTTPException(status_code=404, detail="No team found")
+
+    # Find the player in the current squad
+    target_fp = None
+    for fp in team.fantasy_players:
+        if fp.player_id == payload.player_id and fp.is_active:
+            target_fp = fp
+            break
+
+    if not target_fp:
+        raise HTTPException(status_code=404, detail="Player not found in active squad")
+
     db.commit()
     return {"status": "success"}
 
@@ -764,13 +797,14 @@ def bench_swap(
     if not team:
         raise HTTPException(status_code=404, detail="No team found")
 
-    fps = {fp.player_id: fp for fp in team.fantasy_players}
+    # Add validation that both players are active
+    fps = {fp.player_id: fp for fp in team.fantasy_players if fp.is_active}
 
     starter_fp = fps.get(payload.starter_player_id)
     bench_fp = fps.get(payload.bench_player_id)
 
     if not starter_fp or not bench_fp:
-        raise HTTPException(status_code=404, detail="Player not found in squad")
+        raise HTTPException(status_code=404, detail="Player not found in active squad")
     if starter_fp.slot != models.FantasySlot.starter:
         raise HTTPException(status_code=400, detail="First player must be a starter")
     if bench_fp.slot != models.FantasySlot.bench:
@@ -846,7 +880,7 @@ def get_global_leaderboard(
         .all()
     )
 
-    # ── 2. Predictor points per user ────────────────────────────────────────
+    # ── 2. Predictor points per user ────────────────────────────────
     # Sum PredictionMatchdayStats across all matchdays belonging to this season.
     predictor_rows = (
         db.query(
@@ -1112,7 +1146,9 @@ def get_player_points_all_matchdays(
             models.FantasyPlayer,
             models.PlayerPoints.fantasy_player_id == models.FantasyPlayer.id,
         )
-        .filter(models.FantasyPlayer.fantasy_team_id == team.id)
+        .filter(
+            models.FantasyPlayer.fantasy_team_id == team.id,
+        )
         .order_by(models.Matchday.id.asc())
         .all()
     )

@@ -598,6 +598,22 @@
                 filter: drop-shadow(0 0 4px var(--gold));
             }
 
+            .penalty-toggle-btn {
+                flex: 1;
+                padding: 8px 6px;
+                border-radius: 8px;
+                border: 1px solid rgba(255,255,255,0.15);
+                background: rgba(255,255,255,0.05);
+                color: rgba(255,255,255,0.7);
+                font-size: 0.85rem;
+                cursor: pointer;
+            }
+            .penalty-toggle-btn.active {
+                background: rgba(255, 193, 7, 0.25);
+                border-color: rgba(255, 193, 7, 0.6);
+                color: #fff;
+            }
+
             /* matchup display */
             .card-matchup {
                 display: flex;
@@ -1127,6 +1143,11 @@
             .breakdown-chip.miss-chip {
                 background: var(--red-dim);
                 color: var(--red);
+            }
+
+            .breakdown-chip.penalty-chip {
+                background: rgba(255, 152, 0, 0.15);
+                color: #ff9800;
             }
 
             /* Pending result state inside past card */
@@ -1686,6 +1707,18 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div
+                                        x-show="fx.is_knockout"
+                                        class="score-hint"
+                                        style="
+                                            font-size: 0.8rem;
+                                            color: rgba(255, 255, 255, 0.55);
+                                            margin-top: 4px;
+                                            text-align: center;
+                                        "
+                                    >
+                                        ⏱️ El marcador incluye los 90 minutos + tiempo extra (si lo hubo)
+                                    </div>
                                     <!-- Extra Time & Penalties (only for knockout matches) -->
                                     <div
                                         x-show="fx.is_knockout"
@@ -1697,7 +1730,7 @@
                                             padding-top: 12px;
                                         "
                                     >
-                                        <div class="score-label">
+                                        <!-- <div class="score-label">
                                             ⚡ EXTRA TIME
                                         </div>
                                         <div class="score-inputs">
@@ -1768,81 +1801,40 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> -->
 
+                                        <!-- Penalties (only for knockout matches) -->
                                         <div
-                                            class="score-label"
-                                            style="margin-top: 12px"
+                                            x-show="fx.is_knockout"
+                                            class="score-section"
+                                            style="margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px;"
                                         >
-                                            🎯 PENALTY SHOOTOUT
-                                        </div>
-                                        <div class="score-inputs">
-                                            <div class="score-field">
-                                                <label>Pens Home</label>
-                                                <div class="score-controls">
-                                                    <button
-                                                        class="score-btn"
-                                                        @click="decrementPenalty(idx, 'home')"
-                                                        :disabled="fx.pastDeadline || fx.localPenaltyHome <= 0"
-                                                    >
-                                                        −
-                                                    </button>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="20"
-                                                        class="score-input"
-                                                        x-model.number="fx.localPenaltyHome"
-                                                        @input="clampPenalty(idx, 'home')"
-                                                        :disabled="fx.pastDeadline"
-                                                        style="
-                                                            width: 60px;
-                                                            height: 44px;
-                                                            font-size: 1.2rem;
-                                                        "
-                                                    />
-                                                    <button
-                                                        class="score-btn"
-                                                        @click="incrementPenalty(idx, 'home')"
-                                                        :disabled="fx.pastDeadline"
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="score-dash">—</div>
-                                            <div class="score-field">
-                                                <label>Pens Away</label>
-                                                <div class="score-controls">
-                                                    <button
-                                                        class="score-btn"
-                                                        @click="decrementPenalty(idx, 'away')"
-                                                        :disabled="fx.pastDeadline || fx.localPenaltyAway <= 0"
-                                                    >
-                                                        −
-                                                    </button>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="20"
-                                                        class="score-input"
-                                                        x-model.number="fx.localPenaltyAway"
-                                                        @input="clampPenalty(idx, 'away')"
-                                                        :disabled="fx.pastDeadline"
-                                                        style="
-                                                            width: 60px;
-                                                            height: 44px;
-                                                            font-size: 1.2rem;
-                                                        "
-                                                    />
-                                                    <button
-                                                        class="score-btn"
-                                                        @click="incrementPenalty(idx, 'away')"
-                                                        :disabled="fx.pastDeadline"
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
+                                            <div class="score-label">SI SE LLEGA A LA TANDA DE PENALTIS, ¿QUIÉN GANA?</div>
+                                            <div class="penalty-toggle-group" style="display:flex; gap:8px; margin-top:8px;">
+                                                <button
+                                                    class="penalty-toggle-btn"
+                                                    :class="{ active: fx.localPenaltyWinner === 'home' }"
+                                                    :disabled="fx.pastDeadline"
+                                                    @click="setPenaltyWinner(idx, 'home')"
+                                                >
+                                                <span x-text="fx.home_team"></span>
+                                                </button>
+                                                <button
+                                                    class="penalty-toggle-btn"
+                                                    :class="{ active: fx.localPenaltyWinner === null }"
+                                                    :disabled="fx.pastDeadline"
+                                                    @click="setPenaltyWinner(idx, null)"
+                                                >
+                                                    No irá a penaltis
+                                                </button>
+                                                <button
+                                                    class="penalty-toggle-btn"
+                                                    :class="{ active: fx.localPenaltyWinner === 'away' }"
+                                                    :disabled="fx.pastDeadline"
+                                                    @click="setPenaltyWinner(idx, 'away')"
+                                                >
+                                                <span x-text="fx.away_team"></span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -2229,64 +2221,22 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <div
-                                    x-show="pred.is_knockout"
-                                    class="scores-row"
-                                    style="margin-top: 8px"
-                                >
-                                    <div
-                                        class="score-col prediction"
-                                        style="background: rgba(0, 0, 0, 0.15)"
-                                    >
-                                        <div class="score-col-label">
-                                            Extra time
+                                <template x-if="pred.is_knockout && pred.result && pred.result.penalty_shootout">
+                                    <div class="scores-row" style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                                        <div class="score-col prediction" style="background: rgba(0,0,0,0.15); flex: 1;">
+                                            <div class="score-col-label">Tu selección</div>
+                                            <div class="score-col-value" style="font-size: 1.2rem;">
+                                                <span x-text="(pred.predicted_penalty_home_goals > pred.predicted_penalty_away_goals) ? pred.fixture_home_team : (pred.predicted_penalty_away_goals > pred.predicted_penalty_home_goals) ? pred.fixture_away_team : '—'"></span>
+                                            </div>
                                         </div>
-                                        <div
-                                            class="score-col-value"
-                                            x-text="(pred.predicted_extra_time_home_goals || 0) + ' - ' + (pred.predicted_extra_time_away_goals || 0)"
-                                        ></div>
-                                    </div>
-                                    <div
-                                        class="score-col actual-score"
-                                        :class="{ 'no-result': !pred.result }"
-                                    >
-                                        <div class="score-col-label">
-                                            Real ET
+                                        <div class="score-col actual-score" style="flex: 1;">
+                                            <div class="score-col-label">Ganador</div>
+                                            <div class="score-col-value" style="font-size: 1.2rem;">
+                                                <span x-text="pred.result.winner === 'home' ? pred.fixture_home_team : pred.result.winner === 'away' ? pred.fixture_away_team : '—'"></span>
+                                            </div>
                                         </div>
-                                        <div
-                                            class="score-col-value"
-                                            x-text="pred.result ? ((pred.result.home_extra_goals || 0) + ' - ' + (pred.result.away_extra_goals || 0)) : '? - ?'"
-                                        ></div>
                                     </div>
-                                </div>
-                                <div
-                                    x-show="pred.is_knockout && pred.result && pred.result.penalty_shootout"
-                                    class="scores-row"
-                                    style="margin-top: 4px"
-                                >
-                                    <div
-                                        class="score-col prediction"
-                                        style="background: rgba(0, 0, 0, 0.15)"
-                                    >
-                                        <div class="score-col-label">
-                                            Penalties
-                                        </div>
-                                        <div
-                                            class="score-col-value"
-                                            x-text="(pred.predicted_penalty_home_goals || 0) + ' - ' + (pred.predicted_penalty_away_goals || 0)"
-                                        ></div>
-                                    </div>
-                                    <div class="score-col actual-score">
-                                        <div class="score-col-label">
-                                            Real Pens
-                                        </div>
-                                        <div
-                                            class="score-col-value"
-                                            x-text="(pred.result.home_penalties || 0) + ' - ' + (pred.result.away_penalties || 0)"
-                                        ></div>
-                                    </div>
-                                </div>
+                                </template>
                                 <!-- Footer: points earned -->
                                 <template x-if="pred.score">
                                     <div class="past-card-footer">
@@ -2321,6 +2271,7 @@
                                                 x-show="pred.score.points_earned === 0"
                                                 >Sin puntos</span
                                             >
+                                            <span class="breakdown-chip penalty-chip" x-show="pred.score.correct_penalty_winner_points > 0" x-text="'+' + pred.score.correct_penalty_winner_points + ' penal'"></span>
                                         </div>
                                     </div>
                                 </template>
@@ -2559,6 +2510,7 @@
                                     matchday_name: f.matchday_name,
                                     fixture_home_team: f.home_team,
                                     fixture_away_team: f.away_team,
+                                    is_knockout: f.is_knockout, 
                                     // normalise result field name: API uses fixture_result, template uses result
                                     result: pred.fixture_result ?? null,
                                     // score is already on pred if scoring worker has run
@@ -2573,30 +2525,18 @@
                         }
                         this.pastLoading = false;
                     },
-
                     _enrich(raw) {
                         const now = new Date();
                         return raw.map((f) => {
                             const pred = f.existing_prediction;
+                            const ph = pred ? (pred.predicted_penalty_home_goals ?? 0) : 0;
+                            const pa = pred ? (pred.predicted_penalty_away_goals ?? 0) : 0;
                             return {
                                 ...f,
                                 pastDeadline: new Date(f.kickoff_utc) <= now,
                                 localHome: pred ? pred.predicted_home_goals : 0,
                                 localAway: pred ? pred.predicted_away_goals : 0,
-                                localExtraHome: pred
-                                    ? (pred.predicted_extra_time_home_goals ??
-                                      0)
-                                    : 0,
-                                localExtraAway: pred
-                                    ? (pred.predicted_extra_time_away_goals ??
-                                      0)
-                                    : 0,
-                                localPenaltyHome: pred
-                                    ? (pred.predicted_penalty_home_goals ?? 0)
-                                    : 0,
-                                localPenaltyAway: pred
-                                    ? (pred.predicted_penalty_away_goals ?? 0)
-                                    : 0,
+                                localPenaltyWinner: ph > pa ? "home" : pa > ph ? "away" : null,
                                 localJoker: pred ? pred.is_joker : false,
                                 saving: false,
                                 savedMsg: pred ? "Guardado" : "",
@@ -2653,86 +2593,91 @@
                                 (fx.localAway || 0) + 1,
                             );
                     },
-                    incrementExtra(idx, side) {
+                    setPenaltyWinner(idx, side) {
                         const fx = this.fixtures[idx];
-                        if (side === "home")
-                            fx.localExtraHome = Math.min(
-                                10,
-                                (fx.localExtraHome || 0) + 1,
-                            );
-                        else
-                            fx.localExtraAway = Math.min(
-                                10,
-                                (fx.localExtraAway || 0) + 1,
-                            );
+                        if (fx.pastDeadline) return;
+                        fx.localPenaltyWinner = side; // "home" | "away" | null
                     },
-                    decrementExtra(idx, side) {
-                        const fx = this.fixtures[idx];
-                        if (side === "home")
-                            fx.localExtraHome = Math.max(
-                                0,
-                                (fx.localExtraHome || 0) - 1,
-                            );
-                        else
-                            fx.localExtraAway = Math.max(
-                                0,
-                                (fx.localExtraAway || 0) - 1,
-                            );
-                    },
+                    // incrementExtra(idx, side) {
+                    //     const fx = this.fixtures[idx];
+                    //     if (side === "home")
+                    //         fx.localExtraHome = Math.min(
+                    //             10,
+                    //             (fx.localExtraHome || 0) + 1,
+                    //         );
+                    //     else
+                    //         fx.localExtraAway = Math.min(
+                    //             10,
+                    //             (fx.localExtraAway || 0) + 1,
+                    //         );
+                    // },
+                    // decrementExtra(idx, side) {
+                    //     const fx = this.fixtures[idx];
+                    //     if (side === "home")
+                    //         fx.localExtraHome = Math.max(
+                    //             0,
+                    //             (fx.localExtraHome || 0) - 1,
+                    //         );
+                    //     else
+                    //         fx.localExtraAway = Math.max(
+                    //             0,
+                    //             (fx.localExtraAway || 0) - 1,
+                    //         );
+                    // },
 
-                    clampExtra(idx, side) {
-                        const fx = this.fixtures[idx];
-                        let val = parseInt(
-                            side === "home"
-                                ? fx.localExtraHome
-                                : fx.localExtraAway,
-                        );
-                        if (isNaN(val)) val = 0;
-                        val = Math.min(10, Math.max(0, val));
-                        if (side === "home") fx.localExtraHome = val;
-                        else fx.localExtraAway = val;
-                    },
+                    // clampExtra(idx, side) {
+                    //     const fx = this.fixtures[idx];
+                    //     let val = parseInt(
+                    //         side === "home"
+                    //             ? fx.localExtraHome
+                    //             : fx.localExtraAway,
+                    //     );
+                    //     if (isNaN(val)) val = 0;
+                    //     val = Math.min(10, Math.max(0, val));
+                    //     if (side === "home") fx.localExtraHome = val;
+                    //     else fx.localExtraAway = val;
+                    // },
 
-                    incrementPenalty(idx, side) {
-                        const fx = this.fixtures[idx];
-                        if (side === "home")
-                            fx.localPenaltyHome = Math.min(
-                                20,
-                                (fx.localPenaltyHome || 0) + 1,
-                            );
-                        else
-                            fx.localPenaltyAway = Math.min(
-                                20,
-                                (fx.localPenaltyAway || 0) + 1,
-                            );
-                    },
+                    // incrementPenalty(idx, side) {
+                    //     const fx = this.fixtures[idx];
+                    //     if (side === "home")
+                    //         fx.localPenaltyHome = Math.min(
+                    //             20,
+                    //             (fx.localPenaltyHome || 0) + 1,
+                    //         );
+                    //     else
+                    //         fx.localPenaltyAway = Math.min(
+                    //             20,
+                    //             (fx.localPenaltyAway || 0) + 1,
+                    //         );
+                    // },
 
-                    decrementPenalty(idx, side) {
-                        const fx = this.fixtures[idx];
-                        if (side === "home")
-                            fx.localPenaltyHome = Math.max(
-                                0,
-                                (fx.localPenaltyHome || 0) - 1,
-                            );
-                        else
-                            fx.localPenaltyAway = Math.max(
-                                0,
-                                (fx.localPenaltyAway || 0) - 1,
-                            );
-                    },
+                    // decrementPenalty(idx, side) {
+                    //     const fx = this.fixtures[idx];
+                    //     if (side === "home")
+                    //         fx.localPenaltyHome = Math.max(
+                    //             0,
+                    //             (fx.localPenaltyHome || 0) - 1,
+                    //         );
+                    //     else
+                    //         fx.localPenaltyAway = Math.max(
+                    //             0,
+                    //             (fx.localPenaltyAway || 0) - 1,
+                    //         );
+                    // },
 
-                    clampPenalty(idx, side) {
-                        const fx = this.fixtures[idx];
-                        let val = parseInt(
-                            side === "home"
-                                ? fx.localPenaltyHome
-                                : fx.localPenaltyAway,
-                        );
-                        if (isNaN(val)) val = 0;
-                        val = Math.min(20, Math.max(0, val));
-                        if (side === "home") fx.localPenaltyHome = val;
-                        else fx.localPenaltyAway = val;
-                    },
+                    // clampPenalty(idx, side) {
+                    //     const fx = this.fixtures[idx];
+                    //     let val = parseInt(
+                    //         side === "home"
+                    //             ? fx.localPenaltyHome
+                    //             : fx.localPenaltyAway,
+                    //     );
+                    //     if (isNaN(val)) val = 0;
+                    //     val = Math.min(20, Math.max(0, val));
+                    //     if (side === "home") fx.localPenaltyHome = val;
+                    //     else fx.localPenaltyAway = val;
+                    // },
                     decrement(idx, side) {
                         const fx = this.fixtures[idx];
                         if (side === "home")
@@ -2778,6 +2723,8 @@
 
                         try {
                             let resp, data;
+                            const penHome = fx.localPenaltyWinner === "home" ? 1 : 0;
+                            const penAway = fx.localPenaltyWinner === "away" ? 1 : 0;
                             if (fx.existing_prediction) {
                                 resp = await authFetch(
                                     `/prediction/${fx.existing_prediction.id}`,
@@ -2787,17 +2734,11 @@
                                             "Content-Type": "application/json",
                                         },
                                         body: JSON.stringify({
-                                            predicted_home_goals: fx.localHome,
-                                            predicted_away_goals: fx.localAway,
-                                            predicted_extra_time_home_goals:
-                                                fx.localExtraHome,
-                                            predicted_extra_time_away_goals:
-                                                fx.localExtraAway,
-                                            predicted_penalty_home_goals:
-                                                fx.localPenaltyHome,
-                                            predicted_penalty_away_goals:
-                                                fx.localPenaltyAway,
-                                            is_joker: fx.localJoker,
+                                          predicted_home_goals: fx.localHome,
+                                          predicted_away_goals: fx.localAway,
+                                          predicted_penalty_home_goals: penHome,
+                                          predicted_penalty_away_goals: penAway,
+                                          is_joker: fx.localJoker,
                                         }),
                                     },
                                 );
@@ -2811,14 +2752,8 @@
                                         fixture_id: fx.fixture_id,
                                         predicted_home_goals: fx.localHome,
                                         predicted_away_goals: fx.localAway,
-                                        predicted_extra_time_home_goals:
-                                            fx.localExtraHome,
-                                        predicted_extra_time_away_goals:
-                                            fx.localExtraAway,
-                                        predicted_penalty_home_goals:
-                                            fx.localPenaltyHome,
-                                        predicted_penalty_away_goals:
-                                            fx.localPenaltyAway,
+                                        predicted_penalty_home_goals: penHome,
+                                        predicted_penalty_away_goals: penAway,
                                         is_joker: fx.localJoker,
                                     }),
                                 });
@@ -2916,20 +2851,18 @@
                             return;
                         }
 
-                        const predictions = openFixtures.map((f) => ({
-                            fixture_id: f.fixture_id,
-                            predicted_home_goals: f.localHome ?? 0,
-                            predicted_away_goals: f.localAway ?? 0,
-                            predicted_extra_time_home_goals:
-                                f.localExtraHome ?? 0,
-                            predicted_extra_time_away_goals:
-                                f.localExtraAway ?? 0,
-                            predicted_penalty_home_goals:
-                                f.localPenaltyHome ?? 0,
-                            predicted_penalty_away_goals:
-                                f.localPenaltyAway ?? 0,
-                            is_joker: f.localJoker ?? false,
-                        }));
+                        const predictions = openFixtures.map((f) => {
+                            const penHome = f.localPenaltyWinner === "home" ? 1 : 0;
+                            const penAway = f.localPenaltyWinner === "away" ? 1 : 0;
+                            return {
+                                fixture_id: f.fixture_id,
+                                predicted_home_goals: f.localHome ?? 0,
+                                predicted_away_goals: f.localAway ?? 0,
+                                predicted_penalty_home_goals: penHome,
+                                predicted_penalty_away_goals: penAway,
+                                is_joker: f.localJoker ?? false,
+                            };
+                        })
 
                         try {
                             const resp = await authFetch("/prediction/batch", {

@@ -87,6 +87,7 @@ class PredictionScoreInline(BaseModel):
     exact_score_points: int
     correct_outcome_points: int
     joker_multiplier_applied: bool
+    correct_penalty_winner_points: int
     calculated_at: datetime
 
     class Config:
@@ -822,6 +823,7 @@ def _build_score_inline(
         points_earned=score.points_earned,
         exact_score_points=score.exact_score_points or 0,
         correct_outcome_points=score.correct_outcome_points or 0,
+        correct_penalty_winner_points=score.correct_penalty_winner_points,
         joker_multiplier_applied=score.joker_multiplier_applied,
         calculated_at=score.calculated_at,
     )
